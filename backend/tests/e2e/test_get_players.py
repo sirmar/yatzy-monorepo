@@ -1,17 +1,16 @@
-from tests.e2e.players import create_player, list_players
+from tests.e2e.players import Player
 
 
 async def test_list_players_empty(client):
-  response = await list_players(client)
-  assert response.status_code == 200
-  assert response.json() == []
+  player = Player(client)
+  await player.list_all()
+  player.assert_status(200)
+  player.assert_is_empty_list()
 
 
 async def test_list_players_returns_created_players(client):
-  await create_player(client, 'Alice')
-  await create_player(client, 'Bob')
-  response = await list_players(client)
-  assert response.status_code == 200
-  names = [p['name'] for p in response.json()]
-  assert 'Alice' in names
-  assert 'Bob' in names
+  player = Player(client)
+  await player.create('Alice')
+  await player.create('Bob')
+  await player.list_all()
+  player.assert_names_include('Alice', 'Bob')

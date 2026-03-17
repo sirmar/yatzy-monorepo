@@ -1,29 +1,31 @@
-from httpx import AsyncClient
-from tests.e2e.players import create_player
+from tests.e2e.players import Player
 
 
-async def test_create_player(client: AsyncClient):
-  response = await create_player(client, 'Alice')
-  assert response.status_code == 201
-  body = response.json()
-  assert body['id'] > 0
-  assert body['name'] == 'Alice'
-  assert 'created_at' in body
+async def test_create_player(client):
+  player = Player(client)
+  await player.create('Alice')
+  player.assert_status(201)
+  player.assert_id_positive()
+  player.assert_name('Alice')
+  player.assert_has_created_at()
 
 
-async def test_create_player_missing_name(client: AsyncClient):
-  response = await client.post('/players', json={})
-  assert response.status_code == 422
-  assert 'detail' in response.json()
+async def test_create_player_missing_name(client):
+  player = Player(client)
+  await player.create()
+  player.assert_status(422)
+  player.assert_has_detail()
 
 
-async def test_create_player_empty_name(client: AsyncClient):
-  response = await create_player(client, '')
-  assert response.status_code == 422
-  assert 'detail' in response.json()
+async def test_create_player_empty_name(client):
+  player = Player(client)
+  await player.create('')
+  player.assert_status(422)
+  player.assert_has_detail()
 
 
-async def test_create_player_name_too_long(client: AsyncClient):
-  response = await create_player(client, 'x' * 65)
-  assert response.status_code == 422
-  assert 'detail' in response.json()
+async def test_create_player_name_too_long(client):
+  player = Player(client)
+  await player.create('x' * 65)
+  player.assert_status(422)
+  player.assert_has_detail()
