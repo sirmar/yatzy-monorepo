@@ -4,7 +4,7 @@ The purpose of this project is not to write another yatzy service but to practic
 
 # Yatzy Backend
 
-REST API backend for a Yatzy game. Tracks players, games, dice rolls, and scores. Implements Swedish Maxi Yatzy rules (6 dice, up to 3 rolls per turn, unused rolls can be saved).
+REST API backend for a Yatzy game. Tracks players, games, dice rolls and scores. Implements Swedish Maxi Yatzy rules (6 dice, up to 3 rolls per turn, unused rolls can be saved).
 
 Built with FastAPI + MySQL (no ORM), Python 3.14, Docker.
 
