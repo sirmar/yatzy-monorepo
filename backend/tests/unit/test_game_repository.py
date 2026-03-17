@@ -45,6 +45,23 @@ class TestGameRepository:
     await self.WhenGameIsCreated(5)
     self.ThenGamePlayersSelectFiltersOnDeletedAt()
 
+  # list_all
+
+  async def test_list_all_returns_games(self):
+    self.GivenDatabaseHasGamesWithPlayers([(1, 'lobby', 5, [5]), (2, 'lobby', 5, [5])])
+    await self.WhenAllGamesAreListed()
+    self.ThenGamesAreReturned([1, 2])
+
+  async def test_list_all_filters_deleted(self):
+    self.GivenDatabaseHasGamesWithPlayers([(1, 'lobby', 5, [5])])
+    await self.WhenAllGamesAreListed()
+    self.ThenListQueryFiltersOnDeletedAt()
+
+  async def test_list_all_returns_empty_list(self):
+    self.GivenDatabaseHasGamesWithPlayers([])
+    await self.WhenAllGamesAreListed()
+    self.ThenGamesAreReturned([])
+
   async def test_create_maps_started_at_and_ended_at(self):
     self.GivenDatabaseReturnsGame(1, 'lobby', 5, datetime(2024, 6, 1), None, None)
     self.GivenDatabaseReturnsPlayerIds([5])
@@ -79,6 +96,24 @@ class TestGameRepository:
 
   def ThenGamePlayerIdsInclude(self, player_id):
     assert player_id in self.game.player_ids
+
+  async def WhenAllGamesAreListed(self):
+    self.games = await self.repo.list_all()
+
+  def ThenGamesAreReturned(self, ids):
+    assert [g.id for g in self.games] == ids
+
+  def ThenListQueryFiltersOnDeletedAt(self):
+    list_call = self.cursor.execute.call_args_list[0]
+    assert 'deleted_at IS NULL' in list_call[0][0]
+
+  def GivenDatabaseHasGamesWithPlayers(self, games_with_players):
+    game_rows = [
+      (id, status, creator_id, datetime(2024, 6, 1), None, None)
+      for id, status, creator_id, _ in games_with_players
+    ]
+    player_rows_list = [[(pid,) for pid in pids] for _, _, _, pids in games_with_players]
+    self.cursor.fetchall = AsyncMock(side_effect=[game_rows] + player_rows_list)
 
   def ThenInsertWasCalledWithCreatorId(self, creator_id):
     insert_call = self.cursor.execute.call_args_list[0]

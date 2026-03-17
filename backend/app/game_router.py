@@ -21,4 +21,10 @@ def create_game_router(database: Database) -> APIRouter:
   ) -> Game:
     return await GameRepository(conn).create(body.creator_id)
 
+  @router.get('/games', response_model=list[Game])
+  async def list_games(
+    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+  ) -> list[Game]:
+    return await GameRepository(conn).list_all()
+
   return router

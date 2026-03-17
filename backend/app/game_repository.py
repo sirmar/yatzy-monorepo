@@ -42,3 +42,22 @@ class GameRepository:
     player_rows = await cursor.fetchall()
     await cursor.close()
     return self._to_game(row, [r[0] for r in player_rows])
+
+  async def list_all(self) -> list[Game]:
+    cursor = await self._conn.cursor()
+    await cursor.execute(
+      'SELECT id, status, creator_id, created_at, started_at, ended_at '
+      'FROM games WHERE deleted_at IS NULL ORDER BY id',
+    )
+    rows = await cursor.fetchall()
+    games = []
+    for row in rows:
+      await cursor.execute(
+        'SELECT player_id FROM game_players '
+        'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
+        (row[0],),
+      )
+      player_rows = await cursor.fetchall()
+      games.append(self._to_game(row, [r[0] for r in player_rows]))
+    await cursor.close()
+    return games
