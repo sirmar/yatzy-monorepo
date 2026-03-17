@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+import glob
 import aiomysql
 from app.config import Settings
 
@@ -17,6 +18,19 @@ class Database:
       db=self._settings.db_name,
       autocommit=True,
     )
+
+  async def run_migrations(self) -> None:
+    assert self._pool is not None
+    async with self._pool.acquire() as conn:
+      cursor = await conn.cursor()
+      for path in sorted(glob.glob('migrations/*.sql')):
+        with open(path) as f:
+          sql = f.read()
+        for statement in sql.split(';'):
+          statement = statement.strip()
+          if statement:
+            await cursor.execute(statement)
+      await cursor.close()
 
   async def disconnect(self) -> None:
     if self._pool:

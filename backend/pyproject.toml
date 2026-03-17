@@ -2,7 +2,7 @@
 name = 'yatzy-backend'
 version = '0.1.0'
 requires-python = '>=3.14'
-dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings']
+dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings', 'cryptography']
 
 [project.optional-dependencies]
 dev = ['pytest', 'pytest-asyncio', 'httpx', 'ruff', 'ty']

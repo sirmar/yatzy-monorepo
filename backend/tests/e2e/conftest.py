@@ -15,6 +15,13 @@ import aiomysql  # noqa: E402
 from httpx import AsyncClient, ASGITransport  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+async def connect_database():
+  await database.connect()
+  yield
+  await database.disconnect()
+
+
 @pytest.fixture(scope='session', autouse=True)
 async def run_migrations():
   conn = await aiomysql.connect(
