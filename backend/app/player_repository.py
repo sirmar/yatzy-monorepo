@@ -20,3 +20,12 @@ class PlayerRepository:
     row = await cursor.fetchone()
     await cursor.close()
     return Player(id=row[0], name=row[1], created_at=row[2])
+
+  async def list_all(self) -> list[Player]:
+    cursor = await self._conn.cursor()
+    await cursor.execute(
+      'SELECT id, name, created_at FROM players WHERE deleted_at IS NULL ORDER BY id',
+    )
+    rows = await cursor.fetchall()
+    await cursor.close()
+    return [Player(id=row[0], name=row[1], created_at=row[2]) for row in rows]
