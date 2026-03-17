@@ -5,7 +5,7 @@ requires-python = '>=3.14'
 dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings', 'cryptography']
 
 [project.optional-dependencies]
-dev = ['pytest', 'pytest-asyncio', 'httpx', 'ruff', 'ty']
+dev = ['pytest', 'pytest-asyncio', 'httpx', 'ruff', 'ty', 'pytest-cov']
 
 [tool.ruff]
 indent-width = 2
