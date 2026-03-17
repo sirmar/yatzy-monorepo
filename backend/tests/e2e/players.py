@@ -39,31 +39,40 @@ class Player:
     self.response = await self._client.delete(f'/players/{player_id}')
     return self
 
-  def assert_status(self, status_code: int) -> None:
+  def assert_status(self, status_code: int) -> 'Player':
     assert self.response.status_code == status_code
+    return self
 
-  def assert_name(self, name: str) -> None:
+  def assert_name(self, name: str) -> 'Player':
     assert self.json['name'] == name
+    return self
 
-  def assert_id_positive(self) -> None:
+  def assert_id_positive(self) -> 'Player':
     assert self.json['id'] > 0
+    return self
 
-  def assert_has_created_at(self) -> None:
+  def assert_has_created_at(self) -> 'Player':
     assert 'created_at' in self.json
+    return self
 
-  def assert_has_detail(self) -> None:
+  def assert_has_detail(self) -> 'Player':
     assert 'detail' in self.json
+    return self
 
-  def assert_is_empty_list(self) -> None:
+  def assert_is_empty_list(self) -> 'Player':
     assert self.json == []
+    return self
 
-  def assert_names_include(self, *names: str) -> None:
+  def assert_names_include(self, *names: str) -> 'Player':
     result_names = [p['name'] for p in self.json]
     for name in names:
       assert name in result_names
+    return self
 
-  def assert_id_in_list(self, player_id: int) -> None:
+  def assert_id_in_list(self, player_id: int) -> 'Player':
     assert any(p['id'] == player_id for p in self.json)
+    return self
 
-  def assert_id_not_in_list(self, player_id: int) -> None:
+  def assert_id_not_in_list(self, player_id: int) -> 'Player':
     assert not any(p['id'] == player_id for p in self.json)
+    return self

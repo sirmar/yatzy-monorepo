@@ -2,9 +2,7 @@ from tests.e2e.players import Player
 
 
 async def test_player_crud_flow(client):
-  player = Player(client)
-
-  await player.create('Alice')
+  player = await Player(client).create('Alice')
   player_id = player.id
 
   await player.get(player_id)

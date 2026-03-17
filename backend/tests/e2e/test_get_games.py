@@ -10,9 +10,9 @@ async def test_list_games_empty(client: AsyncClient):
 
 
 async def test_list_games_returns_created_games(client: AsyncClient):
-  player = await Player(client).create('Alice')
-  game1 = await Game(client).create(player.id)
-  game2 = await Game(client).create(player.id)
+  alice = await Player(client).create('Alice')
+  game1 = await Game(client).create(alice.id)
+  game2 = await Game(client).create(alice.id)
   response = await client.get('/games')
   assert response.status_code == 200
   ids = [g['id'] for g in response.json()]
