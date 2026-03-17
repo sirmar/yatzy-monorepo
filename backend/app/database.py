@@ -1,0 +1,29 @@
+from collections.abc import AsyncGenerator
+import aiomysql
+from app.config import Settings
+
+
+class Database:
+  def __init__(self, settings: Settings) -> None:
+    self._settings = settings
+    self._pool: aiomysql.Pool | None = None
+
+  async def connect(self) -> None:
+    self._pool = await aiomysql.create_pool(
+      host=self._settings.db_host,
+      port=self._settings.db_port,
+      user=self._settings.db_user,
+      password=self._settings.db_password,
+      db=self._settings.db_name,
+      autocommit=True,
+    )
+
+  async def disconnect(self) -> None:
+    if self._pool:
+      self._pool.close()
+      await self._pool.wait_closed()
+
+  async def get_db(self) -> AsyncGenerator[aiomysql.Connection, None]:
+    assert self._pool is not None
+    async with self._pool.acquire() as conn:
+      yield conn
