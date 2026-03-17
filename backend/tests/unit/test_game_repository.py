@@ -45,6 +45,26 @@ class TestGameRepository:
     await self.WhenGameIsCreated(5)
     self.ThenGamePlayersSelectFiltersOnDeletedAt()
 
+  # get_by_id
+
+  async def test_get_by_id_returns_game(self):
+    self.GivenDatabaseReturnsGame(1, 'lobby', 5, datetime(2024, 6, 1))
+    self.GivenDatabaseReturnsPlayerIds([5])
+    await self.WhenGameIsFetchedById(1)
+    self.ThenGameHasId(1)
+    self.ThenGameHasStatus('lobby')
+
+  async def test_get_by_id_returns_none_when_not_found(self):
+    self.GivenDatabaseReturnsNoRow()
+    await self.WhenGameIsFetchedById(99)
+    self.ThenGameIsNone()
+
+  async def test_get_by_id_filters_deleted(self):
+    self.GivenDatabaseReturnsGame(1, 'lobby', 5, datetime(2024, 6, 1))
+    self.GivenDatabaseReturnsPlayerIds([5])
+    await self.WhenGameIsFetchedById(1)
+    self.ThenGetByIdQueryFiltersOnDeletedAt()
+
   # list_all
 
   async def test_list_all_returns_games(self):
@@ -97,6 +117,15 @@ class TestGameRepository:
   def ThenGamePlayerIdsInclude(self, player_id):
     assert player_id in self.game.player_ids
 
+  async def WhenGameIsFetchedById(self, game_id):
+    self.game = await self.repo.get_by_id(game_id)
+
+  def GivenDatabaseReturnsNoRow(self):
+    self.cursor.fetchone = AsyncMock(return_value=None)
+
+  def ThenGameIsNone(self):
+    assert self.game is None
+
   async def WhenAllGamesAreListed(self):
     self.games = await self.repo.list_all()
 
@@ -118,6 +147,10 @@ class TestGameRepository:
   def ThenInsertWasCalledWithCreatorId(self, creator_id):
     insert_call = self.cursor.execute.call_args_list[0]
     assert creator_id in insert_call[0][1]
+
+  def ThenGetByIdQueryFiltersOnDeletedAt(self):
+    select_call = self.cursor.execute.call_args_list[0]
+    assert 'deleted_at IS NULL' in select_call[0][0]
 
   def ThenGameSelectFiltersOnDeletedAt(self):
     select_call = self.cursor.execute.call_args_list[2]

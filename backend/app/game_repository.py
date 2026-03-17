@@ -43,6 +43,26 @@ class GameRepository:
     await cursor.close()
     return self._to_game(row, [r[0] for r in player_rows])
 
+  async def get_by_id(self, game_id: int) -> Game | None:
+    cursor = await self._conn.cursor()
+    await cursor.execute(
+      'SELECT id, status, creator_id, created_at, started_at, ended_at '
+      'FROM games WHERE id = %s AND deleted_at IS NULL',
+      (game_id,),
+    )
+    row = await cursor.fetchone()
+    if row is None:
+      await cursor.close()
+      return None
+    await cursor.execute(
+      'SELECT player_id FROM game_players '
+      'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
+      (game_id,),
+    )
+    player_rows = await cursor.fetchall()
+    await cursor.close()
+    return self._to_game(row, [r[0] for r in player_rows])
+
   async def list_all(self) -> list[Game]:
     cursor = await self._conn.cursor()
     await cursor.execute(

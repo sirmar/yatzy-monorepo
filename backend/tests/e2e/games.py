@@ -11,6 +11,12 @@ class Game:
   def id(self) -> int:
     return self.json['id']
 
+  async def get(self, game_id: int) -> 'Game':
+    self.response = await self._client.get(f'/games/{game_id}')
+    if self.response.content:
+      self.json = self.response.json()
+    return self
+
   async def create(self, creator_id=None) -> 'Game':
     body = {'creator_id': creator_id} if creator_id is not None else {}
     self.response = await self._client.post('/games', json=body)
