@@ -32,6 +32,15 @@ async def test_join_game_already_joined(client: AsyncClient):
   game.assert_status(409).assert_has_detail()
 
 
+async def test_join_non_lobby_game(client: AsyncClient):
+  alice = await Player(client).create('Alice')
+  bob = await Player(client).create('Bob')
+  game = await Game(client).create(alice.id)
+  await game.start(game.id, alice.id)
+  await game.join(game.id, bob.id)
+  game.assert_status(409).assert_has_detail()
+
+
 async def test_join_game_full(client: AsyncClient):
   players = [await Player(client).create(f'Player{i}') for i in range(7)]
   game = await Game(client).create(players[0].id)

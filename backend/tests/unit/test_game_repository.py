@@ -45,6 +45,27 @@ class TestGameRepository:
     await self.WhenGameIsCreated(5)
     self.ThenGamePlayersSelectFiltersOnDeletedAt()
 
+  # start
+
+  async def test_start_returns_game_with_active_status(self):
+    self.GivenDatabaseReturnsGame(1, 'active', 5, datetime(2024, 6, 1))
+    self.GivenDatabaseReturnsPlayerIds([5])
+    self.GivenDatabaseAffectsRows(1)
+    await self.WhenGameIsStarted(1, 7)
+    self.ThenGameHasStatus('active')
+
+  async def test_start_uses_turn_id_and_game_id_in_update(self):
+    self.GivenDatabaseReturnsGame(1, 'active', 5, datetime(2024, 6, 1))
+    self.GivenDatabaseReturnsPlayerIds([5])
+    self.GivenDatabaseAffectsRows(1)
+    await self.WhenGameIsStarted(1, 7)
+    self.ThenStartUpdateUsedTurnIdAndGameId(7, 1)
+
+  async def test_start_returns_none_when_not_found(self):
+    self.GivenDatabaseAffectsRows(0)
+    await self.WhenGameIsStarted(99, 7)
+    self.ThenGameIsNone()
+
   # get_by_id
 
   async def test_get_by_id_returns_game(self):
@@ -116,6 +137,16 @@ class TestGameRepository:
 
   def ThenGamePlayerIdsInclude(self, player_id):
     assert player_id in self.game.player_ids
+
+  def GivenDatabaseAffectsRows(self, count):
+    self.cursor.rowcount = count
+
+  async def WhenGameIsStarted(self, game_id, turn_id):
+    self.game = await self.repo.start(game_id, turn_id)
+
+  def ThenStartUpdateUsedTurnIdAndGameId(self, turn_id, game_id):
+    update_call = self.cursor.execute.call_args_list[0]
+    assert update_call[0][1] == (turn_id, game_id)
 
   async def WhenGameIsFetchedById(self, game_id):
     self.game = await self.repo.get_by_id(game_id)

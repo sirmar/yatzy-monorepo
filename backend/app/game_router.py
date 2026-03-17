@@ -5,8 +5,10 @@ import aiomysql
 from app.database import Database
 from app.game import Game, GameCreate
 from app.game_join import GameJoin
+from app.game_start import GameStart
 from app.game_repository import GameRepository
 from app.game_player_repository import GamePlayerRepository
+from app.turn_repository import TurnRepository
 
 
 def create_game_router(database: Database) -> APIRouter:
@@ -32,6 +34,24 @@ def create_game_router(database: Database) -> APIRouter:
     if game is None:
       raise HTTPException(status_code=404, detail='Game not found')
     return game
+
+  @router.post('/games/{game_id}/start', response_model=Game)
+  async def start_game(
+    game_id: int,
+    body: GameStart,
+    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+  ) -> Game:
+    game = await GameRepository(conn).get_by_id(game_id)
+    if game is None:
+      raise HTTPException(status_code=404, detail='Game not found')
+    if game.status != 'lobby':
+      raise HTTPException(status_code=409, detail='Game is not in lobby')
+    if body.player_id != game.creator_id:
+      raise HTTPException(status_code=403, detail='Only the creator can start the game')
+    turn_id = await TurnRepository(conn).create(game_id, body.player_id, 1)
+    started = await GameRepository(conn).start(game_id, turn_id)
+    assert started is not None
+    return started
 
   @router.post('/games/{game_id}/join', response_model=Game)
   async def join_game(

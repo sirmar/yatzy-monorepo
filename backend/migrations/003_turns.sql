@@ -1,0 +1,19 @@
+CREATE TABLE IF NOT EXISTS turns (
+  id           INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+  game_id      INT UNSIGNED NOT NULL,
+  player_id    INT UNSIGNED NOT NULL,
+  turn_number  INT UNSIGNED NOT NULL,
+  created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  completed_at DATETIME DEFAULT NULL,
+  FOREIGN KEY (game_id)   REFERENCES games(id),
+  FOREIGN KEY (player_id) REFERENCES players(id)
+);
+
+CREATE TABLE IF NOT EXISTS turn_dice (
+  turn_id   INT UNSIGNED NOT NULL,
+  die_index TINYINT UNSIGNED NOT NULL,
+  value     TINYINT UNSIGNED DEFAULT NULL,
+  kept      BOOLEAN NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (turn_id, die_index),
+  FOREIGN KEY (turn_id) REFERENCES turns(id) ON DELETE CASCADE
+);
