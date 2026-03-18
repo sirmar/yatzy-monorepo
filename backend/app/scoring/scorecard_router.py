@@ -8,7 +8,8 @@ from app.games.game_status import GameStatus
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.scoring.score_calculator import calculate
-from app.scoring.scorecard import Scorecard, ScoreRequest
+from app.scoring.score_category import ScoreCategory
+from app.scoring.scorecard import Scorecard, ScoreRequest, ScoringOption
 from app.scoring.scorecard_repository import ScorecardRepository
 
 
@@ -85,5 +86,40 @@ def create_scorecard_router(database: Database) -> APIRouter:
     if scorecard is None:
       raise HTTPException(status_code=404, detail='Scorecard not found')
     return scorecard
+
+  @router.get(
+    '/games/{game_id}/players/{player_id}/scoring-options',
+    response_model=list[ScoringOption],
+  )
+  async def get_scoring_options(
+    game_id: int,
+    player_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+  ) -> list[ScoringOption]:
+    game = await GameRepository(conn).get_by_id(game_id)
+    if game is None:
+      raise HTTPException(status_code=404, detail='Game not found')
+    if player_id not in game.player_ids:
+      raise HTTPException(status_code=404, detail='Player not in game')
+    if game.status != GameStatus.ACTIVE:
+      raise HTTPException(status_code=409, detail='Game is not active')
+
+    roll_repo = RollRepository(conn)
+    turn_info = await roll_repo.get_turn_info(game_id)
+    if turn_info is None:
+      raise HTTPException(status_code=409, detail='No active turn found')
+
+    turn_id, current_player_id, _, _ = turn_info
+    if player_id != current_player_id:
+      raise HTTPException(status_code=403, detail='Not your turn')
+
+    dice = await roll_repo.get_dice_values(turn_id)
+    scored = await ScorecardRepository(conn).get_scored_categories(game_id, player_id)
+    return [
+      ScoringOption(category=cat, score=score)
+      for cat in ScoreCategory
+      if cat not in scored
+      if (score := calculate(cat, dice)) > 0
+    ]
 
   return router

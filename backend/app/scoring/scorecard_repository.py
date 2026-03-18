@@ -68,6 +68,21 @@ class ScorecardRepository:
     finally:
       await cursor.close()
 
+  async def get_scored_categories(
+    self, game_id: int, player_id: int
+  ) -> set[ScoreCategory]:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'SELECT category FROM scorecard_entries '
+        'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
+        (game_id, player_id),
+      )
+      rows = await cursor.fetchall()
+      return {ScoreCategory(row[0]) for row in rows}
+    finally:
+      await cursor.close()
+
   async def get(self, game_id: int, player_id: int) -> Scorecard | None:
     cursor = await self._conn.cursor()
     try:

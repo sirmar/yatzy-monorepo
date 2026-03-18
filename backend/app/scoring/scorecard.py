@@ -15,3 +15,8 @@ class Scorecard(BaseModel):
 
 class ScoreRequest(BaseModel):
   category: ScoreCategory
+
+
+class ScoringOption(BaseModel):
+  category: ScoreCategory
+  score: int
