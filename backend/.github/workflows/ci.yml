@@ -10,6 +10,16 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --extra dev
+      - run: uv run bandit -r app/ -c pyproject.toml
+
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -97,7 +107,7 @@ jobs:
           name: coverage-e2e
           path: coverage-e2e
       - run: uv run coverage combine coverage-unit/.coverage coverage-e2e/.coverage
-      - run: uv run coverage report --show-missing
+      - run: uv run coverage report --show-missing --fail-under=90
       - name: Write coverage summary
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY

@@ -5,7 +5,7 @@ requires-python = '>=3.14'
 dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings', 'cryptography']
 
 [project.optional-dependencies]
-dev = ['pytest', 'pytest-asyncio', 'httpx', 'ruff', 'ty', 'pytest-cov']
+dev = ['pytest', 'pytest-asyncio', 'httpx', 'ruff', 'ty', 'pytest-cov', 'bandit']
 
 [tool.ruff]
 indent-width = 2
@@ -16,6 +16,10 @@ quote-style = 'single'
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = 'single'
 
+[tool.bandit]
+skips = ['B101', 'B311']
+
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
 testpaths = ['tests']
+addopts = '--cov-fail-under=90'
