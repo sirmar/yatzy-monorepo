@@ -87,6 +87,19 @@ def create_game_router(database: Database) -> APIRouter:
     assert updated is not None
     return updated
 
+  @router.delete('/games/{game_id}', status_code=204)
+  async def delete_game(
+    game_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+  ) -> None:
+    repo = GameRepository(conn)
+    game = await repo.get_by_id(game_id)
+    if game is None:
+      raise HTTPException(status_code=404, detail='Game not found')
+    if game.status == 'active':
+      raise HTTPException(status_code=409, detail='Cannot delete an active game')
+    await repo.soft_delete(game_id)
+
   @router.get('/games', response_model=list[Game])
   async def list_games(
     conn: Annotated[aiomysql.Connection, Depends(get_conn)],

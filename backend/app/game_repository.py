@@ -113,6 +113,17 @@ class GameRepository:
     await cursor.close()
     return self._to_game(row, [r[0] for r in player_rows])
 
+  async def soft_delete(self, game_id: int) -> bool:
+    cursor = await self._conn.cursor()
+    await cursor.execute(
+      'UPDATE games SET deleted_at = NOW() '
+      'WHERE id = %s AND status IN (\'lobby\', \'finished\') AND deleted_at IS NULL',
+      (game_id,),
+    )
+    affected = cursor.rowcount
+    await cursor.close()
+    return affected > 0
+
   async def list_all(self) -> list[Game]:
     cursor = await self._conn.cursor()
     await cursor.execute(

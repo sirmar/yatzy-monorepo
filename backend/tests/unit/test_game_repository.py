@@ -131,6 +131,26 @@ class TestGameRepository:
     await self.WhenAllGamesAreListed()
     self.ThenGamesAreReturned([])
 
+  async def test_soft_delete_returns_true_when_deleted(self):
+    self.GivenDatabaseAffectsRows(1)
+    await self.WhenGameIsDeleted(1)
+    self.ThenDeletedIsTrue()
+
+  async def test_soft_delete_returns_false_when_not_found(self):
+    self.GivenDatabaseAffectsRows(0)
+    await self.WhenGameIsDeleted(99)
+    self.ThenDeletedIsFalse()
+
+  async def test_soft_delete_filters_on_lobby_or_finished(self):
+    self.GivenDatabaseAffectsRows(1)
+    await self.WhenGameIsDeleted(1)
+    self.ThenDeleteQueryFiltersOnLobbeyOrFinished()
+
+  async def test_soft_delete_uses_game_id(self):
+    self.GivenDatabaseAffectsRows(1)
+    await self.WhenGameIsDeleted(1)
+    self.ThenDeleteQueryUsesGameId(1)
+
   # Given
 
   def GivenDatabaseReturnsGame(self, id=1, status='lobby', creator_id=5, created_at=datetime(2024, 6, 1), started_at=None, ended_at=None):
@@ -171,6 +191,9 @@ class TestGameRepository:
 
   async def WhenAllGamesAreListed(self):
     self.games = await self.repo.list_all()
+
+  async def WhenGameIsDeleted(self, game_id):
+    self.deleted = await self.repo.soft_delete(game_id)
 
   # Then
 
@@ -225,3 +248,17 @@ class TestGameRepository:
 
   def ThenGameEndedAtIsNone(self):
     assert self.game.ended_at is None
+
+  def ThenDeletedIsTrue(self):
+    assert self.deleted is True
+
+  def ThenDeletedIsFalse(self):
+    assert self.deleted is False
+
+  def ThenDeleteQueryFiltersOnLobbeyOrFinished(self):
+    delete_call = self.cursor.execute.call_args_list[0]
+    assert 'status IN' in delete_call[0][0]
+
+  def ThenDeleteQueryUsesGameId(self, game_id):
+    delete_call = self.cursor.execute.call_args_list[0]
+    assert delete_call[0][1] == (game_id,)
