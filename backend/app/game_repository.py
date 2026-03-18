@@ -50,8 +50,8 @@ class GameRepository:
   async def end(self, game_id: int) -> Game | None:
     cursor = await self._conn.cursor()
     await cursor.execute(
-      'UPDATE games SET status = \'finished\', ended_at = NOW() '
-      'WHERE id = %s AND status = \'active\' AND deleted_at IS NULL',
+      "UPDATE games SET status = 'finished', ended_at = NOW() "
+      "WHERE id = %s AND status = 'active' AND deleted_at IS NULL",
       (game_id,),
     )
     if cursor.rowcount == 0:
@@ -64,7 +64,7 @@ class GameRepository:
   async def start(self, game_id: int, turn_id: int) -> Game | None:
     cursor = await self._conn.cursor()
     await cursor.execute(
-      'UPDATE games SET status = \'active\', started_at = NOW(), current_turn = %s '
+      "UPDATE games SET status = 'active', started_at = NOW(), current_turn = %s "
       'WHERE id = %s AND deleted_at IS NULL',
       (turn_id, game_id),
     )
@@ -99,7 +99,7 @@ class GameRepository:
     cursor = await self._conn.cursor()
     await cursor.execute(
       'UPDATE games SET deleted_at = NOW() '
-      'WHERE id = %s AND status IN (\'lobby\', \'finished\') AND deleted_at IS NULL',
+      "WHERE id = %s AND status IN ('lobby', 'finished') AND deleted_at IS NULL",
       (game_id,),
     )
     affected = cursor.rowcount

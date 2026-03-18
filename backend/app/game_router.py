@@ -82,7 +82,9 @@ def create_game_router(database: Database) -> APIRouter:
       raise HTTPException(status_code=409, detail='Player already in game')
     if len(game.player_ids) >= 6:
       raise HTTPException(status_code=409, detail='Game is full')
-    await GamePlayerRepository(conn).add(game_id, body.player_id, len(game.player_ids) + 1)
+    await GamePlayerRepository(conn).add(
+      game_id, body.player_id, len(game.player_ids) + 1
+    )
     updated = await GameRepository(conn).get_by_id(game_id)
     assert updated is not None
     return updated
