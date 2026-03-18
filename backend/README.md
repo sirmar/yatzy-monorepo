@@ -20,30 +20,25 @@ docker compose up
 
 ## Running tests
 
-E2e tests require the test database:
-
 ```bash
-docker compose up db-test -d
+make unit       # unit tests
+make e2e        # e2e tests (starts and stops db-test automatically)
+make test       # all tests with coverage
 ```
 
+## Lint, type checking and security
+
 ```bash
-# Unit tests
-uv run pytest tests/unit/ -v
-
-# E2e tests
-uv run pytest tests/e2e/ -v
-
-# All tests with coverage
-uv run pytest tests/ -v --cov=app
-uv run coverage report --show-missing
+make format     # auto-fix formatting and lint issues
+make lint       # check formatting and lint
+make types      # type check
+make security   # security scan
 ```
 
-## Lint and type checking
+## Run all checks
 
 ```bash
-uv run ruff check app/     # lint
-uv run ruff format app/    # format
-uv run ty check app/       # type check
+make check
 ```
 
 ## Development setup
