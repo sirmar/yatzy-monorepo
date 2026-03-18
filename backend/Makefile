@@ -18,11 +18,11 @@ unit:
 	uv run pytest tests/unit/ -v
 
 e2e:
-	docker compose up db-test -d
+	docker compose up db-test -d --wait
 	uv run pytest tests/e2e/ -v; docker compose stop db-test
 
 test:
-	docker compose up db-test -d
+	docker compose up db-test -d --wait
 	uv run pytest tests/ --cov=app; docker compose stop db-test
 
 check: lint types security test
