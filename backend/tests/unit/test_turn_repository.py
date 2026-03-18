@@ -1,13 +1,12 @@
-from unittest.mock import AsyncMock, MagicMock, call
+from unittest.mock import call
 from app.turn_repository import TurnRepository
+from tests.unit.repository_test_case import RepositoryTestCase
 
 
-class TestTurnRepository:
+class TestTurnRepository(RepositoryTestCase):
   def setup_method(self):
-    self.cursor = AsyncMock()
+    super().setup_method()
     self.cursor.lastrowid = 7
-    self.conn = MagicMock()
-    self.conn.cursor = AsyncMock(return_value=self.cursor)
     self.repo = TurnRepository(self.conn)
 
   # create

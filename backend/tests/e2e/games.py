@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 
 
 class Game:
@@ -12,57 +12,39 @@ class Game:
   def id(self) -> int:
     return self._id  # type: ignore[return-value]
 
+  def _set_response(self, response: Response) -> 'Game':
+    self.response = response
+    if response.content:
+      self.json = response.json()
+      if isinstance(self.json, dict) and 'id' in self.json:
+        self._id = self.json['id']
+    return self
+
   async def roll(self, game_id: int, player_id: int, kept_dice: list[int] | None = None) -> 'Game':
     body = {'player_id': player_id, 'kept_dice': kept_dice or []}
-    self.response = await self._client.post(f'/games/{game_id}/roll', json=body)
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.post(f'/games/{game_id}/roll', json=body))
 
   async def state(self, game_id: int) -> 'Game':
-    self.response = await self._client.get(f'/games/{game_id}/state')
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.get(f'/games/{game_id}/state'))
 
   async def delete(self, game_id: int) -> 'Game':
-    self.response = await self._client.delete(f'/games/{game_id}')
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.delete(f'/games/{game_id}'))
 
   async def end(self, game_id: int) -> 'Game':
-    self.response = await self._client.post(f'/games/{game_id}/end')
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.post(f'/games/{game_id}/end'))
 
   async def start(self, game_id: int, player_id: int) -> 'Game':
-    self.response = await self._client.post(f'/games/{game_id}/start', json={'player_id': player_id})
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.post(f'/games/{game_id}/start', json={'player_id': player_id}))
 
   async def join(self, game_id: int, player_id: int) -> 'Game':
-    self.response = await self._client.post(f'/games/{game_id}/join', json={'player_id': player_id})
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.post(f'/games/{game_id}/join', json={'player_id': player_id}))
 
   async def get(self, game_id: int) -> 'Game':
-    self.response = await self._client.get(f'/games/{game_id}')
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.get(f'/games/{game_id}'))
 
   async def create(self, creator_id=None) -> 'Game':
     body = {'creator_id': creator_id} if creator_id is not None else {}
-    self.response = await self._client.post('/games', json=body)
-    if self.response.content:
-      self.json = self.response.json()
-      if 'id' in self.json:
-        self._id = self.json['id']
-    return self
+    return self._set_response(await self._client.post('/games', json=body))
 
   def assert_status(self, status_code: int) -> 'Game':
     assert self.response.status_code == status_code

@@ -1,12 +1,11 @@
-from unittest.mock import AsyncMock, MagicMock, call, patch
+from unittest.mock import AsyncMock, call, patch
 from app.roll_repository import RollRepository
+from tests.unit.repository_test_case import RepositoryTestCase
 
 
-class TestRollRepository:
+class TestRollRepository(RepositoryTestCase):
   def setup_method(self):
-    self.cursor = AsyncMock()
-    self.conn = MagicMock()
-    self.conn.cursor = AsyncMock(return_value=self.cursor)
+    super().setup_method()
     self.repo = RollRepository(self.conn)
 
   async def test_get_turn_info_returns_none_when_not_found(self):

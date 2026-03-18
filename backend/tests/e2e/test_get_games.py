@@ -1,6 +1,6 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
-from tests.e2e.players import Player
+from tests.e2e.helpers import lobby_game
 
 
 async def test_list_games_empty(client: AsyncClient):
@@ -10,9 +10,8 @@ async def test_list_games_empty(client: AsyncClient):
 
 
 async def test_list_games_returns_created_games(client: AsyncClient):
-  alice = await Player(client).create('Alice')
-  game1 = await Game(client).create(alice.id)
-  game2 = await Game(client).create(alice.id)
+  player, game1 = await lobby_game(client)
+  game2 = await Game(client).create(player.id)
   response = await client.get('/games')
   assert response.status_code == 200
   ids = [g['id'] for g in response.json()]

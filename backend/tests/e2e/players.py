@@ -1,4 +1,4 @@
-from httpx import AsyncClient
+from httpx import AsyncClient, Response
 
 
 class Player:
@@ -11,33 +11,27 @@ class Player:
   def id(self) -> int:
     return self.json['id']
 
+  def _set_response(self, response: Response) -> 'Player':
+    self.response = response
+    if response.content:
+      self.json = response.json()
+    return self
+
   async def create(self, name=None) -> 'Player':
     body = {'name': name} if name is not None else {}
-    self.response = await self._client.post('/players', json=body)
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.post('/players', json=body))
 
   async def get(self, player_id: int) -> 'Player':
-    self.response = await self._client.get(f'/players/{player_id}')
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.get(f'/players/{player_id}'))
 
   async def list_all(self) -> 'Player':
-    self.response = await self._client.get('/players')
-    self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.get('/players'))
 
   async def update(self, player_id: int, name: str) -> 'Player':
-    self.response = await self._client.put(f'/players/{player_id}', json={'name': name})
-    if self.response.content:
-      self.json = self.response.json()
-    return self
+    return self._set_response(await self._client.put(f'/players/{player_id}', json={'name': name}))
 
   async def delete(self, player_id: int) -> 'Player':
-    self.response = await self._client.delete(f'/players/{player_id}')
-    return self
+    return self._set_response(await self._client.delete(f'/players/{player_id}'))
 
   def assert_status(self, status_code: int) -> 'Player':
     assert self.response.status_code == status_code

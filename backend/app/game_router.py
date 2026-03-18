@@ -1,5 +1,4 @@
 from typing import Annotated
-from collections.abc import AsyncGenerator
 from fastapi import APIRouter, Depends, HTTPException
 import aiomysql
 from app.database import Database
@@ -19,21 +18,17 @@ from app.turn_repository import TurnRepository
 def create_game_router(database: Database) -> APIRouter:
   router = APIRouter()
 
-  async def get_conn() -> AsyncGenerator[aiomysql.Connection, None]:
-    async for conn in database.get_db():
-      yield conn
-
   @router.post('/games', status_code=201, response_model=Game)
   async def create_game(
     body: GameCreate,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
     return await GameRepository(conn).create(body.creator_id)
 
   @router.get('/games/{game_id}', response_model=Game)
   async def get_game(
     game_id: int,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
@@ -43,7 +38,7 @@ def create_game_router(database: Database) -> APIRouter:
   @router.post('/games/{game_id}/end', response_model=Game)
   async def end_game(
     game_id: int,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
@@ -58,7 +53,7 @@ def create_game_router(database: Database) -> APIRouter:
   async def start_game(
     game_id: int,
     body: GameStart,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
@@ -76,7 +71,7 @@ def create_game_router(database: Database) -> APIRouter:
   async def join_game(
     game_id: int,
     body: GameJoin,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
@@ -96,7 +91,7 @@ def create_game_router(database: Database) -> APIRouter:
   async def roll_dice(
     game_id: int,
     body: RollRequest,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> DiceResponse:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
@@ -117,7 +112,7 @@ def create_game_router(database: Database) -> APIRouter:
   @router.get('/games/{game_id}/state', response_model=GameState)
   async def get_game_state(
     game_id: int,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> GameState:
     state = await GameStateRepository(conn).get(game_id)
     if state is None:
@@ -127,7 +122,7 @@ def create_game_router(database: Database) -> APIRouter:
   @router.delete('/games/{game_id}', status_code=204)
   async def delete_game(
     game_id: int,
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> None:
     repo = GameRepository(conn)
     game = await repo.get_by_id(game_id)
@@ -139,7 +134,7 @@ def create_game_router(database: Database) -> APIRouter:
 
   @router.get('/games', response_model=list[Game])
   async def list_games(
-    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[Game]:
     return await GameRepository(conn).list_all()
 

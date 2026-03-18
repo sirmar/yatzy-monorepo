@@ -1,13 +1,12 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from app.player_repository import PlayerRepository
+from tests.unit.repository_test_case import RepositoryTestCase
 
 
-class TestPlayerRepository:
+class TestPlayerRepository(RepositoryTestCase):
   def setup_method(self):
-    self.cursor = AsyncMock()
-    self.conn = MagicMock()
-    self.conn.cursor = AsyncMock(return_value=self.cursor)
+    super().setup_method()
     self.repo = PlayerRepository(self.conn)
 
   async def test_create_maps_row_to_player_fields(self):

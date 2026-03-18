@@ -1,12 +1,10 @@
-from unittest.mock import AsyncMock, MagicMock
 from app.game_player_repository import GamePlayerRepository
+from tests.unit.repository_test_case import RepositoryTestCase
 
 
-class TestGamePlayerRepository:
+class TestGamePlayerRepository(RepositoryTestCase):
   def setup_method(self):
-    self.cursor = AsyncMock()
-    self.conn = MagicMock()
-    self.conn.cursor = AsyncMock(return_value=self.cursor)
+    super().setup_method()
     self.repo = GamePlayerRepository(self.conn)
 
   # add

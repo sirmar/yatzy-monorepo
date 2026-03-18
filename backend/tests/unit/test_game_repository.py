@@ -1,14 +1,13 @@
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from app.game_repository import GameRepository
+from tests.unit.repository_test_case import RepositoryTestCase
 
 
-class TestGameRepository:
+class TestGameRepository(RepositoryTestCase):
   def setup_method(self):
-    self.cursor = AsyncMock()
+    super().setup_method()
     self.cursor.lastrowid = 1
-    self.conn = MagicMock()
-    self.conn.cursor = AsyncMock(return_value=self.cursor)
     self.repo = GameRepository(self.conn)
 
   # create

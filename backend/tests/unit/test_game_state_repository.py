@@ -1,12 +1,11 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from app.game_state_repository import GameStateRepository
+from tests.unit.repository_test_case import RepositoryTestCase
 
 
-class TestGameStateRepository:
+class TestGameStateRepository(RepositoryTestCase):
   def setup_method(self):
-    self.cursor = AsyncMock()
-    self.conn = MagicMock()
-    self.conn.cursor = AsyncMock(return_value=self.cursor)
+    super().setup_method()
     self.repo = GameStateRepository(self.conn)
 
   async def test_get_returns_none_when_not_found(self):

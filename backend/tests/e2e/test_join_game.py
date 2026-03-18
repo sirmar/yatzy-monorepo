@@ -1,43 +1,39 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
 from tests.e2e.players import Player
+from tests.e2e.helpers import lobby_game, active_game
 
 
 async def test_join_game_returns_200(client: AsyncClient):
-  alice = await Player(client).create('Alice')
-  bob = await Player(client).create('Bob')
-  game = await Game(client).create(alice.id)
-  await game.join(game.id, bob.id)
+  _, game = await lobby_game(client)
+  p2 = await Player(client).create('Bob')
+  await game.join(game.id, p2.id)
   game.assert_status(200)
 
 
 async def test_join_game_adds_player(client: AsyncClient):
-  alice = await Player(client).create('Alice')
-  bob = await Player(client).create('Bob')
-  game = await Game(client).create(alice.id)
-  await game.join(game.id, bob.id)
-  game.assert_player_ids_include(bob.id)
+  _, game = await lobby_game(client)
+  p2 = await Player(client).create('Bob')
+  await game.join(game.id, p2.id)
+  game.assert_player_ids_include(p2.id)
 
 
 async def test_join_game_not_found(client: AsyncClient):
-  alice = await Player(client).create('Alice')
-  game = await Game(client).join(999, alice.id)
+  p1, game = await lobby_game(client)
+  await game.join(999, p1.id)
   game.assert_status(404).assert_has_detail()
 
 
 async def test_join_game_already_joined(client: AsyncClient):
-  alice = await Player(client).create('Alice')
-  game = await Game(client).create(alice.id)
-  await game.join(game.id, alice.id)
+  p1, game = await lobby_game(client)
+  await game.join(game.id, p1.id)
   game.assert_status(409).assert_has_detail()
 
 
 async def test_join_non_lobby_game(client: AsyncClient):
-  alice = await Player(client).create('Alice')
-  bob = await Player(client).create('Bob')
-  game = await Game(client).create(alice.id)
-  await game.start(game.id, alice.id)
-  await game.join(game.id, bob.id)
+  _, game = await active_game(client)
+  p2 = await Player(client).create('Bob')
+  await game.join(game.id, p2.id)
   game.assert_status(409).assert_has_detail()
 
 

@@ -17,6 +17,21 @@ class GameRepository:
       player_ids=player_ids,
     )
 
+  async def _fetch_game(self, cursor: aiomysql.Cursor, game_id: int) -> Game:
+    await cursor.execute(
+      'SELECT id, status, creator_id, created_at, started_at, ended_at '
+      'FROM games WHERE id = %s AND deleted_at IS NULL',
+      (game_id,),
+    )
+    row = await cursor.fetchone()
+    await cursor.execute(
+      'SELECT player_id FROM game_players '
+      'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
+      (game_id,),
+    )
+    player_rows = await cursor.fetchall()
+    return self._to_game(row, [r[0] for r in player_rows])
+
   async def create(self, creator_id: int) -> Game:
     cursor = await self._conn.cursor()
     await cursor.execute(
@@ -28,20 +43,9 @@ class GameRepository:
       'INSERT INTO game_players (game_id, player_id, join_order) VALUES (%s, %s, 1)',
       (game_id, creator_id),
     )
-    await cursor.execute(
-      'SELECT id, status, creator_id, created_at, started_at, ended_at '
-      'FROM games WHERE id = %s AND deleted_at IS NULL',
-      (game_id,),
-    )
-    row = await cursor.fetchone()
-    await cursor.execute(
-      'SELECT player_id FROM game_players '
-      'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
-      (game_id,),
-    )
-    player_rows = await cursor.fetchall()
+    game = await self._fetch_game(cursor, game_id)
     await cursor.close()
-    return self._to_game(row, [r[0] for r in player_rows])
+    return game
 
   async def end(self, game_id: int) -> Game | None:
     cursor = await self._conn.cursor()
@@ -53,20 +57,9 @@ class GameRepository:
     if cursor.rowcount == 0:
       await cursor.close()
       return None
-    await cursor.execute(
-      'SELECT id, status, creator_id, created_at, started_at, ended_at '
-      'FROM games WHERE id = %s AND deleted_at IS NULL',
-      (game_id,),
-    )
-    row = await cursor.fetchone()
-    await cursor.execute(
-      'SELECT player_id FROM game_players '
-      'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
-      (game_id,),
-    )
-    player_rows = await cursor.fetchall()
+    game = await self._fetch_game(cursor, game_id)
     await cursor.close()
-    return self._to_game(row, [r[0] for r in player_rows])
+    return game
 
   async def start(self, game_id: int, turn_id: int) -> Game | None:
     cursor = await self._conn.cursor()
@@ -78,20 +71,9 @@ class GameRepository:
     if cursor.rowcount == 0:
       await cursor.close()
       return None
-    await cursor.execute(
-      'SELECT id, status, creator_id, created_at, started_at, ended_at '
-      'FROM games WHERE id = %s AND deleted_at IS NULL',
-      (game_id,),
-    )
-    row = await cursor.fetchone()
-    await cursor.execute(
-      'SELECT player_id FROM game_players '
-      'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
-      (game_id,),
-    )
-    player_rows = await cursor.fetchall()
+    game = await self._fetch_game(cursor, game_id)
     await cursor.close()
-    return self._to_game(row, [r[0] for r in player_rows])
+    return game
 
   async def get_by_id(self, game_id: int) -> Game | None:
     cursor = await self._conn.cursor()

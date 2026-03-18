@@ -15,6 +15,17 @@ import aiomysql  # noqa: E402
 from httpx import AsyncClient, ASGITransport  # noqa: E402
 
 
+async def _connect() -> aiomysql.Connection:
+  return await aiomysql.connect(
+    host=os.environ['DB_HOST'],
+    port=int(os.environ['DB_PORT']),
+    user=os.environ['DB_USER'],
+    password=os.environ['DB_PASSWORD'],
+    db=os.environ['DB_NAME'],
+    autocommit=True,
+  )
+
+
 @pytest.fixture(autouse=True)
 async def connect_database():
   await database.connect()
@@ -24,14 +35,7 @@ async def connect_database():
 
 @pytest.fixture(scope='session', autouse=True)
 async def run_migrations():
-  conn = await aiomysql.connect(
-    host=os.environ['DB_HOST'],
-    port=int(os.environ['DB_PORT']),
-    user=os.environ['DB_USER'],
-    password=os.environ['DB_PASSWORD'],
-    db=os.environ['DB_NAME'],
-    autocommit=True,
-  )
+  conn = await _connect()
   cursor = await conn.cursor()
   migration_files = sorted(glob.glob('migrations/*.sql'))
   for path in migration_files:
@@ -48,14 +52,7 @@ async def run_migrations():
 @pytest.fixture(autouse=True)
 async def truncate_tables():
   yield
-  conn = await aiomysql.connect(
-    host=os.environ['DB_HOST'],
-    port=int(os.environ['DB_PORT']),
-    user=os.environ['DB_USER'],
-    password=os.environ['DB_PASSWORD'],
-    db=os.environ['DB_NAME'],
-    autocommit=True,
-  )
+  conn = await _connect()
   cursor = await conn.cursor()
   await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
   await cursor.execute(
