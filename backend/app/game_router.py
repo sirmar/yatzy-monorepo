@@ -35,6 +35,20 @@ def create_game_router(database: Database) -> APIRouter:
       raise HTTPException(status_code=404, detail='Game not found')
     return game
 
+  @router.post('/games/{game_id}/end', response_model=Game)
+  async def end_game(
+    game_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+  ) -> Game:
+    game = await GameRepository(conn).get_by_id(game_id)
+    if game is None:
+      raise HTTPException(status_code=404, detail='Game not found')
+    if game.status != 'active':
+      raise HTTPException(status_code=409, detail='Game is not active')
+    ended = await GameRepository(conn).end(game_id)
+    assert ended is not None
+    return ended
+
   @router.post('/games/{game_id}/start', response_model=Game)
   async def start_game(
     game_id: int,

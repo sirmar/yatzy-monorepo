@@ -11,6 +11,12 @@ class Game:
   def id(self) -> int:
     return self.json['id']
 
+  async def end(self, game_id: int) -> 'Game':
+    self.response = await self._client.post(f'/games/{game_id}/end')
+    if self.response.content:
+      self.json = self.response.json()
+    return self
+
   async def start(self, game_id: int, player_id: int) -> 'Game':
     self.response = await self._client.post(f'/games/{game_id}/start', json={'player_id': player_id})
     if self.response.content:

@@ -11,19 +11,19 @@ class TestPlayerRepository:
     self.repo = PlayerRepository(self.conn)
 
   async def test_create_maps_row_to_player_fields(self):
-    self.GivenDatabaseReturnsPlayer(7, 'Alice', datetime(2024, 6, 1, 10, 0, 0))
+    self.GivenDatabaseReturnsPlayer(id=7, name='Alice', created_at=datetime(2024, 6, 1, 10, 0, 0))
     await self.WhenPlayerIsCreatedWithName('Alice')
     self.ThenPlayerHasId(7)
     self.ThenPlayerHasName('Alice')
     self.ThenPlayerHasCreatedAt(datetime(2024, 6, 1, 10, 0, 0))
 
   async def test_create_selects_inserted_row_by_id(self):
-    self.GivenDatabaseReturnsPlayer(7, 'Alice')
+    self.GivenDatabaseReturnsPlayer(id=7)
     await self.WhenPlayerIsCreatedWithName('Alice')
     self.ThenSelectQueriesById(7)
 
   async def test_create_insert_uses_provided_name(self):
-    self.GivenDatabaseReturnsPlayer(7, 'Alice')
+    self.GivenDatabaseReturnsPlayer()
     await self.WhenPlayerIsCreatedWithName('Bob')
     self.ThenInsertWasCalledWith('Bob')
 
@@ -38,7 +38,7 @@ class TestPlayerRepository:
     self.ThenQueryFiltersOnDeletedAtColumn()
 
   async def test_get_by_id_returns_player(self):
-    self.GivenDatabaseReturnsPlayer(3, 'Alice')
+    self.GivenDatabaseReturnsPlayer(id=3, name='Alice')
     await self.WhenPlayerIsFetchedById(3)
     self.ThenPlayerHasId(3)
     self.ThenPlayerHasName('Alice')
@@ -49,17 +49,17 @@ class TestPlayerRepository:
     self.ThenPlayerIsNone()
 
   async def test_get_by_id_filters_deleted(self):
-    self.GivenDatabaseReturnsPlayer(3, 'Alice')
+    self.GivenDatabaseReturnsPlayer()
     await self.WhenPlayerIsFetchedById(3)
     self.ThenQueryFiltersOnDeletedAtColumn()
 
   async def test_update_returns_updated_player(self):
-    self.GivenDatabaseReturnsPlayer(3, 'Bob')
+    self.GivenDatabaseReturnsPlayer(name='Bob')
     await self.WhenPlayerIsUpdated(3, 'Bob')
     self.ThenPlayerHasName('Bob')
 
   async def test_update_uses_provided_name(self):
-    self.GivenDatabaseReturnsPlayer(3, 'Bob')
+    self.GivenDatabaseReturnsPlayer()
     await self.WhenPlayerIsUpdated(3, 'Bob')
     self.ThenUpdateQueryUsesNameAndId('Bob', 3)
 
@@ -69,7 +69,7 @@ class TestPlayerRepository:
     self.ThenPlayerIsNone()
 
   async def test_update_filters_deleted(self):
-    self.GivenDatabaseReturnsPlayer(3, 'Bob')
+    self.GivenDatabaseReturnsPlayer()
     await self.WhenPlayerIsUpdated(3, 'Bob')
     self.ThenQueryFiltersOnDeletedAtColumn()
 
@@ -93,7 +93,9 @@ class TestPlayerRepository:
     await self.WhenPlayerIsDeleted(3)
     self.ThenQueryFiltersOnDeletedAtColumn()
 
-  def GivenDatabaseReturnsPlayer(self, id, name, created_at=datetime(2024, 6, 1, 10, 0, 0)):
+  # Given
+
+  def GivenDatabaseReturnsPlayer(self, id=1, name='Alice', created_at=datetime(2024, 6, 1, 10, 0, 0)):
     self.cursor.lastrowid = id
     self.cursor.fetchone = AsyncMock(return_value=(id, name, created_at))
 
@@ -106,6 +108,8 @@ class TestPlayerRepository:
 
   def GivenDatabaseAffectsRows(self, count):
     self.cursor.rowcount = count
+
+  # When
 
   async def WhenPlayerIsCreatedWithName(self, name):
     self.player = await self.repo.create(name)
@@ -121,6 +125,8 @@ class TestPlayerRepository:
 
   async def WhenPlayerIsDeleted(self, id):
     self.player = await self.repo.delete(id)
+
+  # Then
 
   def ThenPlayerHasId(self, id):
     assert self.player.id == id
