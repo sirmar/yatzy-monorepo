@@ -1,6 +1,7 @@
 from datetime import datetime
 from unittest.mock import AsyncMock
 from app.game_repository import GameRepository
+from app.game_status import GameStatus
 from tests.unit.repository_test_case import RepositoryTestCase
 
 
@@ -9,8 +10,6 @@ class TestGameRepository(RepositoryTestCase):
     super().setup_method()
     self.cursor.lastrowid = 1
     self.repo = GameRepository(self.conn)
-
-  # create
 
   async def test_create_maps_row_to_game_fields(self):
     self.GivenDatabaseReturnsGame(id=1, creator_id=5)
@@ -51,8 +50,6 @@ class TestGameRepository(RepositoryTestCase):
     self.ThenGameStartedAtIsNone()
     self.ThenGameEndedAtIsNone()
 
-  # end
-
   async def test_end_returns_game_with_finished_status(self):
     self.GivenDatabaseReturnsGame(status='finished')
     self.GivenDatabaseReturnsPlayerIds()
@@ -71,8 +68,6 @@ class TestGameRepository(RepositoryTestCase):
     self.GivenDatabaseAffectsRows(1)
     await self.WhenGameIsEnded(1)
     self.ThenEndUpdateFilteredOnActiveStatus()
-
-  # start
 
   async def test_start_returns_game_with_active_status(self):
     self.GivenDatabaseReturnsGame(status='active')
@@ -93,7 +88,12 @@ class TestGameRepository(RepositoryTestCase):
     await self.WhenGameIsStarted(99, 7)
     self.ThenGameIsNone()
 
-  # get_by_id
+  async def test_start_only_updates_lobby_games(self):
+    self.GivenDatabaseReturnsGame()
+    self.GivenDatabaseReturnsPlayerIds()
+    self.GivenDatabaseAffectsRows(1)
+    await self.WhenGameIsStarted(1, 7)
+    self.ThenStartUpdateFilteredOnLobbyStatus()
 
   async def test_get_by_id_returns_game(self):
     self.GivenDatabaseReturnsGame(id=1)
@@ -112,8 +112,6 @@ class TestGameRepository(RepositoryTestCase):
     self.GivenDatabaseReturnsPlayerIds()
     await self.WhenGameIsFetchedById(1)
     self.ThenGetByIdQueryFiltersOnDeletedAt()
-
-  # list_all
 
   async def test_list_all_returns_games(self):
     self.GivenDatabaseHasGamesWithPlayers([(1, 'lobby', 5, [5]), (2, 'lobby', 5, [5])])
@@ -143,14 +141,12 @@ class TestGameRepository(RepositoryTestCase):
   async def test_soft_delete_filters_on_lobby_or_finished(self):
     self.GivenDatabaseAffectsRows(1)
     await self.WhenGameIsDeleted(1)
-    self.ThenDeleteQueryFiltersOnLobbeyOrFinished()
+    self.ThenDeleteQueryFiltersOnLobbyOrFinished()
 
   async def test_soft_delete_uses_game_id(self):
     self.GivenDatabaseAffectsRows(1)
     await self.WhenGameIsDeleted(1)
     self.ThenDeleteQueryUsesGameId(1)
-
-  # Given
 
   def GivenDatabaseReturnsGame(self, id=1, status='lobby', creator_id=5, created_at=datetime(2024, 6, 1), started_at=None, ended_at=None):
     self.cursor.lastrowid = id
@@ -171,10 +167,12 @@ class TestGameRepository(RepositoryTestCase):
       (id, status, creator_id, datetime(2024, 6, 1), None, None)
       for id, status, creator_id, _ in games_with_players
     ]
-    player_rows_list = [[(pid,) for pid in pids] for _, _, _, pids in games_with_players]
-    self.cursor.fetchall = AsyncMock(side_effect=[game_rows] + player_rows_list)
-
-  # When
+    all_player_rows = [
+      (game_id, player_id)
+      for game_id, _, _, pids in games_with_players
+      for player_id in pids
+    ]
+    self.cursor.fetchall = AsyncMock(side_effect=[game_rows, all_player_rows])
 
   async def WhenGameIsCreated(self, creator_id):
     self.game = await self.repo.create(creator_id)
@@ -193,8 +191,6 @@ class TestGameRepository(RepositoryTestCase):
 
   async def WhenGameIsDeleted(self, game_id):
     self.deleted = await self.repo.soft_delete(game_id)
-
-  # Then
 
   def ThenGameHasId(self, id):
     assert self.game.id == id
@@ -236,11 +232,16 @@ class TestGameRepository(RepositoryTestCase):
 
   def ThenEndUpdateFilteredOnActiveStatus(self):
     update_call = self.cursor.execute.call_args_list[0]
-    assert 'status = \'active\'' in update_call[0][0]
+    assert GameStatus.ACTIVE in update_call[0][1]
 
   def ThenStartUpdateUsedTurnIdAndGameId(self, turn_id, game_id):
     update_call = self.cursor.execute.call_args_list[0]
-    assert update_call[0][1] == (turn_id, game_id)
+    assert turn_id in update_call[0][1]
+    assert game_id in update_call[0][1]
+
+  def ThenStartUpdateFilteredOnLobbyStatus(self):
+    update_call = self.cursor.execute.call_args_list[0]
+    assert GameStatus.LOBBY in update_call[0][1]
 
   def ThenGameStartedAtIsNone(self):
     assert self.game.started_at is None
@@ -254,10 +255,10 @@ class TestGameRepository(RepositoryTestCase):
   def ThenDeletedIsFalse(self):
     assert self.deleted is False
 
-  def ThenDeleteQueryFiltersOnLobbeyOrFinished(self):
+  def ThenDeleteQueryFiltersOnLobbyOrFinished(self):
     delete_call = self.cursor.execute.call_args_list[0]
     assert 'status IN' in delete_call[0][0]
 
   def ThenDeleteQueryUsesGameId(self, game_id):
     delete_call = self.cursor.execute.call_args_list[0]
-    assert delete_call[0][1] == (game_id,)
+    assert game_id in delete_call[0][1]

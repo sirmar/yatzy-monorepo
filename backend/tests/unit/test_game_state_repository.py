@@ -49,6 +49,13 @@ class TestGameStateRepository(RepositoryTestCase):
     await self.WhenStateIsFetched(1)
     self.ThenGameQueryFiltersOnDeletedAt()
 
+  async def test_get_filters_deleted_on_turns(self):
+    self.GivenDatabaseReturnsGame(status='active', current_turn=7)
+    self.GivenTurnBelongsToPlayer(5)
+    self.GivenDatabaseReturnsDice([])
+    await self.WhenStateIsFetched(1)
+    self.ThenTurnsQueryFiltersOnDeletedAt()
+
   def GivenDatabaseReturnsNoRow(self):
     self.cursor.fetchone = AsyncMock(return_value=None)
 
@@ -90,4 +97,8 @@ class TestGameStateRepository(RepositoryTestCase):
 
   def ThenGameQueryFiltersOnDeletedAt(self):
     query = self.cursor.execute.call_args_list[0][0][0]
+    assert 'deleted_at IS NULL' in query
+
+  def ThenTurnsQueryFiltersOnDeletedAt(self):
+    query = self.cursor.execute.call_args_list[1][0][0]
     assert 'deleted_at IS NULL' in query

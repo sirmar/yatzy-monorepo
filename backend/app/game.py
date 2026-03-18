@@ -1,5 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
+from app.game_status import GameStatus
 
 
 class GameCreate(BaseModel):
@@ -8,7 +9,7 @@ class GameCreate(BaseModel):
 
 class Game(BaseModel):
   id: int
-  status: str
+  status: GameStatus
   creator_id: int
   player_ids: list[int]
   created_at: datetime

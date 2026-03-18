@@ -1,0 +1,11 @@
+SELECT IF(COUNT(*) = 0,
+  'ALTER TABLE turns ADD COLUMN deleted_at DATETIME DEFAULT NULL',
+  'SELECT 1'
+) INTO @ddl
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE TABLE_SCHEMA = DATABASE()
+  AND TABLE_NAME = 'turns'
+  AND COLUMN_NAME = 'deleted_at';
+PREPARE add_deleted_at FROM @ddl;
+EXECUTE add_deleted_at;
+DEALLOCATE PREPARE add_deleted_at;

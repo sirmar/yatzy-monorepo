@@ -5,6 +5,7 @@ from app.database import Database
 from app.game import Game, GameCreate
 from app.game_join import GameJoin
 from app.game_start import GameStart
+from app.game_status import GameStatus
 from app.dice_response import DiceResponse
 from app.game_repository import GameRepository
 from app.game_player_repository import GamePlayerRepository
@@ -43,10 +44,11 @@ def create_game_router(database: Database) -> APIRouter:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
       raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != 'active':
+    if game.status != GameStatus.ACTIVE:
       raise HTTPException(status_code=409, detail='Game is not active')
     ended = await GameRepository(conn).end(game_id)
-    assert ended is not None
+    if ended is None:
+      raise HTTPException(status_code=409, detail='Game could not be ended')
     return ended
 
   @router.post('/games/{game_id}/start', response_model=Game)
@@ -58,13 +60,14 @@ def create_game_router(database: Database) -> APIRouter:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
       raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != 'lobby':
+    if game.status != GameStatus.LOBBY:
       raise HTTPException(status_code=409, detail='Game is not in lobby')
     if body.player_id != game.creator_id:
       raise HTTPException(status_code=403, detail='Only the creator can start the game')
     turn_id = await TurnRepository(conn).create(game_id, body.player_id, 1)
     started = await GameRepository(conn).start(game_id, turn_id)
-    assert started is not None
+    if started is None:
+      raise HTTPException(status_code=409, detail='Game could not be started')
     return started
 
   @router.post('/games/{game_id}/join', response_model=Game)
@@ -76,7 +79,7 @@ def create_game_router(database: Database) -> APIRouter:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
       raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != 'lobby':
+    if game.status != GameStatus.LOBBY:
       raise HTTPException(status_code=409, detail='Game is not in lobby')
     if body.player_id in game.player_ids:
       raise HTTPException(status_code=409, detail='Player already in game')
@@ -86,7 +89,8 @@ def create_game_router(database: Database) -> APIRouter:
       game_id, body.player_id, len(game.player_ids) + 1
     )
     updated = await GameRepository(conn).get_by_id(game_id)
-    assert updated is not None
+    if updated is None:
+      raise HTTPException(status_code=409, detail='Game could not be retrieved')
     return updated
 
   @router.post('/games/{game_id}/roll', response_model=DiceResponse)
@@ -98,11 +102,12 @@ def create_game_router(database: Database) -> APIRouter:
     game = await GameRepository(conn).get_by_id(game_id)
     if game is None:
       raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != 'active':
+    if game.status != GameStatus.ACTIVE:
       raise HTTPException(status_code=409, detail='Game is not active')
     roll_repo = RollRepository(conn)
     turn_info = await roll_repo.get_turn_info(game_id)
-    assert turn_info is not None
+    if turn_info is None:
+      raise HTTPException(status_code=409, detail='No active turn found')
     turn_id, current_player_id, rolls_used, rolls_remaining = turn_info
     if body.player_id != current_player_id:
       raise HTTPException(status_code=403, detail='Not your turn')
@@ -130,7 +135,7 @@ def create_game_router(database: Database) -> APIRouter:
     game = await repo.get_by_id(game_id)
     if game is None:
       raise HTTPException(status_code=404, detail='Game not found')
-    if game.status == 'active':
+    if game.status == GameStatus.ACTIVE:
       raise HTTPException(status_code=409, detail='Cannot delete an active game')
     await repo.soft_delete(game_id)
 

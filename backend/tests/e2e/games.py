@@ -46,6 +46,9 @@ class Game:
     body = {'creator_id': creator_id} if creator_id is not None else {}
     return self._set_response(await self._client.post('/games', json=body))
 
+  async def list_all(self) -> 'Game':
+    return self._set_response(await self._client.get('/games'))
+
   def assert_status(self, status_code: int) -> 'Game':
     assert self.response.status_code == status_code
     return self
@@ -94,4 +97,14 @@ class Game:
 
   def assert_has_detail(self) -> 'Game':
     assert 'detail' in self.json
+    return self
+
+  def assert_is_empty_list(self) -> 'Game':
+    assert self.json == []
+    return self
+
+  def assert_ids_include(self, *game_ids: int) -> 'Game':
+    result_ids = [g['id'] for g in self.json]
+    for gid in game_ids:
+      assert gid in result_ids
     return self

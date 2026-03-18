@@ -9,6 +9,7 @@ os.environ.update({
 })
 
 from app.main import app, database  # noqa: E402
+from app.database import execute_sql_script  # noqa: E402
 import glob  # noqa: E402
 import pytest  # noqa: E402
 import aiomysql  # noqa: E402
@@ -41,10 +42,7 @@ async def run_migrations():
   for path in migration_files:
     with open(path) as f:
       sql = f.read()
-    for statement in sql.split(';'):
-      statement = statement.strip()
-      if statement:
-        await cursor.execute(statement)
+    await execute_sql_script(cursor, sql)
   await cursor.close()
   conn.close()
 

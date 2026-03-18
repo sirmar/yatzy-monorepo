@@ -4,6 +4,13 @@ import aiomysql
 from app.config import Settings
 
 
+async def execute_sql_script(cursor: aiomysql.Cursor, sql: str) -> None:
+  for statement in sql.split(';'):
+    statement = statement.strip()
+    if statement:
+      await cursor.execute(statement)
+
+
 class Database:
   def __init__(self, settings: Settings) -> None:
     self._settings = settings
@@ -20,16 +27,14 @@ class Database:
     )
 
   async def run_migrations(self) -> None:
-    assert self._pool is not None
+    if self._pool is None:
+      raise RuntimeError('Database.connect() must be called before run_migrations()')
     async with self._pool.acquire() as conn:
       cursor = await conn.cursor()
       for path in sorted(glob.glob('migrations/*.sql')):
         with open(path) as f:
           sql = f.read()
-        for statement in sql.split(';'):
-          statement = statement.strip()
-          if statement:
-            await cursor.execute(statement)
+        await execute_sql_script(cursor, sql)
       await cursor.close()
 
   async def disconnect(self) -> None:
@@ -38,6 +43,7 @@ class Database:
       await self._pool.wait_closed()
 
   async def get_db(self) -> AsyncGenerator[aiomysql.Connection, None]:
-    assert self._pool is not None
+    if self._pool is None:
+      raise RuntimeError('Database.connect() must be called before get_db()')
     async with self._pool.acquire() as conn:
       yield conn

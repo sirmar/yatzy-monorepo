@@ -82,10 +82,10 @@ class TestPlayerRepository(RepositoryTestCase):
     await self.WhenPlayerIsDeleted(3)
     self.ThenPlayerIsTrue()
 
-  async def test_delete_returns_none_when_not_found(self):
+  async def test_delete_returns_false_when_not_found(self):
     self.GivenDatabaseAffectsRows(0)
     await self.WhenPlayerIsDeleted(99)
-    self.ThenPlayerIsNone()
+    self.ThenDeletedIsFalse()
 
   async def test_delete_filters_deleted(self):
     self.GivenDatabaseAffectsRows(1)
@@ -164,3 +164,6 @@ class TestPlayerRepository(RepositoryTestCase):
   def ThenDeleteQueryUsesId(self, id):
     delete_call = self.cursor.execute.call_args_list[0]
     assert delete_call[0][1] == (id,)
+
+  def ThenDeletedIsFalse(self):
+    assert self.player is False

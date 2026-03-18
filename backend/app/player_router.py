@@ -49,7 +49,7 @@ def create_player_router(database: Database) -> APIRouter:
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Response:
     deleted = await PlayerRepository(conn).delete(player_id)
-    if deleted is None:
+    if not deleted:
       raise HTTPException(status_code=404, detail='Player not found')
     return Response(status_code=204)
 

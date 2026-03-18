@@ -7,15 +7,18 @@ class TurnRepository:
 
   async def create(self, game_id: int, player_id: int, turn_number: int) -> int:
     cursor = await self._conn.cursor()
-    await cursor.execute(
-      'INSERT INTO turns (game_id, player_id, turn_number) VALUES (%s, %s, %s)',
-      (game_id, player_id, turn_number),
-    )
-    turn_id = cursor.lastrowid
-    for die_index in range(6):
+    try:
       await cursor.execute(
-        'INSERT INTO turn_dice (turn_id, die_index) VALUES (%s, %s)',
-        (turn_id, die_index),
+        'INSERT INTO turns (game_id, player_id, turn_number) VALUES (%s, %s, %s)',
+        (game_id, player_id, turn_number),
       )
-    await cursor.close()
-    return turn_id
+      turn_id = cursor.lastrowid
+      placeholders = ', '.join(['(%s, %s)'] * 6)
+      values = [v for i in range(6) for v in (turn_id, i)]
+      await cursor.execute(
+        'INSERT INTO turn_dice (turn_id, die_index) VALUES ' + placeholders,  # nosec B608
+        values,
+      )
+      return turn_id
+    finally:
+      await cursor.close()
