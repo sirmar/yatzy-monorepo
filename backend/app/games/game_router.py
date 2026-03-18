@@ -3,8 +3,19 @@ from fastapi import APIRouter, Depends, HTTPException
 import aiomysql
 from app.database import Database
 from app.games.game import Game, GameCreate
+from app.games.guards import (
+  assert_game_exists,
+  assert_game_active,
+  assert_game_in_lobby,
+  assert_game_deletable,
+  assert_player_not_in_game,
+  assert_game_not_full,
+  assert_is_creator,
+  assert_turn_active,
+  assert_current_player,
+  assert_rolls_remaining,
+)
 from app.games.requests import GameJoin, GameStart, RollRequest
-from app.games.game_status import GameStatus
 from app.games.dice import DiceResponse
 from app.games.game_repository import GameRepository
 from app.games.game_player_repository import GamePlayerRepository
@@ -29,21 +40,15 @@ def create_game_router(database: Database) -> APIRouter:
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
-    game = await GameRepository(conn).get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    return game
+    return assert_game_exists(await GameRepository(conn).get_by_id(game_id))
 
   @router.post('/games/{game_id}/end', response_model=Game)
   async def end_game(
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
-    game = await GameRepository(conn).get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != GameStatus.ACTIVE:
-      raise HTTPException(status_code=409, detail='Game is not active')
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    assert_game_active(game)
     ended = await GameRepository(conn).end(game_id)
     if ended is None:
       raise HTTPException(status_code=409, detail='Game could not be ended')
@@ -55,13 +60,9 @@ def create_game_router(database: Database) -> APIRouter:
     body: GameStart,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
-    game = await GameRepository(conn).get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != GameStatus.LOBBY:
-      raise HTTPException(status_code=409, detail='Game is not in lobby')
-    if body.player_id != game.creator_id:
-      raise HTTPException(status_code=403, detail='Only the creator can start the game')
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    assert_game_in_lobby(game)
+    assert_is_creator(game, body.player_id)
     turn_id = await TurnRepository(conn).create(game_id, body.player_id, 1)
     started = await GameRepository(conn).start(game_id, turn_id)
     if started is None:
@@ -74,15 +75,10 @@ def create_game_router(database: Database) -> APIRouter:
     body: GameJoin,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
-    game = await GameRepository(conn).get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != GameStatus.LOBBY:
-      raise HTTPException(status_code=409, detail='Game is not in lobby')
-    if body.player_id in game.player_ids:
-      raise HTTPException(status_code=409, detail='Player already in game')
-    if len(game.player_ids) >= 6:
-      raise HTTPException(status_code=409, detail='Game is full')
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    assert_game_in_lobby(game)
+    assert_player_not_in_game(game, body.player_id)
+    assert_game_not_full(game)
     await GamePlayerRepository(conn).add(
       game_id, body.player_id, len(game.player_ids) + 1
     )
@@ -97,20 +93,14 @@ def create_game_router(database: Database) -> APIRouter:
     body: RollRequest,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> DiceResponse:
-    game = await GameRepository(conn).get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if game.status != GameStatus.ACTIVE:
-      raise HTTPException(status_code=409, detail='Game is not active')
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    assert_game_active(game)
     roll_repo = RollRepository(conn)
-    turn_info = await roll_repo.get_turn_info(game_id)
-    if turn_info is None:
-      raise HTTPException(status_code=409, detail='No active turn found')
-    turn_id, current_player_id, rolls_used, rolls_remaining = turn_info
-    if body.player_id != current_player_id:
-      raise HTTPException(status_code=403, detail='Not your turn')
-    if rolls_used >= 3 + rolls_remaining:
-      raise HTTPException(status_code=409, detail='No rolls remaining')
+    turn_id, current_player_id, rolls_used, rolls_remaining = assert_turn_active(
+      await roll_repo.get_turn_info(game_id)
+    )
+    assert_current_player(body.player_id, current_player_id)
+    assert_rolls_remaining(rolls_used, rolls_remaining)
     dice = await roll_repo.execute(turn_id, body.kept_dice)
     return DiceResponse(dice=dice)
 
@@ -130,11 +120,8 @@ def create_game_router(database: Database) -> APIRouter:
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> None:
     repo = GameRepository(conn)
-    game = await repo.get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if game.status == GameStatus.ACTIVE:
-      raise HTTPException(status_code=409, detail='Cannot delete an active game')
+    game = assert_game_exists(await repo.get_by_id(game_id))
+    assert_game_deletable(game)
     await repo.soft_delete(game_id)
 
   @router.get('/games', response_model=list[Game])

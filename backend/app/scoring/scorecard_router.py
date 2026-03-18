@@ -4,7 +4,14 @@ import aiomysql
 from app.database import Database
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
-from app.games.game_status import GameStatus
+from app.games.guards import (
+  assert_game_exists,
+  assert_game_active,
+  assert_player_in_game,
+  assert_turn_active,
+  assert_current_player,
+  assert_has_rolled,
+)
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.scoring.score_calculator import calculate
@@ -39,24 +46,16 @@ def create_scorecard_router(database: Database) -> APIRouter:
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Scorecard:
     game_repo = GameRepository(conn)
-    game = await game_repo.get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if player_id not in game.player_ids:
-      raise HTTPException(status_code=404, detail='Player not in game')
-    if game.status != GameStatus.ACTIVE:
-      raise HTTPException(status_code=409, detail='Game is not active')
+    game = assert_game_exists(await game_repo.get_by_id(game_id))
+    assert_player_in_game(game, player_id)
+    assert_game_active(game)
 
     roll_repo = RollRepository(conn)
-    turn_info = await roll_repo.get_turn_info(game_id)
-    if turn_info is None:
-      raise HTTPException(status_code=409, detail='No active turn found')
-
-    turn_id, current_player_id, rolls_used, rolls_remaining = turn_info
-    if player_id != current_player_id:
-      raise HTTPException(status_code=403, detail='Not your turn')
-    if rolls_used == 0:
-      raise HTTPException(status_code=409, detail='Must roll before scoring')
+    turn_id, current_player_id, rolls_used, rolls_remaining = assert_turn_active(
+      await roll_repo.get_turn_info(game_id)
+    )
+    assert_current_player(player_id, current_player_id)
+    assert_has_rolled(rolls_used)
 
     scorecard_repo = ScorecardRepository(conn)
     if await scorecard_repo.is_category_scored(game_id, player_id, body.category):
@@ -96,22 +95,15 @@ def create_scorecard_router(database: Database) -> APIRouter:
     player_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[ScoringOption]:
-    game = await GameRepository(conn).get_by_id(game_id)
-    if game is None:
-      raise HTTPException(status_code=404, detail='Game not found')
-    if player_id not in game.player_ids:
-      raise HTTPException(status_code=404, detail='Player not in game')
-    if game.status != GameStatus.ACTIVE:
-      raise HTTPException(status_code=409, detail='Game is not active')
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    assert_player_in_game(game, player_id)
+    assert_game_active(game)
 
     roll_repo = RollRepository(conn)
-    turn_info = await roll_repo.get_turn_info(game_id)
-    if turn_info is None:
-      raise HTTPException(status_code=409, detail='No active turn found')
-
-    turn_id, current_player_id, _, _ = turn_info
-    if player_id != current_player_id:
-      raise HTTPException(status_code=403, detail='Not your turn')
+    turn_id, current_player_id, _, _ = assert_turn_active(
+      await roll_repo.get_turn_info(game_id)
+    )
+    assert_current_player(player_id, current_player_id)
 
     dice = await roll_repo.get_dice_values(turn_id)
     scored = await ScorecardRepository(conn).get_scored_categories(game_id, player_id)

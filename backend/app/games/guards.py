@@ -1,0 +1,67 @@
+from fastapi import HTTPException
+from app.games.game import Game
+from app.games.game_status import GameStatus
+
+
+def assert_game_exists(game: Game | None) -> Game:
+  if game is None:
+    raise HTTPException(status_code=404, detail='Game not found')
+  return game
+
+
+def assert_game_active(game: Game) -> None:
+  if game.status != GameStatus.ACTIVE:
+    raise HTTPException(status_code=409, detail='Game is not active')
+
+
+def assert_game_in_lobby(game: Game) -> None:
+  if game.status != GameStatus.LOBBY:
+    raise HTTPException(status_code=409, detail='Game is not in lobby')
+
+
+def assert_game_deletable(game: Game) -> None:
+  if game.status == GameStatus.ACTIVE:
+    raise HTTPException(status_code=409, detail='Cannot delete an active game')
+
+
+def assert_player_in_game(game: Game, player_id: int) -> None:
+  if player_id not in game.player_ids:
+    raise HTTPException(status_code=404, detail='Player not in game')
+
+
+def assert_player_not_in_game(game: Game, player_id: int) -> None:
+  if player_id in game.player_ids:
+    raise HTTPException(status_code=409, detail='Player already in game')
+
+
+def assert_game_not_full(game: Game) -> None:
+  if len(game.player_ids) >= 6:
+    raise HTTPException(status_code=409, detail='Game is full')
+
+
+def assert_is_creator(game: Game, player_id: int) -> None:
+  if player_id != game.creator_id:
+    raise HTTPException(status_code=403, detail='Only the creator can start the game')
+
+
+def assert_turn_active(
+  turn_info: tuple[int, int, int, int] | None,
+) -> tuple[int, int, int, int]:
+  if turn_info is None:
+    raise HTTPException(status_code=409, detail='No active turn found')
+  return turn_info
+
+
+def assert_current_player(player_id: int, current_player_id: int) -> None:
+  if player_id != current_player_id:
+    raise HTTPException(status_code=403, detail='Not your turn')
+
+
+def assert_rolls_remaining(rolls_used: int, rolls_remaining: int) -> None:
+  if rolls_used >= 3 + rolls_remaining:
+    raise HTTPException(status_code=409, detail='No rolls remaining')
+
+
+def assert_has_rolled(rolls_used: int) -> None:
+  if rolls_used == 0:
+    raise HTTPException(status_code=409, detail='Must roll before scoring')
