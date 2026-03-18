@@ -1,6 +1,6 @@
 from unittest.mock import AsyncMock
-from app.scorecard_repository import ScorecardRepository
-from app.score_category import ScoreCategory
+from app.scoring.scorecard_repository import ScorecardRepository
+from app.scoring.score_category import ScoreCategory
 from tests.unit.repository_test_case import RepositoryTestCase
 
 

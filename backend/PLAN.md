@@ -259,41 +259,42 @@ CREATE TABLE score_entries (
 ```
 backend/
   app/
-    main.py
-    database.py
     config.py
-    scoring_category.py
-    scoring_engine.py
-    dice_roller.py
-    player_model.py
-    game_model.py
-    score_card_model.py
-    dice_model.py
-    turn_model.py
-    game_state_model.py
-    player_repository.py
-    game_repository.py
-    game_player_repository.py
-    score_card_repository.py
-    turn_repository.py
-    player_service.py
-    game_service.py
-    turn_service.py
-    score_service.py
-    player_routes.py
-    game_routes.py
-    turn_routes.py
-    score_routes.py
-    game_state_routes.py
+    database.py
+    main.py
+    __init__.py
+    players/
+      __init__.py
+      player.py
+      player_repository.py
+      player_router.py
+    games/
+      __init__.py
+      dice.py
+      game.py
+      game_player_repository.py
+      game_repository.py
+      game_router.py
+      game_state.py
+      game_state_repository.py
+      game_status.py
+      requests.py
+      roll_repository.py
+      turn_repository.py
+    scoring/
+      __init__.py
+      score_calculator.py
+      score_category.py
+      scorecard.py
+      scorecard_repository.py
+      scorecard_router.py
   tests/
     unit/
     e2e/
       conftest.py
   migrations/
-    001_initial_schema.sql
   Dockerfile
   docker-compose.yml
   pyproject.toml
-  .env.example
   README.md
 ```

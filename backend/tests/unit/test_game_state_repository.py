@@ -1,5 +1,5 @@
 from unittest.mock import AsyncMock
-from app.game_state_repository import GameStateRepository
+from app.games.game_state_repository import GameStateRepository
 from tests.unit.repository_test_case import RepositoryTestCase
 
 

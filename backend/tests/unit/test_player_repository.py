@@ -1,6 +1,6 @@
 from datetime import datetime
 from unittest.mock import AsyncMock
-from app.player_repository import PlayerRepository
+from app.players.player_repository import PlayerRepository
 from tests.unit.repository_test_case import RepositoryTestCase
 
 

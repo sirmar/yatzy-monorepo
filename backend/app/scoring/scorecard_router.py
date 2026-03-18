@@ -2,15 +2,14 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 import aiomysql
 from app.database import Database
-from app.game_player_repository import GamePlayerRepository
-from app.game_repository import GameRepository
-from app.game_status import GameStatus
-from app.roll_repository import RollRepository
-from app.score_calculator import calculate
-from app.score_request import ScoreRequest
-from app.scorecard import Scorecard
-from app.scorecard_repository import ScorecardRepository
-from app.turn_repository import TurnRepository
+from app.games.game_player_repository import GamePlayerRepository
+from app.games.game_repository import GameRepository
+from app.games.game_status import GameStatus
+from app.games.roll_repository import RollRepository
+from app.games.turn_repository import TurnRepository
+from app.scoring.score_calculator import calculate
+from app.scoring.scorecard import Scorecard, ScoreRequest
+from app.scoring.scorecard_repository import ScorecardRepository
 
 
 def create_scorecard_router(database: Database) -> APIRouter:

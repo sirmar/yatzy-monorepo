@@ -2,8 +2,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Response
 import aiomysql
 from app.database import Database
-from app.player import Player, PlayerCreate, PlayerUpdate
-from app.player_repository import PlayerRepository
+from app.players.player import Player, PlayerCreate, PlayerUpdate
+from app.players.player_repository import PlayerRepository
 
 
 def create_player_router(database: Database) -> APIRouter:

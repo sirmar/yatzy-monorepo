@@ -2,18 +2,16 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 import aiomysql
 from app.database import Database
-from app.game import Game, GameCreate
-from app.game_join import GameJoin
-from app.game_start import GameStart
-from app.game_status import GameStatus
-from app.dice_response import DiceResponse
-from app.game_repository import GameRepository
-from app.game_player_repository import GamePlayerRepository
-from app.game_state import GameState
-from app.game_state_repository import GameStateRepository
-from app.roll_repository import RollRepository
-from app.roll_request import RollRequest
-from app.turn_repository import TurnRepository
+from app.games.game import Game, GameCreate
+from app.games.requests import GameJoin, GameStart, RollRequest
+from app.games.game_status import GameStatus
+from app.games.dice import DiceResponse
+from app.games.game_repository import GameRepository
+from app.games.game_player_repository import GamePlayerRepository
+from app.games.game_state import GameState
+from app.games.game_state_repository import GameStateRepository
+from app.games.roll_repository import RollRepository
+from app.games.turn_repository import TurnRepository
 
 
 def create_game_router(database: Database) -> APIRouter:

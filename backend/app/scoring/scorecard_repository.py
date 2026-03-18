@@ -1,6 +1,6 @@
 import aiomysql
-from app.score_category import ScoreCategory
-from app.scorecard import ScoreEntry, Scorecard
+from app.scoring.score_category import ScoreCategory
+from app.scoring.scorecard import ScoreEntry, Scorecard
 
 UPPER_CATEGORIES = {
   ScoreCategory.ONES,

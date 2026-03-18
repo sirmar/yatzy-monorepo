@@ -1,5 +1,5 @@
-from app.score_calculator import calculate
-from app.score_category import ScoreCategory
+from app.scoring.score_calculator import calculate
+from app.scoring.score_category import ScoreCategory
 
 
 class TestUpperSection:

@@ -1,6 +1,6 @@
 import aiomysql
-from app.die import Die
-from app.game_state import GameState
+from app.games.dice import Die
+from app.games.game_state import GameState
 
 
 class GameStateRepository:

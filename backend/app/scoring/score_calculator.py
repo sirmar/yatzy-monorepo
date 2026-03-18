@@ -1,5 +1,5 @@
 from collections import Counter
-from app.score_category import ScoreCategory
+from app.scoring.score_category import ScoreCategory
 
 
 def calculate(category: ScoreCategory, dice: list[int]) -> int:

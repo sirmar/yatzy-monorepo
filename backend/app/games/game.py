@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
-from app.game_status import GameStatus
+from app.games.game_status import GameStatus
 
 
 class GameCreate(BaseModel):

@@ -1,5 +1,5 @@
 import aiomysql
-from app.player import Player
+from app.players.player import Player
 
 
 class PlayerRepository:

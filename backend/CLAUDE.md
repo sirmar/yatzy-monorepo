@@ -8,10 +8,10 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Always build and run using Docker
 - Use uv for package management
 - Configure project using pyproject.toml
-- Use a flat app/ python application folder structure
+- Organise `app/` into domain subdirectories: `players/`, `games/`, `scoring/`. Infrastructure files (`config.py`, `database.py`, `main.py`) stay at the root. Tests stay flat under `tests/unit/` and `tests/e2e/`.
 
 **Design rules**
-- One class per file
+- One class per file for routers and repositories. Small related models (request/response bodies, enums) may be grouped in a single file when they are closely related and each is under ~15 lines — e.g. `requests.py` for request bodies, grouping model + its sub-models in one file.
 - Dependency injection
 - Use type hints
 - Soft deletes: never delete rows, use a `deleted_at` column instead. All queries filter `WHERE deleted_at IS NULL`.

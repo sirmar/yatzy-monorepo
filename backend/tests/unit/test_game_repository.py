@@ -1,7 +1,7 @@
 from datetime import datetime
 from unittest.mock import AsyncMock
-from app.game_repository import GameRepository
-from app.game_status import GameStatus
+from app.games.game_repository import GameRepository
+from app.games.game_status import GameStatus
 from tests.unit.repository_test_case import RepositoryTestCase
 
 

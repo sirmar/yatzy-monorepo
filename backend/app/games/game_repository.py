@@ -1,6 +1,6 @@
 import aiomysql
-from app.game import Game
-from app.game_status import GameStatus
+from app.games.game import Game
+from app.games.game_status import GameStatus
 
 
 class GameRepository:

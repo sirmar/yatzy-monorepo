@@ -1,4 +1,4 @@
-from app.game_player_repository import GamePlayerRepository
+from app.games.game_player_repository import GamePlayerRepository
 from tests.unit.repository_test_case import RepositoryTestCase
 
 

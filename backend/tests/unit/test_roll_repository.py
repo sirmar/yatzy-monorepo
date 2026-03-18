@@ -1,5 +1,5 @@
 from unittest.mock import AsyncMock, call, patch
-from app.roll_repository import RollRepository
+from app.games.roll_repository import RollRepository
 from tests.unit.repository_test_case import RepositoryTestCase
 
 
@@ -58,7 +58,7 @@ class TestRollRepository(RepositoryTestCase):
     self.turn_info = await self.repo.get_turn_info(game_id)
 
   async def WhenRollIsExecuted(self, turn_id, kept_dice):
-    with patch('app.roll_repository.random.randint', return_value=4):
+    with patch('app.games.roll_repository.random.randint', return_value=4):
       self.dice = await self.repo.execute(turn_id, kept_dice)
 
   def ThenTurnInfoIsNone(self):

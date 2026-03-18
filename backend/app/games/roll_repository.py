@@ -1,6 +1,6 @@
 import random
 import aiomysql
-from app.die import Die
+from app.games.dice import Die
 
 
 class RollRepository:

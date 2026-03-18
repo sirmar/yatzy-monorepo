@@ -1,5 +1,5 @@
 from unittest.mock import AsyncMock
-from app.turn_repository import TurnRepository
+from app.games.turn_repository import TurnRepository
 from tests.unit.repository_test_case import RepositoryTestCase
 
 

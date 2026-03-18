@@ -1,6 +1,6 @@
 from pydantic import BaseModel
-from app.die import Die
-from app.game_status import GameStatus
+from app.games.dice import Die
+from app.games.game_status import GameStatus
 
 
 class GameState(BaseModel):

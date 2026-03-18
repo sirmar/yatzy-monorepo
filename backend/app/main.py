@@ -3,9 +3,9 @@ from collections.abc import AsyncGenerator
 from fastapi import FastAPI
 from app.config import get_settings
 from app.database import Database
-from app.player_router import create_player_router
-from app.game_router import create_game_router
-from app.scorecard_router import create_scorecard_router
+from app.players.player_router import create_player_router
+from app.games.game_router import create_game_router
+from app.scoring.scorecard_router import create_scorecard_router
 
 database = Database(get_settings())
 
