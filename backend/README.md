@@ -8,6 +8,12 @@ REST API backend for a Yatzy game. Tracks players, games, dice rolls and scores.
 
 Built with FastAPI + MySQL (no ORM), Python 3.14, Docker.
 
+## Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) (includes Docker Compose)
+- Python 3.14
+- [uv](https://docs.astral.sh/uv/)
+
 ## Running the service
 
 ```bash
