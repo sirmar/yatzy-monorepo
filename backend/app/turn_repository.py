@@ -5,6 +5,18 @@ class TurnRepository:
   def __init__(self, conn: aiomysql.Connection) -> None:
     self._conn = conn
 
+  async def get_turn_number(self, turn_id: int) -> int:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'SELECT turn_number FROM turns WHERE id = %s AND deleted_at IS NULL',
+        (turn_id,),
+      )
+      row = await cursor.fetchone()
+      return row[0]
+    finally:
+      await cursor.close()
+
   async def create(self, game_id: int, player_id: int, turn_number: int) -> int:
     cursor = await self._conn.cursor()
     try:

@@ -1,3 +1,4 @@
+from unittest.mock import AsyncMock
 from app.turn_repository import TurnRepository
 from tests.unit.repository_test_case import RepositoryTestCase
 
@@ -36,3 +37,32 @@ class TestTurnRepository(RepositoryTestCase):
 
   def ThenTurnIdIs(self, turn_id):
     assert self.turn_id == turn_id
+
+
+class TestTurnRepositoryGetTurnNumber(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = TurnRepository(self.conn)
+
+  async def test_get_turn_number_returns_number(self):
+    self.GivenTurnNumber(3)
+    await self.WhenTurnNumberFetched(7)
+    self.ThenTurnNumberIs(3)
+
+  async def test_get_turn_number_uses_turn_id(self):
+    self.GivenTurnNumber(1)
+    await self.WhenTurnNumberFetched(42)
+    self.ThenQueryUsesTurnId(42)
+
+  def GivenTurnNumber(self, number):
+    self.cursor.fetchone = AsyncMock(return_value=(number,))
+
+  async def WhenTurnNumberFetched(self, turn_id):
+    self.turn_number = await self.repo.get_turn_number(turn_id)
+
+  def ThenTurnNumberIs(self, number):
+    assert self.turn_number == number
+
+  def ThenQueryUsesTurnId(self, turn_id):
+    call = self.cursor.execute.call_args_list[0]
+    assert call[0][1] == (turn_id,)

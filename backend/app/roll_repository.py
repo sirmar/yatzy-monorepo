@@ -22,6 +22,18 @@ class RollRepository:
     finally:
       await cursor.close()
 
+  async def get_dice_values(self, turn_id: int) -> list[int]:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'SELECT value FROM turn_dice WHERE turn_id = %s ORDER BY die_index',
+        (turn_id,),
+      )
+      rows = await cursor.fetchall()
+      return [r[0] for r in rows]
+    finally:
+      await cursor.close()
+
   async def execute(self, turn_id: int, kept_dice: list[int]) -> list[Die]:
     cursor = await self._conn.cursor()
     try:

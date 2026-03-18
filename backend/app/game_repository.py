@@ -110,6 +110,16 @@ class GameRepository:
     finally:
       await cursor.close()
 
+  async def set_current_turn(self, game_id: int, turn_id: int) -> None:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'UPDATE games SET current_turn = %s WHERE id = %s AND deleted_at IS NULL',
+        (turn_id, game_id),
+      )
+    finally:
+      await cursor.close()
+
   async def list_all(self) -> list[Game]:
     cursor = await self._conn.cursor()
     try:

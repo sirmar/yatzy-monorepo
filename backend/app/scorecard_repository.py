@@ -28,6 +28,46 @@ class ScorecardRepository:
       total += bonus
     return Scorecard(entries=entries, bonus=bonus, total=total)
 
+  async def is_category_scored(
+    self, game_id: int, player_id: int, category: ScoreCategory
+  ) -> bool:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'SELECT id FROM scorecard_entries '
+        'WHERE game_id = %s AND player_id = %s AND category = %s AND deleted_at IS NULL',
+        (game_id, player_id, category),
+      )
+      return await cursor.fetchone() is not None
+    finally:
+      await cursor.close()
+
+  async def save(
+    self, game_id: int, player_id: int, category: ScoreCategory, score: int
+  ) -> None:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'INSERT INTO scorecard_entries (game_id, player_id, category, score) '
+        'VALUES (%s, %s, %s, %s)',
+        (game_id, player_id, category, score),
+      )
+    finally:
+      await cursor.close()
+
+  async def count_all_scored(self, game_id: int) -> int:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'SELECT COUNT(*) FROM scorecard_entries '
+        'WHERE game_id = %s AND deleted_at IS NULL',
+        (game_id,),
+      )
+      row = await cursor.fetchone()
+      return row[0]
+    finally:
+      await cursor.close()
+
   async def get(self, game_id: int, player_id: int) -> Scorecard | None:
     cursor = await self._conn.cursor()
     try:

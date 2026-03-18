@@ -117,3 +117,72 @@ class TestScorecardRepository(RepositoryTestCase):
 
   def ThenBonusIs(self, bonus):
     assert self.scorecard.bonus == bonus
+
+
+class TestScorecardRepositoryIsScored(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = ScorecardRepository(self.conn)
+
+  async def test_is_category_scored_returns_true_when_entry_exists(self):
+    self.GivenEntryFound()
+    await self.WhenIsCategoryScored(1, 1, ScoreCategory.ONES)
+    self.ThenResultIsTrue()
+
+  async def test_is_category_scored_returns_false_when_no_entry(self):
+    self.GivenEntryNotFound()
+    await self.WhenIsCategoryScored(1, 1, ScoreCategory.ONES)
+    self.ThenResultIsFalse()
+
+  def GivenEntryFound(self):
+    self.cursor.fetchone = AsyncMock(return_value=(1,))
+
+  def GivenEntryNotFound(self):
+    self.cursor.fetchone = AsyncMock(return_value=None)
+
+  async def WhenIsCategoryScored(self, game_id, player_id, category):
+    self.result = await self.repo.is_category_scored(game_id, player_id, category)
+
+  def ThenResultIsTrue(self):
+    assert self.result is True
+
+  def ThenResultIsFalse(self):
+    assert self.result is False
+
+
+class TestScorecardRepositorySave(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = ScorecardRepository(self.conn)
+
+  async def test_save_inserts_entry(self):
+    await self.WhenSaved(1, 2, ScoreCategory.CHANCE, 21)
+    self.ThenInsertWasCalled(1, 2, ScoreCategory.CHANCE, 21)
+
+  async def WhenSaved(self, game_id, player_id, category, score):
+    await self.repo.save(game_id, player_id, category, score)
+
+  def ThenInsertWasCalled(self, game_id, player_id, category, score):
+    call_args = self.cursor.execute.call_args[0]
+    assert 'INSERT INTO scorecard_entries' in call_args[0]
+    assert (game_id, player_id, category, score) == call_args[1]
+
+
+class TestScorecardRepositoryCountAllScored(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = ScorecardRepository(self.conn)
+
+  async def test_count_all_scored_returns_count(self):
+    self.GivenCountIs(5)
+    await self.WhenCountAllScored(1)
+    self.ThenCountIs(5)
+
+  def GivenCountIs(self, count):
+    self.cursor.fetchone = AsyncMock(return_value=(count,))
+
+  async def WhenCountAllScored(self, game_id):
+    self.result = await self.repo.count_all_scored(game_id)
+
+  def ThenCountIs(self, count):
+    assert self.result == count

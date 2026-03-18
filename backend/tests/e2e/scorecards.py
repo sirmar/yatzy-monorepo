@@ -18,6 +18,14 @@ class Scorecard:
       await self._client.get(f'/games/{game_id}/players/{player_id}/scorecard')
     )
 
+  async def score(self, game_id: int, player_id: int, category: str) -> 'Scorecard':
+    return self._set_response(
+      await self._client.put(
+        f'/games/{game_id}/players/{player_id}/scorecard',
+        json={'category': category},
+      )
+    )
+
   def assert_status(self, status_code: int) -> 'Scorecard':
     assert self.response.status_code == status_code
     return self
@@ -45,4 +53,9 @@ class Scorecard:
   def assert_score(self, category: str, score: int) -> 'Scorecard':
     entry = next(e for e in self.json['entries'] if e['category'] == category)
     assert entry['score'] == score
+    return self
+
+  def assert_score_not_null(self, category: str) -> 'Scorecard':
+    entry = next(e for e in self.json['entries'] if e['category'] == category)
+    assert entry['score'] is not None
     return self

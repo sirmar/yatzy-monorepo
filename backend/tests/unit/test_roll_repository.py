@@ -91,3 +91,32 @@ class TestRollRepository(RepositoryTestCase):
     assert die.index == index
     assert die.value == value
     assert die.kept == kept
+
+
+class TestRollRepositoryGetDiceValues(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = RollRepository(self.conn)
+
+  async def test_get_dice_values_returns_values(self):
+    self.GivenDiceRows([(3,), (5,), (1,), (4,), (2,), (6,)])
+    await self.WhenDiceValuesFetched(7)
+    self.ThenValuesAre([3, 5, 1, 4, 2, 6])
+
+  async def test_get_dice_values_uses_turn_id(self):
+    self.GivenDiceRows([])
+    await self.WhenDiceValuesFetched(42)
+    self.ThenQueryUsesTurnId(42)
+
+  def GivenDiceRows(self, rows):
+    self.cursor.fetchall = AsyncMock(return_value=rows)
+
+  async def WhenDiceValuesFetched(self, turn_id):
+    self.values = await self.repo.get_dice_values(turn_id)
+
+  def ThenValuesAre(self, values):
+    assert self.values == values
+
+  def ThenQueryUsesTurnId(self, turn_id):
+    call = self.cursor.execute.call_args_list[0]
+    assert call[0][1] == (turn_id,)

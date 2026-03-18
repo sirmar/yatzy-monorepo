@@ -262,3 +262,22 @@ class TestGameRepository(RepositoryTestCase):
   def ThenDeleteQueryUsesGameId(self, game_id):
     delete_call = self.cursor.execute.call_args_list[0]
     assert game_id in delete_call[0][1]
+
+
+
+class TestGameRepositorySetCurrentTurn(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = GameRepository(self.conn)
+
+  async def test_set_current_turn_uses_correct_params(self):
+    await self.WhenCurrentTurnSet(1, 7)
+    self.ThenUpdateWasCalledWith(1, 7)
+
+  async def WhenCurrentTurnSet(self, game_id, turn_id):
+    await self.repo.set_current_turn(game_id, turn_id)
+
+  def ThenUpdateWasCalledWith(self, game_id, turn_id):
+    call = self.cursor.execute.call_args_list[0]
+    assert 'UPDATE games' in call[0][0]
+    assert call[0][1] == (turn_id, game_id)
