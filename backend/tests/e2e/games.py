@@ -11,6 +11,12 @@ class Game:
   def id(self) -> int:
     return self.json['id']
 
+  async def state(self, game_id: int) -> 'Game':
+    self.response = await self._client.get(f'/games/{game_id}/state')
+    if self.response.content:
+      self.json = self.response.json()
+    return self
+
   async def delete(self, game_id: int) -> 'Game':
     self.response = await self._client.delete(f'/games/{game_id}')
     if self.response.content:
@@ -71,6 +77,18 @@ class Game:
 
   def assert_has_created_at(self) -> 'Game':
     assert 'created_at' in self.json
+    return self
+
+  def assert_state_status(self, status: str) -> 'Game':
+    assert self.json['status'] == status
+    return self
+
+  def assert_current_player_id(self, player_id: int) -> 'Game':
+    assert self.json['current_player_id'] == player_id
+    return self
+
+  def assert_dice_count(self, count: int) -> 'Game':
+    assert len(self.json['dice']) == count
     return self
 
   def assert_has_detail(self) -> 'Game':

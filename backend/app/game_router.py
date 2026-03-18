@@ -8,6 +8,8 @@ from app.game_join import GameJoin
 from app.game_start import GameStart
 from app.game_repository import GameRepository
 from app.game_player_repository import GamePlayerRepository
+from app.game_state import GameState
+from app.game_state_repository import GameStateRepository
 from app.turn_repository import TurnRepository
 
 
@@ -86,6 +88,16 @@ def create_game_router(database: Database) -> APIRouter:
     updated = await GameRepository(conn).get_by_id(game_id)
     assert updated is not None
     return updated
+
+  @router.get('/games/{game_id}/state', response_model=GameState)
+  async def get_game_state(
+    game_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+  ) -> GameState:
+    state = await GameStateRepository(conn).get(game_id)
+    if state is None:
+      raise HTTPException(status_code=404, detail='Game not found')
+    return state
 
   @router.delete('/games/{game_id}', status_code=204)
   async def delete_game(
