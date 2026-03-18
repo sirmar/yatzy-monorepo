@@ -6,10 +6,13 @@ from app.database import Database
 from app.game import Game, GameCreate
 from app.game_join import GameJoin
 from app.game_start import GameStart
+from app.dice_response import DiceResponse
 from app.game_repository import GameRepository
 from app.game_player_repository import GamePlayerRepository
 from app.game_state import GameState
 from app.game_state_repository import GameStateRepository
+from app.roll_repository import RollRepository
+from app.roll_request import RollRequest
 from app.turn_repository import TurnRepository
 
 
@@ -88,6 +91,27 @@ def create_game_router(database: Database) -> APIRouter:
     updated = await GameRepository(conn).get_by_id(game_id)
     assert updated is not None
     return updated
+
+  @router.post('/games/{game_id}/roll', response_model=DiceResponse)
+  async def roll_dice(
+    game_id: int,
+    body: RollRequest,
+    conn: Annotated[aiomysql.Connection, Depends(get_conn)],
+  ) -> DiceResponse:
+    game = await GameRepository(conn).get_by_id(game_id)
+    if game is None:
+      raise HTTPException(status_code=404, detail='Game not found')
+    if game.status != 'active':
+      raise HTTPException(status_code=409, detail='Game is not active')
+    roll_repo = RollRepository(conn)
+    turn_info = await roll_repo.get_turn_info(game_id)
+    turn_id, current_player_id, rolls_used, rolls_remaining = turn_info
+    if body.player_id != current_player_id:
+      raise HTTPException(status_code=403, detail='Not your turn')
+    if rolls_used >= 3 + rolls_remaining:
+      raise HTTPException(status_code=409, detail='No rolls remaining')
+    dice = await roll_repo.execute(turn_id, body.kept_dice)
+    return DiceResponse(dice=dice)
 
   @router.get('/games/{game_id}/state', response_model=GameState)
   async def get_game_state(
