@@ -105,6 +105,7 @@ def create_game_router(database: Database) -> APIRouter:
       raise HTTPException(status_code=409, detail='Game is not active')
     roll_repo = RollRepository(conn)
     turn_info = await roll_repo.get_turn_info(game_id)
+    assert turn_info is not None
     turn_id, current_player_id, rolls_used, rolls_remaining = turn_info
     if body.player_id != current_player_id:
       raise HTTPException(status_code=403, detail='Not your turn')
