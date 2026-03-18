@@ -56,6 +56,24 @@ class TestGameStateRepository(RepositoryTestCase):
     await self.WhenStateIsFetched(1)
     self.ThenTurnsQueryFiltersOnDeletedAt()
 
+  async def test_get_returns_winner_ids_for_finished_game(self):
+    self.GivenDatabaseReturnsGame(status='finished')
+    self.GivenFinishedGameData(players=[(1,), (2,)], entries=[(1, 'ones', 5), (2, 'ones', 3)])
+    await self.WhenStateIsFetched(1)
+    self.ThenWinnerIdsAre([1])
+
+  async def test_get_returns_final_scores_for_finished_game(self):
+    self.GivenDatabaseReturnsGame(status='finished')
+    self.GivenFinishedGameData(players=[(1,), (2,)], entries=[(1, 'ones', 5), (2, 'ones', 3)])
+    await self.WhenStateIsFetched(1)
+    self.ThenFinalScoresAre([(1, 5), (2, 3)])
+
+  async def test_get_returns_multiple_winner_ids_on_tie(self):
+    self.GivenDatabaseReturnsGame(status='finished')
+    self.GivenFinishedGameData(players=[(1,), (2,)], entries=[(1, 'ones', 5), (2, 'ones', 5)])
+    await self.WhenStateIsFetched(1)
+    self.ThenWinnerIdsAre([1, 2])
+
   def GivenDatabaseReturnsNoRow(self):
     self.cursor.fetchone = AsyncMock(return_value=None)
 
@@ -67,6 +85,9 @@ class TestGameStateRepository(RepositoryTestCase):
       self.cursor.fetchone.return_value,
       (player_id,),
     ])
+
+  def GivenFinishedGameData(self, players, entries):
+    self.cursor.fetchall = AsyncMock(side_effect=[players, entries])
 
   def GivenDatabaseReturnsDice(self, dice):
     self.cursor.fetchall = AsyncMock(return_value=dice)
@@ -94,6 +115,15 @@ class TestGameStateRepository(RepositoryTestCase):
     assert die.index == index
     assert die.value == value
     assert die.kept == kept
+
+  def ThenWinnerIdsAre(self, winner_ids):
+    assert self.state.winner_ids == winner_ids
+
+  def ThenFinalScoresAre(self, scores):
+    for player_id, total in scores:
+      match = next((ps for ps in self.state.final_scores if ps.player_id == player_id), None)
+      assert match is not None
+      assert match.total == total
 
   def ThenGameQueryFiltersOnDeletedAt(self):
     query = self.cursor.execute.call_args_list[0][0][0]

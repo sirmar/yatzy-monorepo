@@ -16,7 +16,12 @@ from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.scoring.score_calculator import calculate
 from app.scoring.score_category import ScoreCategory
-from app.scoring.scorecard import Scorecard, ScoreRequest, ScoringOption
+from app.scoring.scorecard import (
+  PlayerScorecard,
+  Scorecard,
+  ScoreRequest,
+  ScoringOption,
+)
 from app.scoring.scorecard_repository import ScorecardRepository
 
 
@@ -85,6 +90,14 @@ def create_scorecard_router(database: Database) -> APIRouter:
     if scorecard is None:
       raise HTTPException(status_code=404, detail='Scorecard not found')
     return scorecard
+
+  @router.get('/games/{game_id}/scoreboard', response_model=list[PlayerScorecard])
+  async def get_scoreboard(
+    game_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+  ) -> list[PlayerScorecard]:
+    assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    return await ScorecardRepository(conn).get_all(game_id)
 
   @router.get(
     '/games/{game_id}/players/{player_id}/scoring-options',

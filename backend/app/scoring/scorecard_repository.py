@@ -1,6 +1,6 @@
 import aiomysql
 from app.scoring.score_category import ScoreCategory
-from app.scoring.scorecard import ScoreEntry, Scorecard
+from app.scoring.scorecard import PlayerScorecard, ScoreEntry, Scorecard
 
 UPPER_CATEGORIES = {
   ScoreCategory.ONES,
@@ -80,6 +80,33 @@ class ScorecardRepository:
       )
       rows = await cursor.fetchall()
       return {ScoreCategory(row[0]) for row in rows}
+    finally:
+      await cursor.close()
+
+  async def get_all(self, game_id: int) -> list[PlayerScorecard]:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'SELECT player_id FROM game_players WHERE game_id = %s AND deleted_at IS NULL',
+        (game_id,),
+      )
+      player_rows = await cursor.fetchall()
+      player_ids = [r[0] for r in player_rows]
+      result = []
+      for pid in player_ids:
+        await cursor.execute(
+          'SELECT category, score FROM scorecard_entries '
+          'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
+          (game_id, pid),
+        )
+        rows = await cursor.fetchall()
+        sc = self._build_scorecard(rows)
+        result.append(
+          PlayerScorecard(
+            player_id=pid, entries=sc.entries, bonus=sc.bonus, total=sc.total
+          )
+        )
+      return result
     finally:
       await cursor.close()
 

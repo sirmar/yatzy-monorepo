@@ -59,3 +59,11 @@ class Scorecard:
     entry = next(e for e in self.json['entries'] if e['category'] == category)
     assert entry['score'] is not None
     return self
+
+  def assert_all_scored(self) -> 'Scorecard':
+    assert all(e['score'] is not None for e in self.json['entries'])
+    return self
+
+  def assert_total_positive(self) -> 'Scorecard':
+    assert self.json['total'] > 0
+    return self

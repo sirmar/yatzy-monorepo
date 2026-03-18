@@ -162,12 +162,28 @@ asyncio_mode = "auto"
 
 ## Phase 6: Integration Test
 
-`tests/e2e/test_full_game.py` — 2-player game played to completion:
-all categories filled → game status = finished, totals and bonus correct.
+`tests/e2e/test_game_flow.py` — 2-player game played to completion:
+all categories filled → game status = finished, both scorecards fully scored, totals positive. ✅
 
 ---
 
-## Phase 7: Docs
+## Phase 7: Winner & Scoreboard Slices
+
+### Slice 18 — Winner info in GET /games/{id}/state
+- **Model**: Add `PlayerScore` (player_id, total) and extend `GameState` with `winner_ids: list[int] | None` and `final_scores: list[PlayerScore] | None` — only populated when status = finished
+- **Repo**: `GameStateRepository.get()` — when finished, query `scorecard_entries` joined via `game_players`, compute per-player totals (sum + 100 bonus if upper section >= 84), derive `winner_ids` as all players sharing the max total
+- **Route**: No change — existing `GET /games/{game_id}/state` now returns the new fields
+- **Tests**: Unit tests for finished state with winner/tie; e2e tests asserting `winner_ids` and `final_scores` on finished game
+
+### Slice 19 — GET /games/{id}/scoreboard
+- **Model**: Add `PlayerScorecard` (player_id + all Scorecard fields) to `scoring/scorecard.py`
+- **Repo**: `ScorecardRepository.get_all(game_id)` — returns `list[PlayerScorecard]` for all players in the game; works for active and finished games
+- **Route**: `GET /games/{game_id}/scoreboard` → 200 + `list[PlayerScorecard]`; returns 404 if game not found; no status restriction (usable for old finished games too)
+- **Tests**: Unit tests for `get_all`; e2e tests for active game, finished game, and 404
+
+---
+
+## Phase 8: Docs
 
 `README.md` — purpose, prerequisites, how to run/test/lint/type-check, Swagger at `/docs`.
 

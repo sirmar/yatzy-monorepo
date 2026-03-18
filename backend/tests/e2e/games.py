@@ -108,3 +108,11 @@ class Game:
     for gid in game_ids:
       assert gid in result_ids
     return self
+
+  def assert_has_winner_ids(self) -> 'Game':
+    assert self.json.get('winner_ids') is not None
+    return self
+
+  def assert_has_final_scores(self) -> 'Game':
+    assert self.json.get('final_scores') is not None
+    return self

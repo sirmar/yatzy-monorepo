@@ -17,6 +17,13 @@ class ScoreRequest(BaseModel):
   category: ScoreCategory
 
 
+class PlayerScorecard(BaseModel):
+  player_id: int
+  entries: list[ScoreEntry]
+  bonus: int | None = None
+  total: int
+
+
 class ScoringOption(BaseModel):
   category: ScoreCategory
   score: int

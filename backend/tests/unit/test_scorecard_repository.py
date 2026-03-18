@@ -119,6 +119,39 @@ class TestScorecardRepository(RepositoryTestCase):
     assert self.scorecard.bonus == bonus
 
 
+class TestScorecardRepositoryGetAll(RepositoryTestCase):
+  def setup_method(self):
+    super().setup_method()
+    self.repo = ScorecardRepository(self.conn)
+
+  async def test_get_all_returns_scorecard_per_player(self):
+    self.GivenPlayersInGame([(1,), (2,)])
+    self.GivenEntriesPerPlayer([[], []])
+    await self.WhenGetAllIsCalled(1)
+    self.ThenResultHasPlayerCount(2)
+
+  async def test_get_all_returns_empty_for_game_with_no_players(self):
+    self.GivenPlayersInGame([])
+    await self.WhenGetAllIsCalled(1)
+    self.ThenResultIsEmpty()
+
+  def GivenPlayersInGame(self, player_rows):
+    self._player_rows = player_rows
+    self.cursor.fetchall = AsyncMock(return_value=player_rows)
+
+  def GivenEntriesPerPlayer(self, entries_per_player):
+    self.cursor.fetchall = AsyncMock(side_effect=[self._player_rows] + entries_per_player)
+
+  async def WhenGetAllIsCalled(self, game_id):
+    self.result = await self.repo.get_all(game_id)
+
+  def ThenResultHasPlayerCount(self, count):
+    assert len(self.result) == count
+
+  def ThenResultIsEmpty(self):
+    assert self.result == []
+
+
 class TestScorecardRepositoryIsScored(RepositoryTestCase):
   def setup_method(self):
     super().setup_method()

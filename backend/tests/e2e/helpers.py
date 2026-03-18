@@ -15,6 +15,12 @@ async def active_game(client: AsyncClient) -> tuple[Player, Game]:
   return player, game
 
 
+async def finished_game(client: AsyncClient) -> tuple[Player, Game]:
+  player, game = await active_game(client)
+  await game.end(game.id)
+  return player, game
+
+
 async def active_game_two_players(client: AsyncClient) -> tuple[Player, Player, Game]:
   p1 = await Player(client).create('Alice')
   p2 = await Player(client).create('Bob')

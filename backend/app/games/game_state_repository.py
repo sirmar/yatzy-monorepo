@@ -1,6 +1,19 @@
 import aiomysql
 from app.games.dice import Die
-from app.games.game_state import GameState
+from app.games.game_state import GameState, PlayerScore
+from app.games.game_status import GameStatus
+from app.scoring.score_category import ScoreCategory
+
+UPPER_CATEGORIES = {
+  ScoreCategory.ONES,
+  ScoreCategory.TWOS,
+  ScoreCategory.THREES,
+  ScoreCategory.FOURS,
+  ScoreCategory.FIVES,
+  ScoreCategory.SIXES,
+}
+BONUS_THRESHOLD = 84
+BONUS_SCORE = 100
 
 
 class GameStateRepository:
@@ -18,6 +31,35 @@ class GameStateRepository:
       if row is None:
         return None
       status, current_turn = row
+      if status == GameStatus.FINISHED:
+        await cursor.execute(
+          'SELECT player_id FROM game_players WHERE game_id = %s AND deleted_at IS NULL',
+          (game_id,),
+        )
+        player_rows = await cursor.fetchall()
+        player_ids = [r[0] for r in player_rows]
+        await cursor.execute(
+          'SELECT player_id, category, score FROM scorecard_entries '
+          'WHERE game_id = %s AND deleted_at IS NULL',
+          (game_id,),
+        )
+        entry_rows = await cursor.fetchall()
+        entries_by_player: dict[int, list[tuple]] = {pid: [] for pid in player_ids}
+        for entry_pid, cat, score in entry_rows:
+          if entry_pid in entries_by_player:
+            entries_by_player[entry_pid].append((cat, score))
+        final_scores = []
+        for pid in player_ids:
+          scores = {r[0]: r[1] for r in entries_by_player[pid]}
+          upper_total = sum(scores.get(cat, 0) for cat in UPPER_CATEGORIES)
+          bonus = BONUS_SCORE if upper_total >= BONUS_THRESHOLD else 0
+          total = sum(scores.values()) + bonus
+          final_scores.append(PlayerScore(player_id=pid, total=total))
+        max_total = max((ps.total for ps in final_scores), default=0)
+        winner_ids = [ps.player_id for ps in final_scores if ps.total == max_total]
+        return GameState(
+          status=status, winner_ids=winner_ids, final_scores=final_scores
+        )
       if current_turn is None:
         return GameState(status=status)
       await cursor.execute(

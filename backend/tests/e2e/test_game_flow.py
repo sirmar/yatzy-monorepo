@@ -1,6 +1,9 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
 from tests.e2e.players import Player
+from tests.e2e.scorecards import Scorecard
+from tests.e2e.scoring_options import ScoringOptions
+from tests.e2e.helpers import active_game_two_players
 
 
 async def test_full_game_flow(client: AsyncClient):
@@ -41,3 +44,29 @@ async def test_full_game_flow(client: AsyncClient):
 
   state = await Game(client).state(game.id)
   state.assert_status(200).assert_state_status('finished')
+
+
+async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: int) -> None:
+  await game.roll(game_id, player_id)
+  options = await ScoringOptions(client).get(game_id, player_id)
+  if options.json:
+    category = options.json[0]['category']
+  else:
+    sc = await Scorecard(client).get(game_id, player_id)
+    category = next(e['category'] for e in sc.json['entries'] if e['score'] is None)
+  await Scorecard(client).score(game_id, player_id, category)
+
+
+async def test_full_game_completes(client: AsyncClient):
+  p1, p2, game = await active_game_two_players(client)
+
+  for _ in range(20):
+    await _play_turn(client, game, game.id, p1.id)
+    await _play_turn(client, game, game.id, p2.id)
+
+  state = await Game(client).state(game.id)
+  state.assert_state_status('finished').assert_has_winner_ids().assert_has_final_scores()
+
+  for player in [p1, p2]:
+    sc = await Scorecard(client).get(game.id, player.id)
+    sc.assert_all_scored().assert_total_positive()
