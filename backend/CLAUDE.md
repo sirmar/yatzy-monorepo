@@ -17,8 +17,8 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Soft deletes: never delete rows, use a `deleted_at` column instead. All queries filter `WHERE deleted_at IS NULL`.
 
 **Testing**
-- Each class should be unit tested using mocks for dependencies
 - Each REST endpoint should have e2e tests
+- Unit test business logic (score calculation, guard rules). Do not unit test repositories — their correctness is verified by e2e tests against a real database.
 - E2e tests use a separate test database.
 - Use PyTest for both unit tests and end-to-end tests
 - Write tests first
