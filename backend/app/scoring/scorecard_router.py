@@ -26,23 +26,35 @@ from app.scoring.scorecard_repository import ScorecardRepository
 
 
 def create_scorecard_router(database: Database) -> APIRouter:
-  router = APIRouter()
+  router = APIRouter(tags=['Scoring'])
 
   @router.get(
-    '/games/{game_id}/players/{player_id}/scorecard', response_model=Scorecard
+    '/games/{game_id}/players/{player_id}/scorecard',
+    response_model=Scorecard,
+    responses={
+      404: {'description': 'Game or player not found'},
+    },
   )
   async def get_scorecard(
     game_id: int,
     player_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Scorecard:
+    """Get the scorecard for a player in a game."""
     scorecard = await ScorecardRepository(conn).get(game_id, player_id)
     if scorecard is None:
       raise HTTPException(status_code=404, detail='Game or player not found')
     return scorecard
 
   @router.put(
-    '/games/{game_id}/players/{player_id}/scorecard', response_model=Scorecard
+    '/games/{game_id}/players/{player_id}/scorecard',
+    response_model=Scorecard,
+    responses={
+      404: {'description': 'Game or player not found'},
+      409: {
+        'description': "Not the player's turn, no roll taken yet, or category already scored"
+      },
+    },
   )
   async def score_category(
     game_id: int,
@@ -50,6 +62,7 @@ def create_scorecard_router(database: Database) -> APIRouter:
     body: ScoreRequest,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Scorecard:
+    """Score a category with the current dice. Ends the player's turn and advances to the next player. Ends the game when all categories are filled."""
     game_repo = GameRepository(conn)
     game = assert_game_exists(await game_repo.get_by_id(game_id))
     assert_player_in_game(game, player_id)
@@ -90,23 +103,35 @@ def create_scorecard_router(database: Database) -> APIRouter:
     assert scorecard is not None
     return scorecard
 
-  @router.get('/games/{game_id}/scoreboard', response_model=list[PlayerScorecard])
+  @router.get(
+    '/games/{game_id}/scoreboard',
+    response_model=list[PlayerScorecard],
+    responses={
+      404: {'description': 'Game not found'},
+    },
+  )
   async def get_scoreboard(
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[PlayerScorecard]:
+    """Get the full scoreboard for all players in a game."""
     assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     return await ScorecardRepository(conn).get_all(game_id)
 
   @router.get(
     '/games/{game_id}/players/{player_id}/scoring-options',
     response_model=list[ScoringOption],
+    responses={
+      404: {'description': 'Game not found'},
+      409: {'description': "Game is not active or not the player's turn"},
+    },
   )
   async def get_scoring_options(
     game_id: int,
     player_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[ScoringOption]:
+    """List scoring categories that would yield points with the current dice. Only available on the current player's turn after at least one roll."""
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_player_in_game(game, player_id)
     assert_game_active(game)
