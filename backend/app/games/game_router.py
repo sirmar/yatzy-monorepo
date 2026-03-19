@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 import aiomysql
 from app.database import Database
 from app.games.game import Game, GameCreate
+from app.games.game_status import GameStatus
 from app.games.guards import (
   assert_game_exists,
   assert_game_active,
@@ -46,9 +47,10 @@ def create_game_router(database: Database) -> APIRouter:
   @router.get('/games', response_model=list[Game])
   async def list_games(
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    status: GameStatus | None = None,
   ) -> list[Game]:
-    """List all games."""
-    return await GameRepository(conn).list_all()
+    """List all games, optionally filtered by status."""
+    return await GameRepository(conn).list_all(status)
 
   @router.get(
     '/games/{game_id}',

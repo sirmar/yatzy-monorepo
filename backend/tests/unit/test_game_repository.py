@@ -114,19 +114,29 @@ class TestGameRepository(RepositoryTestCase):
     self.ThenGetByIdQueryFiltersOnDeletedAt()
 
   async def test_list_all_returns_games(self):
-    self.GivenDatabaseHasGamesWithPlayers([(1, 'lobby', 5, [5]), (2, 'lobby', 5, [5])])
+    self.GivenDatabaseHasGamesWithPlayers({'id': 1}, {'id': 2})
     await self.WhenAllGamesAreListed()
     self.ThenGamesAreReturned([1, 2])
 
   async def test_list_all_filters_deleted(self):
-    self.GivenDatabaseHasGamesWithPlayers([(1, 'lobby', 5, [5])])
+    self.GivenDatabaseHasGamesWithPlayers({'id': 1})
     await self.WhenAllGamesAreListed()
     self.ThenListQueryFiltersOnDeletedAt()
 
   async def test_list_all_returns_empty_list(self):
-    self.GivenDatabaseHasGamesWithPlayers([])
+    self.GivenDatabaseHasGamesWithPlayers()
     await self.WhenAllGamesAreListed()
     self.ThenGamesAreReturned([])
+
+  async def test_list_all_filters_by_status_when_provided(self):
+    self.GivenDatabaseHasGamesWithPlayers({'id': 1})
+    await self.WhenAllGamesAreListedWithStatus(GameStatus.LOBBY)
+    self.ThenListQueryFiltersOnStatus(GameStatus.LOBBY)
+
+  async def test_list_all_does_not_filter_by_status_when_none(self):
+    self.GivenDatabaseHasGamesWithPlayers({'id': 1})
+    await self.WhenAllGamesAreListed()
+    self.ThenListQueryDoesNotFilterOnStatus()
 
   async def test_soft_delete_returns_true_when_deleted(self):
     self.GivenDatabaseAffectsRows(1)
@@ -162,15 +172,17 @@ class TestGameRepository(RepositoryTestCase):
   def GivenDatabaseAffectsRows(self, count):
     self.cursor.rowcount = count
 
-  def GivenDatabaseHasGamesWithPlayers(self, games_with_players):
+  def GivenDatabaseHasGamesWithPlayers(self, *games):
+    defaults = dict(id=1, status='lobby', creator_id=5, player_ids=[5])
+    merged = [{**defaults, **g} for g in games]
     game_rows = [
-      (id, status, creator_id, datetime(2024, 6, 1), None, None)
-      for id, status, creator_id, _ in games_with_players
+      (g['id'], g['status'], g['creator_id'], datetime(2024, 6, 1), None, None)
+      for g in merged
     ]
     all_player_rows = [
-      (game_id, player_id)
-      for game_id, _, _, pids in games_with_players
-      for player_id in pids
+      (g['id'], player_id)
+      for g in merged
+      for player_id in g['player_ids']
     ]
     self.cursor.fetchall = AsyncMock(side_effect=[game_rows, all_player_rows])
 
@@ -188,6 +200,9 @@ class TestGameRepository(RepositoryTestCase):
 
   async def WhenAllGamesAreListed(self):
     self.games = await self.repo.list_all()
+
+  async def WhenAllGamesAreListedWithStatus(self, status):
+    self.games = await self.repo.list_all(status)
 
   async def WhenGameIsDeleted(self, game_id):
     self.deleted = await self.repo.soft_delete(game_id)
@@ -229,6 +244,15 @@ class TestGameRepository(RepositoryTestCase):
   def ThenListQueryFiltersOnDeletedAt(self):
     list_call = self.cursor.execute.call_args_list[0]
     assert 'deleted_at IS NULL' in list_call[0][0]
+
+  def ThenListQueryFiltersOnStatus(self, status):
+    list_call = self.cursor.execute.call_args_list[0]
+    assert 'status = %s' in list_call[0][0]
+    assert status in list_call[0][1]
+
+  def ThenListQueryDoesNotFilterOnStatus(self):
+    list_call = self.cursor.execute.call_args_list[0]
+    assert 'status = %s' not in list_call[0][0]
 
   def ThenEndUpdateFilteredOnActiveStatus(self):
     update_call = self.cursor.execute.call_args_list[0]

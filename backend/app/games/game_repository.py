@@ -114,13 +114,19 @@ class GameRepository:
     finally:
       await cursor.close()
 
-  async def list_all(self) -> list[Game]:
+  async def list_all(self, status: GameStatus | None = None) -> list[Game]:
     cursor = await self._conn.cursor()
     try:
-      await cursor.execute(
+      query = (
         'SELECT id, status, creator_id, created_at, started_at, ended_at '
-        'FROM games WHERE deleted_at IS NULL ORDER BY id',
+        'FROM games WHERE deleted_at IS NULL'
       )
+      params: tuple = ()
+      if status is not None:
+        query += ' AND status = %s'
+        params = (status,)
+      query += ' ORDER BY id'
+      await cursor.execute(query, params)
       game_rows = await cursor.fetchall()
       if not game_rows:
         return []
