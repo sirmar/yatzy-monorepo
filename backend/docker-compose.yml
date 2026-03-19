@@ -35,6 +35,8 @@ services:
     volumes:
       - .:/app
       - /app/.venv
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
     environment:
       TEST_DB_HOST: db-test
       TEST_DB_PORT: '3306'

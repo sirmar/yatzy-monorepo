@@ -1,12 +1,10 @@
 .PHONY: format lint types security unit e2e test check
 
 format:
-	docker compose run --rm dev uv run ruff format app/
-	docker compose run --rm dev uv run ruff check --fix app/
+	docker compose run --rm dev sh -c 'uv run ruff format app/ && uv run ruff check --fix app/'
 
 lint:
-	docker compose run --rm dev uv run ruff check app/
-	docker compose run --rm dev uv run ruff format --check app/
+	docker compose run --rm dev sh -c 'uv run ruff check app/ && uv run ruff format --check app/'
 
 types:
 	docker compose run --rm dev uv run ty check app/
