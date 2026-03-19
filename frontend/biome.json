@@ -25,6 +25,7 @@
     "ignore": [
       "node_modules",
       "dist",
+      "coverage",
       "src/api/schema.ts",
       "src/components/ui",
       "src/hooks/use-toast.ts"
