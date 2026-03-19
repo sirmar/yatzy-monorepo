@@ -38,18 +38,20 @@ class RollRepository:
     cursor = await self._conn.cursor()
     try:
       kept_set = set(kept_dice)
-      for i in range(6):
-        if i in kept_set:
-          await cursor.execute(
-            'UPDATE turn_dice SET kept = TRUE WHERE turn_id = %s AND die_index = %s',
-            (turn_id, i),
-          )
-        else:
-          value = random.randint(1, 6)
-          await cursor.execute(
-            'UPDATE turn_dice SET value = %s, kept = FALSE WHERE turn_id = %s AND die_index = %s',
-            (value, turn_id, i),
-          )
+      if kept_set:
+        kept_indices = sorted(kept_set)
+        placeholders = ', '.join(['%s'] * len(kept_indices))
+        await cursor.execute(
+          f'UPDATE turn_dice SET kept = TRUE WHERE turn_id = %s AND die_index IN ({placeholders})',  # nosec B608
+          (turn_id, *kept_indices),
+        )
+      reroll_indices = sorted(i for i in range(6) if i not in kept_set)
+      for idx in reroll_indices:
+        value = random.randint(1, 6)
+        await cursor.execute(
+          'UPDATE turn_dice SET value = %s, kept = FALSE WHERE turn_id = %s AND die_index = %s',
+          (value, turn_id, idx),
+        )
       await cursor.execute(
         'UPDATE turns SET rolls_used = rolls_used + 1 WHERE id = %s',
         (turn_id,),

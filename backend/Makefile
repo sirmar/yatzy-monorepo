@@ -15,11 +15,11 @@ security:
 	docker compose run --rm dev uv run bandit -r app/ -c pyproject.toml
 
 unit:
-	docker compose run --rm dev uv run pytest tests/unit/ -v
+	docker compose run --rm dev uv run pytest tests/unit/ -v --cov=app
 
 e2e:
 	docker compose up db-test -d --wait
-	docker compose run --rm dev uv run pytest tests/e2e/ -v; docker compose stop db-test
+	docker compose run --rm dev uv run pytest tests/e2e/ -v --cov=app; docker compose stop db-test
 
 test:
 	docker compose up db-test -d --wait

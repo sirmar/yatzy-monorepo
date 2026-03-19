@@ -13,6 +13,8 @@ class TurnRepository:
         (turn_id,),
       )
       row = await cursor.fetchone()
+      if row is None:
+        raise RuntimeError(f'Turn {turn_id} not found')
       return row[0]
     finally:
       await cursor.close()

@@ -11,4 +11,4 @@ class GameStart(BaseModel):
 
 class RollRequest(BaseModel):
   player_id: int = Field(gt=0)
-  kept_dice: list[int] = []
+  kept_dice: list[int] = Field(default_factory=list)

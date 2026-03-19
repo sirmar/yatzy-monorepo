@@ -126,7 +126,7 @@ class TestScorecardRepositoryGetAll(RepositoryTestCase):
 
   async def test_get_all_returns_scorecard_per_player(self):
     self.GivenPlayersInGame([(1,), (2,)])
-    self.GivenEntriesPerPlayer([[], []])
+    self.GivenEntries([])
     await self.WhenGetAllIsCalled(1)
     self.ThenResultHasPlayerCount(2)
 
@@ -139,8 +139,8 @@ class TestScorecardRepositoryGetAll(RepositoryTestCase):
     self._player_rows = player_rows
     self.cursor.fetchall = AsyncMock(return_value=player_rows)
 
-  def GivenEntriesPerPlayer(self, entries_per_player):
-    self.cursor.fetchall = AsyncMock(side_effect=[self._player_rows] + entries_per_player)
+  def GivenEntries(self, all_entry_rows):
+    self.cursor.fetchall = AsyncMock(side_effect=[self._player_rows, all_entry_rows])
 
   async def WhenGetAllIsCalled(self, game_id):
     self.result = await self.repo.get_all(game_id)

@@ -3,152 +3,311 @@ from app.scoring.score_category import ScoreCategory
 
 
 class TestUpperSection:
+  def setup_method(self):
+    pass
+
   def test_ones_sums_matching_dice(self):
-    assert calculate(ScoreCategory.ONES, [3, 1, 5, 1, 4, 2]) == 2
+    self.WhenCalculated(ScoreCategory.ONES, [3, 1, 5, 1, 4, 2])
+    self.ThenScoreIs(2)
 
   def test_ones_returns_zero_when_no_match(self):
-    assert calculate(ScoreCategory.ONES, [4, 2, 6, 3, 5, 2]) == 0
+    self.WhenCalculated(ScoreCategory.ONES, [4, 2, 6, 3, 5, 2])
+    self.ThenScoreIs(0)
 
   def test_twos_sums_matching_dice(self):
-    assert calculate(ScoreCategory.TWOS, [2, 4, 2, 1, 2, 3]) == 6
+    self.WhenCalculated(ScoreCategory.TWOS, [2, 4, 2, 1, 2, 3])
+    self.ThenScoreIs(6)
 
   def test_threes_sums_matching_dice(self):
-    assert calculate(ScoreCategory.THREES, [3, 2, 3, 1, 3, 3]) == 12
+    self.WhenCalculated(ScoreCategory.THREES, [3, 2, 3, 1, 3, 3])
+    self.ThenScoreIs(12)
 
   def test_fours_sums_matching_dice(self):
-    assert calculate(ScoreCategory.FOURS, [2, 4, 1, 4, 3, 5]) == 8
+    self.WhenCalculated(ScoreCategory.FOURS, [2, 4, 1, 4, 3, 5])
+    self.ThenScoreIs(8)
 
   def test_fives_sums_matching_dice(self):
-    assert calculate(ScoreCategory.FIVES, [5, 1, 5, 5, 5, 5]) == 25
+    self.WhenCalculated(ScoreCategory.FIVES, [5, 1, 5, 5, 5, 5])
+    self.ThenScoreIs(25)
 
   def test_sixes_sums_matching_dice(self):
-    assert calculate(ScoreCategory.SIXES, [6, 6, 6, 6, 6, 6]) == 36
+    self.WhenCalculated(ScoreCategory.SIXES, [6, 6, 6, 6, 6, 6])
+    self.ThenScoreIs(36)
 
   def test_sixes_returns_zero_when_no_match(self):
-    assert calculate(ScoreCategory.SIXES, [5, 2, 5, 1, 3, 4]) == 0
+    self.WhenCalculated(ScoreCategory.SIXES, [5, 2, 5, 1, 3, 4])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestOnePair:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_pair(self):
-    assert calculate(ScoreCategory.ONE_PAIR, [4, 1, 3, 1, 5, 2]) == 2
+    self.WhenCalculated(ScoreCategory.ONE_PAIR, [4, 1, 3, 1, 5, 2])
+    self.ThenScoreIs(2)
 
   def test_scores_highest_pair_when_multiple(self):
-    assert calculate(ScoreCategory.ONE_PAIR, [3, 5, 1, 5, 2, 3]) == 10
+    self.WhenCalculated(ScoreCategory.ONE_PAIR, [3, 5, 1, 5, 2, 3])
+    self.ThenScoreIs(10)
 
   def test_returns_zero_when_no_pair(self):
-    assert calculate(ScoreCategory.ONE_PAIR, [4, 1, 6, 2, 5, 3]) == 0
+    self.WhenCalculated(ScoreCategory.ONE_PAIR, [4, 1, 6, 2, 5, 3])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestTwoPairs:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_two_pairs(self):
-    assert calculate(ScoreCategory.TWO_PAIRS, [2, 1, 3, 2, 4, 1]) == 6
+    self.WhenCalculated(ScoreCategory.TWO_PAIRS, [2, 1, 3, 2, 4, 1])
+    self.ThenScoreIs(6)
 
   def test_scores_two_highest_pairs_when_three_available(self):
-    assert calculate(ScoreCategory.TWO_PAIRS, [4, 6, 5, 4, 6, 5]) == 22
+    self.WhenCalculated(ScoreCategory.TWO_PAIRS, [4, 6, 5, 4, 6, 5])
+    self.ThenScoreIs(22)
 
   def test_returns_zero_when_only_one_pair(self):
-    assert calculate(ScoreCategory.TWO_PAIRS, [5, 1, 3, 1, 4, 2]) == 0
+    self.WhenCalculated(ScoreCategory.TWO_PAIRS, [5, 1, 3, 1, 4, 2])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestThreePairs:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_three_pairs(self):
-    assert calculate(ScoreCategory.THREE_PAIRS, [2, 1, 3, 2, 1, 3]) == 12
+    self.WhenCalculated(ScoreCategory.THREE_PAIRS, [2, 1, 3, 2, 1, 3])
+    self.ThenScoreIs(12)
 
   def test_returns_zero_when_four_of_a_kind_and_pair(self):
-    assert calculate(ScoreCategory.THREE_PAIRS, [4, 3, 4, 4, 3, 4]) == 0
+    self.WhenCalculated(ScoreCategory.THREE_PAIRS, [4, 3, 4, 4, 3, 4])
+    self.ThenScoreIs(0)
 
   def test_returns_zero_when_only_two_pairs(self):
-    assert calculate(ScoreCategory.THREE_PAIRS, [2, 1, 3, 2, 4, 1]) == 0
+    self.WhenCalculated(ScoreCategory.THREE_PAIRS, [2, 1, 3, 2, 4, 1])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestThreeOfAKind:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_three(self):
-    assert calculate(ScoreCategory.THREE_OF_A_KIND, [1, 3, 4, 3, 2, 3]) == 9
+    self.WhenCalculated(ScoreCategory.THREE_OF_A_KIND, [1, 3, 4, 3, 2, 3])
+    self.ThenScoreIs(9)
 
   def test_scores_highest_when_multiple(self):
-    assert calculate(ScoreCategory.THREE_OF_A_KIND, [4, 5, 5, 4, 4, 5]) == 15
+    self.WhenCalculated(ScoreCategory.THREE_OF_A_KIND, [4, 5, 5, 4, 4, 5])
+    self.ThenScoreIs(15)
 
   def test_returns_zero_when_no_three(self):
-    assert calculate(ScoreCategory.THREE_OF_A_KIND, [2, 1, 3, 2, 4, 1]) == 0
+    self.WhenCalculated(ScoreCategory.THREE_OF_A_KIND, [2, 1, 3, 2, 4, 1])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestFourOfAKind:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_four(self):
-    assert calculate(ScoreCategory.FOUR_OF_A_KIND, [6, 1, 6, 6, 2, 6]) == 24
+    self.WhenCalculated(ScoreCategory.FOUR_OF_A_KIND, [6, 1, 6, 6, 2, 6])
+    self.ThenScoreIs(24)
 
   def test_returns_zero_when_only_three(self):
-    assert calculate(ScoreCategory.FOUR_OF_A_KIND, [6, 3, 1, 6, 2, 6]) == 0
+    self.WhenCalculated(ScoreCategory.FOUR_OF_A_KIND, [6, 3, 1, 6, 2, 6])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestFiveOfAKind:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_five(self):
-    assert calculate(ScoreCategory.FIVE_OF_A_KIND, [4, 4, 1, 4, 4, 4]) == 20
+    self.WhenCalculated(ScoreCategory.FIVE_OF_A_KIND, [4, 4, 1, 4, 4, 4])
+    self.ThenScoreIs(20)
 
   def test_returns_zero_when_only_four(self):
-    assert calculate(ScoreCategory.FIVE_OF_A_KIND, [4, 4, 1, 4, 2, 4]) == 0
+    self.WhenCalculated(ScoreCategory.FIVE_OF_A_KIND, [4, 4, 1, 4, 2, 4])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestStraights:
+  def setup_method(self):
+    pass
+
   def test_small_straight_scores_15(self):
-    assert calculate(ScoreCategory.SMALL_STRAIGHT, [4, 1, 3, 5, 2, 5]) == 15
+    self.WhenCalculated(ScoreCategory.SMALL_STRAIGHT, [4, 1, 3, 5, 2, 5])
+    self.ThenScoreIs(15)
 
   def test_small_straight_returns_zero_when_missing(self):
-    assert calculate(ScoreCategory.SMALL_STRAIGHT, [4, 1, 3, 6, 2, 6]) == 0
+    self.WhenCalculated(ScoreCategory.SMALL_STRAIGHT, [4, 1, 3, 6, 2, 6])
+    self.ThenScoreIs(0)
 
   def test_large_straight_scores_20(self):
-    assert calculate(ScoreCategory.LARGE_STRAIGHT, [3, 6, 2, 5, 4, 6]) == 20
+    self.WhenCalculated(ScoreCategory.LARGE_STRAIGHT, [3, 6, 2, 5, 4, 6])
+    self.ThenScoreIs(20)
 
   def test_large_straight_returns_zero_when_missing(self):
-    assert calculate(ScoreCategory.LARGE_STRAIGHT, [3, 6, 1, 5, 4, 6]) == 0
+    self.WhenCalculated(ScoreCategory.LARGE_STRAIGHT, [3, 6, 1, 5, 4, 6])
+    self.ThenScoreIs(0)
 
   def test_full_straight_scores_21(self):
-    assert calculate(ScoreCategory.FULL_STRAIGHT, [4, 1, 6, 2, 5, 3]) == 21
+    self.WhenCalculated(ScoreCategory.FULL_STRAIGHT, [4, 1, 6, 2, 5, 3])
+    self.ThenScoreIs(21)
 
   def test_full_straight_returns_zero_when_not_all_unique(self):
-    assert calculate(ScoreCategory.FULL_STRAIGHT, [4, 1, 5, 2, 5, 3]) == 0
+    self.WhenCalculated(ScoreCategory.FULL_STRAIGHT, [4, 1, 5, 2, 5, 3])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestFullHouse:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_three_and_pair(self):
-    assert calculate(ScoreCategory.FULL_HOUSE, [5, 3, 1, 3, 5, 3]) == 19
+    self.WhenCalculated(ScoreCategory.FULL_HOUSE, [5, 3, 1, 3, 5, 3])
+    self.ThenScoreIs(19)
 
   def test_returns_zero_when_no_pair(self):
-    assert calculate(ScoreCategory.FULL_HOUSE, [5, 3, 4, 3, 6, 3]) == 0
+    self.WhenCalculated(ScoreCategory.FULL_HOUSE, [5, 3, 4, 3, 6, 3])
+    self.ThenScoreIs(0)
 
   def test_returns_zero_when_no_three(self):
-    assert calculate(ScoreCategory.FULL_HOUSE, [4, 3, 5, 3, 5, 4]) == 0
+    self.WhenCalculated(ScoreCategory.FULL_HOUSE, [4, 3, 5, 3, 5, 4])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestVilla:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_two_threes(self):
-    assert calculate(ScoreCategory.VILLA, [5, 3, 5, 3, 5, 3]) == 24
+    self.WhenCalculated(ScoreCategory.VILLA, [5, 3, 5, 3, 5, 3])
+    self.ThenScoreIs(24)
 
   def test_returns_zero_when_only_one_three(self):
-    assert calculate(ScoreCategory.VILLA, [5, 3, 1, 3, 5, 3]) == 0
+    self.WhenCalculated(ScoreCategory.VILLA, [5, 3, 1, 3, 5, 3])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestTower:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_four_and_pair(self):
-    assert calculate(ScoreCategory.TOWER, [2, 6, 6, 2, 6, 6]) == 28
+    self.WhenCalculated(ScoreCategory.TOWER, [2, 6, 6, 2, 6, 6])
+    self.ThenScoreIs(28)
 
   def test_returns_zero_when_no_pair(self):
-    assert calculate(ScoreCategory.TOWER, [2, 6, 6, 3, 6, 6]) == 0
+    self.WhenCalculated(ScoreCategory.TOWER, [2, 6, 6, 3, 6, 6])
+    self.ThenScoreIs(0)
 
   def test_returns_zero_when_no_four(self):
-    assert calculate(ScoreCategory.TOWER, [2, 6, 6, 2, 1, 6]) == 0
+    self.WhenCalculated(ScoreCategory.TOWER, [2, 6, 6, 2, 1, 6])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestChance:
+  def setup_method(self):
+    pass
+
   def test_scores_sum_of_all_dice(self):
-    assert calculate(ScoreCategory.CHANCE, [4, 1, 6, 2, 5, 3]) == 21
+    self.WhenCalculated(ScoreCategory.CHANCE, [4, 1, 6, 2, 5, 3])
+    self.ThenScoreIs(21)
 
   def test_scores_sum_of_all_dice_any_combination(self):
-    assert calculate(ScoreCategory.CHANCE, [6, 6, 6, 6, 6, 6]) == 36
+    self.WhenCalculated(ScoreCategory.CHANCE, [6, 6, 6, 6, 6, 6])
+    self.ThenScoreIs(36)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected
 
 
 class TestMaxiYatzy:
+  def setup_method(self):
+    pass
+
   def test_scores_100_when_all_same(self):
-    assert calculate(ScoreCategory.MAXI_YATZY, [5, 5, 5, 5, 5, 5]) == 100
+    self.WhenCalculated(ScoreCategory.MAXI_YATZY, [5, 5, 5, 5, 5, 5])
+    self.ThenScoreIs(100)
 
   def test_returns_zero_when_not_all_same(self):
-    assert calculate(ScoreCategory.MAXI_YATZY, [5, 4, 5, 5, 5, 5]) == 0
+    self.WhenCalculated(ScoreCategory.MAXI_YATZY, [5, 4, 5, 5, 5, 5])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected

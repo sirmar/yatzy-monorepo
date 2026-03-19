@@ -48,7 +48,9 @@ services:
       target: prod
     ports:
       - '8000:8000'
-    env_file: .env
+    env_file:
+      - path: .env
+        required: false
     depends_on:
       db:
         condition: service_healthy

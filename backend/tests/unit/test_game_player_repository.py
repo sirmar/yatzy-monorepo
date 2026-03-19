@@ -28,20 +28,12 @@ class TestGamePlayerRepository(RepositoryTestCase):
     super().setup_method()
     self.repo = GamePlayerRepository(self.conn)
 
-  # add
-
   async def test_add_uses_game_id_player_id_and_join_order(self):
     await self.WhenPlayerIsAdded(1, 5, 2)
     self.ThenInsertWasCalledWith(1, 5, 2)
 
-  # Given
-
-  # When
-
   async def WhenPlayerIsAdded(self, game_id, player_id, join_order):
     await self.repo.add(game_id, player_id, join_order)
-
-  # Then
 
   def ThenInsertWasCalledWith(self, game_id, player_id, join_order):
     call = self.cursor.execute.call_args_list[0]

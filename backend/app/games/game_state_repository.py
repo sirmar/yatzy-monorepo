@@ -2,18 +2,7 @@ import aiomysql
 from app.games.dice import Die
 from app.games.game_state import GameState, PlayerScore
 from app.games.game_status import GameStatus
-from app.scoring.score_category import ScoreCategory
-
-UPPER_CATEGORIES = {
-  ScoreCategory.ONES,
-  ScoreCategory.TWOS,
-  ScoreCategory.THREES,
-  ScoreCategory.FOURS,
-  ScoreCategory.FIVES,
-  ScoreCategory.SIXES,
-}
-BONUS_THRESHOLD = 84
-BONUS_SCORE = 100
+from app.scoring.scoring_rules import BONUS_SCORE, BONUS_THRESHOLD, UPPER_CATEGORIES
 
 
 class GameStateRepository:
@@ -60,7 +49,7 @@ class GameStateRepository:
         return GameState(
           status=status, winner_ids=winner_ids, final_scores=final_scores
         )
-      if current_turn is None:
+      if status != GameStatus.ACTIVE or current_turn is None:
         return GameState(status=status)
       await cursor.execute(
         'SELECT player_id FROM turns WHERE id = %s AND deleted_at IS NULL',

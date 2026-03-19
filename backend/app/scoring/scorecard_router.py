@@ -87,8 +87,7 @@ def create_scorecard_router(database: Database) -> APIRouter:
       await game_repo.set_current_turn(game_id, new_turn_id)
 
     scorecard = await scorecard_repo.get(game_id, player_id)
-    if scorecard is None:
-      raise HTTPException(status_code=404, detail='Scorecard not found')
+    assert scorecard is not None
     return scorecard
 
   @router.get('/games/{game_id}/scoreboard', response_model=list[PlayerScorecard])

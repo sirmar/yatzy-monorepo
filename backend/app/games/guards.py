@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from app.games.game import Game
 from app.games.game_status import GameStatus
 
+BASE_ROLLS_PER_TURN = 3
+
 
 def assert_game_exists(game: Game | None) -> Game:
   if game is None:
@@ -58,7 +60,7 @@ def assert_current_player(player_id: int, current_player_id: int) -> None:
 
 
 def assert_rolls_remaining(rolls_used: int, rolls_remaining: int) -> None:
-  if rolls_used >= 3 + rolls_remaining:
+  if rolls_used >= BASE_ROLLS_PER_TURN + rolls_remaining:
     raise HTTPException(status_code=409, detail='No rolls remaining')
 
 

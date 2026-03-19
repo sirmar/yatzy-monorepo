@@ -1,17 +1,7 @@
 import aiomysql
 from app.scoring.score_category import ScoreCategory
 from app.scoring.scorecard import PlayerScorecard, ScoreEntry, Scorecard
-
-UPPER_CATEGORIES = {
-  ScoreCategory.ONES,
-  ScoreCategory.TWOS,
-  ScoreCategory.THREES,
-  ScoreCategory.FOURS,
-  ScoreCategory.FIVES,
-  ScoreCategory.SIXES,
-}
-BONUS_THRESHOLD = 84
-BONUS_SCORE = 100
+from app.scoring.scoring_rules import BONUS_SCORE, BONUS_THRESHOLD, UPPER_CATEGORIES
 
 
 class ScorecardRepository:
@@ -92,15 +82,21 @@ class ScorecardRepository:
       )
       player_rows = await cursor.fetchall()
       player_ids = [r[0] for r in player_rows]
+      if not player_ids:
+        return []
+      await cursor.execute(
+        'SELECT player_id, category, score FROM scorecard_entries '
+        'WHERE game_id = %s AND deleted_at IS NULL',
+        (game_id,),
+      )
+      entry_rows = await cursor.fetchall()
+      entries_by_player: dict[int, list[tuple]] = {pid: [] for pid in player_ids}
+      for pid, cat, score in entry_rows:
+        if pid in entries_by_player:
+          entries_by_player[pid].append((cat, score))
       result = []
       for pid in player_ids:
-        await cursor.execute(
-          'SELECT category, score FROM scorecard_entries '
-          'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
-          (game_id, pid),
-        )
-        rows = await cursor.fetchall()
-        sc = self._build_scorecard(rows)
+        sc = self._build_scorecard(entries_by_player[pid])
         result.append(
           PlayerScorecard(
             player_id=pid, entries=sc.entries, bonus=sc.bonus, total=sc.total
@@ -132,6 +128,6 @@ class ScorecardRepository:
         (game_id, player_id),
       )
       rows = await cursor.fetchall()
+      return self._build_scorecard(rows)
     finally:
       await cursor.close()
-    return self._build_scorecard(rows)

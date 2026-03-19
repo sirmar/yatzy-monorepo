@@ -25,6 +25,8 @@ class GameRepository:
       (game_id,),
     )
     row = await cursor.fetchone()
+    if row is None:
+      raise RuntimeError(f'Expected game {game_id} to exist in _fetch_game')
     await cursor.execute(
       'SELECT player_id FROM game_players '
       'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
@@ -81,20 +83,12 @@ class GameRepository:
     cursor = await self._conn.cursor()
     try:
       await cursor.execute(
-        'SELECT id, status, creator_id, created_at, started_at, ended_at '
-        'FROM games WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id FROM games WHERE id = %s AND deleted_at IS NULL',
         (game_id,),
       )
-      row = await cursor.fetchone()
-      if row is None:
+      if await cursor.fetchone() is None:
         return None
-      await cursor.execute(
-        'SELECT player_id FROM game_players '
-        'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
-        (game_id,),
-      )
-      player_rows = await cursor.fetchall()
-      return self._to_game(row, [r[0] for r in player_rows])
+      return await self._fetch_game(cursor, game_id)
     finally:
       await cursor.close()
 

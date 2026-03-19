@@ -47,9 +47,10 @@ def create_game_router(database: Database) -> APIRouter:
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
-    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    repo = GameRepository(conn)
+    game = assert_game_exists(await repo.get_by_id(game_id))
     assert_game_active(game)
-    ended = await GameRepository(conn).end(game_id)
+    ended = await repo.end(game_id)
     if ended is None:
       raise HTTPException(status_code=409, detail='Game could not be ended')
     return ended

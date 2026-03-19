@@ -31,8 +31,7 @@ class TestRollRepository(RepositoryTestCase):
   async def test_execute_marks_kept_dice(self):
     self.GivenDiceRows([(i, 3, False) for i in range(6)])
     await self.WhenRollIsExecuted(7, kept_dice=[0, 2])
-    self.ThenDieWasMarkedKept(7, 0)
-    self.ThenDieWasMarkedKept(7, 2)
+    self.ThenKeptDiceWereMarkedKept(7, [0, 2])
 
   async def test_execute_increments_rolls_used(self):
     self.GivenDiceRows([])
@@ -75,9 +74,12 @@ class TestRollRepository(RepositoryTestCase):
     update_calls = [c for c in self.cursor.execute.call_args_list if 'SET value' in c[0][0]]
     assert len(update_calls) == 6
 
-  def ThenDieWasMarkedKept(self, turn_id, die_index):
+  def ThenKeptDiceWereMarkedKept(self, turn_id, die_indices):
     kept_calls = [c for c in self.cursor.execute.call_args_list if 'SET kept = TRUE' in c[0][0]]
-    assert any(c[0][1] == (turn_id, die_index) for c in kept_calls)
+    assert len(kept_calls) == 1
+    params = kept_calls[0][0][1]
+    assert params[0] == turn_id
+    assert set(params[1:]) == set(die_indices)
 
   def ThenRollsUsedWasIncremented(self, turn_id):
     update_call = next(c for c in self.cursor.execute.call_args_list if 'rolls_used = rolls_used + 1' in c[0][0])

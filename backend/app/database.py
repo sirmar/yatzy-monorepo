@@ -30,12 +30,11 @@ class Database:
     if self._pool is None:
       raise RuntimeError('Database.connect() must be called before run_migrations()')
     async with self._pool.acquire() as conn:
-      cursor = await conn.cursor()
-      for path in sorted(glob.glob('migrations/*.sql')):
-        with open(path) as f:
-          sql = f.read()
-        await execute_sql_script(cursor, sql)
-      await cursor.close()
+      async with await conn.cursor() as cursor:
+        for path in sorted(glob.glob('migrations/*.sql')):
+          with open(path) as f:
+            sql = f.read()
+          await execute_sql_script(cursor, sql)
 
   async def disconnect(self) -> None:
     if self._pool:

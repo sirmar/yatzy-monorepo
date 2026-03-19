@@ -10,7 +10,20 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
-  check:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          cache-from: type=gha,scope=dev
+          cache-to: type=gha,mode=max,scope=dev
+
+  lint:
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,10 +35,102 @@ jobs:
           load: true
           tags: backend-dev:latest
           cache-from: type=gha,scope=dev
-          cache-to: type=gha,mode=max,scope=dev
-      - run: make check
-      - name: Coverage summary
-        if: always()
+      - run: make lint
+
+  types:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          load: true
+          tags: backend-dev:latest
+          cache-from: type=gha,scope=dev
+      - run: make types
+
+  security:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          load: true
+          tags: backend-dev:latest
+          cache-from: type=gha,scope=dev
+      - run: make security
+
+  unit:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          load: true
+          tags: backend-dev:latest
+          cache-from: type=gha,scope=dev
+      - run: make unit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit
+          path: .coverage
+          include-hidden-files: true
+
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          load: true
+          tags: backend-dev:latest
+          cache-from: type=gha,scope=dev
+      - run: make e2e
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-e2e
+          path: .coverage
+          include-hidden-files: true
+
+  coverage:
+    needs: [unit, e2e]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: dev
+          load: true
+          tags: backend-dev:latest
+          cache-from: type=gha,scope=dev
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-unit
+          path: coverage-unit
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-e2e
+          path: coverage-e2e
+      - run: docker compose run --rm dev uv run coverage combine coverage-unit/.coverage coverage-e2e/.coverage
+      - run: docker compose run --rm dev uv run coverage report --show-missing --fail-under=90
+      - name: Write coverage summary
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
           docker compose run --rm dev uv run coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
