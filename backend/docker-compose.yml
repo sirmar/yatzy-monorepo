@@ -27,8 +27,25 @@ services:
       timeout: 5s
       retries: 10
 
+  dev:
+    image: backend-dev
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      TEST_DB_HOST: db-test
+      TEST_DB_PORT: '3306'
+      TEST_DB_USER: root
+      TEST_DB_PASSWORD: test
+      TEST_DB_NAME: yatzy_test
+
   app:
-    build: .
+    build:
+      context: .
+      target: prod
     ports:
       - '8000:8000'
     env_file: .env

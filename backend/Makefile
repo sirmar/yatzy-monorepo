@@ -1,28 +1,28 @@
 .PHONY: format lint types security unit e2e test check
 
 format:
-	uv run ruff format app/
-	uv run ruff check --fix app/
+	docker compose run --rm dev uv run ruff format app/
+	docker compose run --rm dev uv run ruff check --fix app/
 
 lint:
-	uv run ruff check app/
-	uv run ruff format --check app/
+	docker compose run --rm dev uv run ruff check app/
+	docker compose run --rm dev uv run ruff format --check app/
 
 types:
-	uv run ty check app/
+	docker compose run --rm dev uv run ty check app/
 
 security:
-	uv run bandit -r app/ -c pyproject.toml
+	docker compose run --rm dev uv run bandit -r app/ -c pyproject.toml
 
 unit:
-	uv run pytest tests/unit/ -v
+	docker compose run --rm dev uv run pytest tests/unit/ -v
 
 e2e:
 	docker compose up db-test -d --wait
-	uv run pytest tests/e2e/ -v; docker compose stop db-test
+	docker compose run --rm dev uv run pytest tests/e2e/ -v; docker compose stop db-test
 
 test:
 	docker compose up db-test -d --wait
-	uv run pytest tests/ --cov=app; docker compose stop db-test
+	docker compose run --rm dev uv run pytest tests/ --cov=app; docker compose stop db-test
 
 check: lint types security test

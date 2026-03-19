@@ -1,8 +1,15 @@
-FROM python:3.14-slim
+FROM python:3.14-slim AS base
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-COPY pyproject.toml .
-RUN uv sync --no-dev
+COPY pyproject.toml uv.lock ./
+
+FROM base AS dev
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --extra dev
+
+FROM base AS prod
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-dev
 COPY app/ app/
 COPY migrations/ migrations/
 EXPOSE 8000
