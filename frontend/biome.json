@@ -22,6 +22,12 @@
     }
   },
   "files": {
-    "ignore": ["node_modules", "dist", "src/api/schema.ts", "src/components/ui"]
+    "ignore": [
+      "node_modules",
+      "dist",
+      "src/api/schema.ts",
+      "src/components/ui",
+      "src/hooks/use-toast.ts"
+    ]
   }
 }
