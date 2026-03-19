@@ -11,8 +11,6 @@ Built with FastAPI + MySQL (no ORM), Python 3.14, Docker.
 ## Prerequisites
 
 - [Docker](https://docs.docker.com/get-docker/) (includes Docker Compose)
-- Python 3.14
-- [uv](https://docs.astral.sh/uv/)
 
 ## Running the service
 
@@ -24,33 +22,14 @@ docker compose up
 - API: http://localhost:8000
 - Swagger docs: http://localhost:8000/docs
 
-## Running tests
-
-```bash
-make unit       # unit tests
-make e2e        # e2e tests (starts and stops db-test automatically)
-make test       # all tests with coverage
-```
-
-## Lint, type checking and security
+## Development
 
 ```bash
 make format     # auto-fix formatting and lint issues
 make lint       # check formatting and lint
 make types      # type check
 make security   # security scan
-```
-
-## Run all checks
-
-```bash
-make check
-```
-
-## Development setup
-
-Requires Python 3.14 and [uv](https://docs.astral.sh/uv/).
-
-```bash
-uv sync --extra dev
+make unit       # unit tests
+make e2e        # e2e tests (starts and stops db-test automatically)
+make check      # lint + types + security + all tests
 ```
