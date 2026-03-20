@@ -11,10 +11,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Players */
+        /**
+         * List Players
+         * @description List all players.
+         */
         get: operations["list_players_players_get"];
         put?: never;
-        /** Create Player */
+        /**
+         * Create Player
+         * @description Create a new player.
+         */
         post: operations["create_player_players_post"];
         delete?: never;
         options?: never;
@@ -29,12 +35,21 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Player */
+        /**
+         * Get Player
+         * @description Get a player by ID.
+         */
         get: operations["get_player_players__player_id__get"];
-        /** Update Player */
+        /**
+         * Update Player
+         * @description Update a player's name.
+         */
         put: operations["update_player_players__player_id__put"];
         post?: never;
-        /** Delete Player */
+        /**
+         * Delete Player
+         * @description Delete a player.
+         */
         delete: operations["delete_player_players__player_id__delete"];
         options?: never;
         head?: never;
@@ -48,10 +63,16 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** List Games */
+        /**
+         * List Games
+         * @description List all games, optionally filtered by status.
+         */
         get: operations["list_games_games_get"];
         put?: never;
-        /** Create Game */
+        /**
+         * Create Game
+         * @description Create a new game. The requesting player becomes the creator.
+         */
         post: operations["create_game_games_post"];
         delete?: never;
         options?: never;
@@ -66,18 +87,24 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Game */
+        /**
+         * Get Game
+         * @description Get a game by ID.
+         */
         get: operations["get_game_games__game_id__get"];
         put?: never;
         post?: never;
-        /** Delete Game */
+        /**
+         * Delete Game
+         * @description Delete a game. Only lobby games can be deleted.
+         */
         delete: operations["delete_game_games__game_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/games/{game_id}/end": {
+    "/games/{game_id}/players/{player_id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -86,8 +113,31 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** End Game */
-        post: operations["end_game_games__game_id__end_post"];
+        post?: never;
+        /**
+         * Leave Game
+         * @description Leave a lobby game. The creator cannot leave — delete the game instead.
+         */
+        delete: operations["leave_game_games__game_id__players__player_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{game_id}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Join Game
+         * @description Join a game that is in the lobby. Up to 6 players can join.
+         */
+        post: operations["join_game_games__game_id__join_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -103,7 +153,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Start Game */
+        /**
+         * Start Game
+         * @description Start a game. Only the creator can start it.
+         */
         post: operations["start_game_games__game_id__start_post"];
         delete?: never;
         options?: never;
@@ -111,7 +164,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/games/{game_id}/join": {
+    "/games/{game_id}/end": {
         parameters: {
             query?: never;
             header?: never;
@@ -120,8 +173,11 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Join Game */
-        post: operations["join_game_games__game_id__join_post"];
+        /**
+         * End Game
+         * @description Force-end an active game before all categories are filled.
+         */
+        post: operations["end_game_games__game_id__end_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -137,7 +193,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Roll Dice */
+        /**
+         * Roll Dice
+         * @description Roll dice for the current player's turn. Pass kept_dice to hold specific dice between rolls.
+         */
         post: operations["roll_dice_games__game_id__roll_post"];
         delete?: never;
         options?: never;
@@ -152,7 +211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Game State */
+        /**
+         * Get Game State
+         * @description Get the current game state for polling. Returns dice, current player and scores when the game has ended.
+         */
         get: operations["get_game_state_games__game_id__state_get"];
         put?: never;
         post?: never;
@@ -169,9 +231,15 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Scorecard */
+        /**
+         * Get Scorecard
+         * @description Get the scorecard for a player in a game.
+         */
         get: operations["get_scorecard_games__game_id__players__player_id__scorecard_get"];
-        /** Score Category */
+        /**
+         * Score Category
+         * @description Score a category with the current dice. Ends the player's turn and advances to the next player. Ends the game when all categories are filled.
+         */
         put: operations["score_category_games__game_id__players__player_id__scorecard_put"];
         post?: never;
         delete?: never;
@@ -187,7 +255,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Scoreboard */
+        /**
+         * Get Scoreboard
+         * @description Get the full scoreboard for all players in a game.
+         */
         get: operations["get_scoreboard_games__game_id__scoreboard_get"];
         put?: never;
         post?: never;
@@ -204,7 +275,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Scoring Options */
+        /**
+         * Get Scoring Options
+         * @description List scoring categories that would yield points with the current dice. Only available on the current player's turn after at least one roll.
+         */
         get: operations["get_scoring_options_games__game_id__players__player_id__scoring_options_get"];
         put?: never;
         post?: never;
@@ -220,62 +294,113 @@ export interface components {
     schemas: {
         /** DiceResponse */
         DiceResponse: {
-            /** Dice */
+            /**
+             * Dice
+             * @description All six dice after the roll
+             */
             dice: components["schemas"]["Die"][];
         };
         /** Die */
         Die: {
-            /** Index */
+            /**
+             * Index
+             * @description Die position (0–5)
+             */
             index: number;
-            /** Value */
+            /**
+             * Value
+             * @description Face value (1–6), null if not yet rolled
+             */
             value?: number | null;
-            /** Kept */
+            /**
+             * Kept
+             * @description Whether this die is held for the next roll
+             */
             kept: boolean;
         };
         /** Game */
         Game: {
-            /** Id */
+            /**
+             * Id
+             * @description Unique game identifier
+             */
             id: number;
+            /** @description Current status of the game */
             status: components["schemas"]["GameStatus"];
-            /** Creator Id */
+            /**
+             * Creator Id
+             * @description ID of the player who created the game
+             */
             creator_id: number;
-            /** Player Ids */
+            /**
+             * Player Ids
+             * @description IDs of all players who have joined
+             */
             player_ids: number[];
             /**
              * Created At
              * Format: date-time
+             * @description When the game was created
              */
             created_at: string;
-            /** Started At */
+            /**
+             * Started At
+             * @description When the game was started
+             */
             started_at?: string | null;
-            /** Ended At */
+            /**
+             * Ended At
+             * @description When the game ended
+             */
             ended_at?: string | null;
         };
         /** GameCreate */
         GameCreate: {
-            /** Creator Id */
+            /**
+             * Creator Id
+             * @description ID of the player creating the game
+             */
             creator_id: number;
         };
         /** GameJoin */
         GameJoin: {
-            /** Player Id */
+            /**
+             * Player Id
+             * @description ID of the player joining the game
+             */
             player_id: number;
         };
         /** GameStart */
         GameStart: {
-            /** Player Id */
+            /**
+             * Player Id
+             * @description ID of the creator starting the game
+             */
             player_id: number;
         };
         /** GameState */
         GameState: {
+            /** @description Current game status */
             status: components["schemas"]["GameStatus"];
-            /** Current Player Id */
+            /**
+             * Current Player Id
+             * @description ID of the player whose turn it is; null when game is not active
+             */
             current_player_id?: number | null;
-            /** Dice */
+            /**
+             * Dice
+             * @description Current dice state; null when game is not active
+             */
             dice?: components["schemas"]["Die"][] | null;
-            /** Winner Ids */
+            /**
+             * Winner Ids
+             * @description IDs of the winner(s); set when game has ended
+             */
             winner_ids?: number[] | null;
-            /** Final Scores */
+            /**
+             * Final Scores
+             * @description Final scores for all players; set when game has ended
+             */
             final_scores?: components["schemas"]["PlayerScore"][] | null;
         };
         /**
@@ -290,53 +415,87 @@ export interface components {
         };
         /** Player */
         Player: {
-            /** Id */
+            /**
+             * Id
+             * @description Unique player identifier
+             */
             id: number;
-            /** Name */
+            /**
+             * Name
+             * @description Display name of the player
+             */
             name: string;
             /**
              * Created At
              * Format: date-time
+             * @description When the player was created
              */
             created_at: string;
         };
         /** PlayerCreate */
         PlayerCreate: {
-            /** Name */
+            /**
+             * Name
+             * @description Display name of the player
+             */
             name: string;
         };
         /** PlayerScore */
         PlayerScore: {
-            /** Player Id */
+            /**
+             * Player Id
+             * @description Player identifier
+             */
             player_id: number;
-            /** Total */
+            /**
+             * Total
+             * @description Final total score including bonus
+             */
             total: number;
         };
         /** PlayerScorecard */
         PlayerScorecard: {
-            /** Player Id */
+            /**
+             * Player Id
+             * @description Player identifier
+             */
             player_id: number;
-            /** Entries */
+            /**
+             * Entries
+             * @description One entry per scoring category
+             */
             entries: components["schemas"]["ScoreEntry"][];
-            /** Bonus */
+            /**
+             * Bonus
+             * @description Upper section bonus (100 points) if score reaches 84; null if not yet earned
+             */
             bonus?: number | null;
-            /** Total */
+            /**
+             * Total
+             * @description Total score including bonus
+             */
             total: number;
         };
         /** PlayerUpdate */
         PlayerUpdate: {
-            /** Name */
+            /**
+             * Name
+             * @description Display name of the player
+             */
             name: string;
         };
         /** RollRequest */
         RollRequest: {
-            /** Player Id */
+            /**
+             * Player Id
+             * @description ID of the current player
+             */
             player_id: number;
             /**
              * Kept Dice
-             * @default []
+             * @description Indices (0–5) of dice to keep; all others are rerolled
              */
-            kept_dice: number[];
+            kept_dice?: number[];
         };
         /**
          * ScoreCategory
@@ -345,27 +504,45 @@ export interface components {
         ScoreCategory: "ones" | "twos" | "threes" | "fours" | "fives" | "sixes" | "one_pair" | "two_pairs" | "three_pairs" | "three_of_a_kind" | "four_of_a_kind" | "five_of_a_kind" | "small_straight" | "large_straight" | "full_straight" | "full_house" | "villa" | "tower" | "chance" | "maxi_yatzy";
         /** ScoreEntry */
         ScoreEntry: {
+            /** @description Scoring category */
             category: components["schemas"]["ScoreCategory"];
-            /** Score */
+            /**
+             * Score
+             * @description Points scored; null if not yet filled
+             */
             score?: number | null;
         };
         /** ScoreRequest */
         ScoreRequest: {
+            /** @description Category to score with the current dice */
             category: components["schemas"]["ScoreCategory"];
         };
         /** Scorecard */
         Scorecard: {
-            /** Entries */
+            /**
+             * Entries
+             * @description One entry per scoring category
+             */
             entries: components["schemas"]["ScoreEntry"][];
-            /** Bonus */
+            /**
+             * Bonus
+             * @description Upper section bonus (100 points) if score reaches 84; null if not yet earned
+             */
             bonus?: number | null;
-            /** Total */
+            /**
+             * Total
+             * @description Total score including bonus
+             */
             total: number;
         };
         /** ScoringOption */
         ScoringOption: {
+            /** @description Available scoring category */
             category: components["schemas"]["ScoreCategory"];
-            /** Score */
+            /**
+             * Score
+             * @description Points that would be scored for this category with the current dice
+             */
             score: number;
         };
         /** ValidationError */
@@ -423,7 +600,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description Player created */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -463,6 +640,13 @@ export interface operations {
                     "application/json": components["schemas"]["Player"];
                 };
             };
+            /** @description Player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -498,6 +682,13 @@ export interface operations {
                     "application/json": components["schemas"]["Player"];
                 };
             };
+            /** @description Player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -527,6 +718,13 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -540,7 +738,9 @@ export interface operations {
     };
     list_games_games_get: {
         parameters: {
-            query?: never;
+            query?: {
+                status?: components["schemas"]["GameStatus"] | null;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -554,6 +754,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Game"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -571,7 +780,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Successful Response */
+            /** @description Game created */
             201: {
                 headers: {
                     [name: string]: unknown;
@@ -611,6 +820,13 @@ export interface operations {
                     "application/json": components["schemas"]["Game"];
                 };
             };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -640,6 +856,20 @@ export interface operations {
                 };
                 content?: never;
             };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Game cannot be deleted (already started or ended) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -651,12 +881,13 @@ export interface operations {
             };
         };
     };
-    end_game_games__game_id__end_post: {
+    leave_game_games__game_id__players__player_id__delete: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 game_id: number;
+                player_id: number;
             };
             cookie?: never;
         };
@@ -671,40 +902,26 @@ export interface operations {
                     "application/json": components["schemas"]["Game"];
                 };
             };
-            /** @description Validation Error */
-            422: {
+            /** @description Creator cannot leave the game */
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
+                content?: never;
             };
-        };
-    };
-    start_game_games__game_id__start_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                game_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["GameStart"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
+            /** @description Game not found */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["Game"];
+                content?: never;
+            };
+            /** @description Player not in game or game is not in lobby */
+            409: {
+                headers: {
+                    [name: string]: unknown;
                 };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -741,6 +958,114 @@ export interface operations {
                     "application/json": components["schemas"]["Game"];
                 };
             };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Game is not in lobby, player already joined, or game is full */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    start_game_games__game_id__start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                game_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GameStart"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Game"];
+                };
+            };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Game is not in lobby or player is not the creator */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    end_game_games__game_id__end_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                game_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Game"];
+                };
+            };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Game is not active */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -776,6 +1101,20 @@ export interface operations {
                     "application/json": components["schemas"]["DiceResponse"];
                 };
             };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Game is not active, not the player's turn, or no rolls remaining */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -806,6 +1145,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["GameState"];
                 };
+            };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -838,6 +1184,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["Scorecard"];
                 };
+            };
+            /** @description Game or player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -875,6 +1228,20 @@ export interface operations {
                     "application/json": components["schemas"]["Scorecard"];
                 };
             };
+            /** @description Game or player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Not the player's turn, no roll taken yet, or category already scored */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -905,6 +1272,13 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["PlayerScorecard"][];
                 };
+            };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -937,6 +1311,20 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ScoringOption"][];
                 };
+            };
+            /** @description Game not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Game is not active or not the player's turn */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

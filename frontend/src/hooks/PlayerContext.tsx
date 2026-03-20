@@ -14,16 +14,16 @@ const STORAGE_KEY = 'yatzy_player';
 
 export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [player, setPlayerState] = useState<Player | null>(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored = sessionStorage.getItem(STORAGE_KEY);
     return stored ? (JSON.parse(stored) as Player) : null;
   });
 
   function setPlayer(player: Player | null) {
     setPlayerState(player);
     if (player) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(player));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify(player));
     } else {
-      localStorage.removeItem(STORAGE_KEY);
+      sessionStorage.removeItem(STORAGE_KEY);
     }
   }
 
