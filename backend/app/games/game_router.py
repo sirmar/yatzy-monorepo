@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 import aiomysql
 from app.database import Database
 from app.games.game import Game, GameCreate
@@ -47,7 +47,7 @@ def create_game_router(database: Database) -> APIRouter:
   @router.get('/games', response_model=list[Game])
   async def list_games(
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
-    status: GameStatus | None = None,
+    status: Annotated[GameStatus | None, Query()] = None,
   ) -> list[Game]:
     """List all games, optionally filtered by status."""
     return await GameRepository(conn).list_all(status)
