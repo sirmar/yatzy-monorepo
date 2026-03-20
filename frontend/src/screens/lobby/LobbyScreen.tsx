@@ -2,6 +2,7 @@ import { apiClient } from '@/api';
 import type { components } from '@/api';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
+import { useErrorToast } from '@/hooks/use-toast';
 import { usePolling } from '@/hooks/usePolling';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ export function LobbyScreen() {
   const [playerNames, setPlayerNames] = useState<Record<number, string>>({});
   const { player } = usePlayer();
   const navigate = useNavigate();
+  const errorToast = useErrorToast();
 
   useEffect(() => {
     apiClient.GET('/players').then(({ data }) => {
@@ -48,45 +50,69 @@ export function LobbyScreen() {
 
   usePolling(fetchGames, { interval: 2000 });
 
+  async function withMutation(title: string, fn: () => Promise<{ error?: unknown }>) {
+    const { error } = await fn();
+    if (error) {
+      errorToast(title);
+      return;
+    }
+    await fetchGames();
+  }
+
   async function handleCreate() {
     if (!player) return;
     setCreating(true);
-    await apiClient.POST('/games', { body: { creator_id: player.id } });
-    setCreating(false);
+    try {
+      const { error } = await apiClient.POST('/games', { body: { creator_id: player.id } });
+      if (error) throw error;
+    } catch {
+      errorToast('Failed to create game');
+      return;
+    } finally {
+      setCreating(false);
+    }
     await fetchGames();
   }
 
   async function handleJoin(game: Game) {
     if (!player) return;
-    await apiClient.POST('/games/{game_id}/join', {
-      params: { path: { game_id: game.id } },
-      body: { player_id: player.id },
-    });
-    await fetchGames();
+    await withMutation('Failed to join game', () =>
+      apiClient.POST('/games/{game_id}/join', {
+        params: { path: { game_id: game.id } },
+        body: { player_id: player.id },
+      })
+    );
   }
 
   async function handleDelete(game: Game) {
-    await apiClient.DELETE('/games/{game_id}', {
-      params: { path: { game_id: game.id } },
-    });
-    await fetchGames();
+    await withMutation('Failed to delete game', () =>
+      apiClient.DELETE('/games/{game_id}', {
+        params: { path: { game_id: game.id } },
+      })
+    );
   }
 
   async function handleLeave(game: Game) {
     if (!player) return;
-    await apiClient.DELETE('/games/{game_id}/players/{player_id}', {
-      params: { path: { game_id: game.id, player_id: player.id } },
-    });
-    await fetchGames();
+    await withMutation('Failed to leave game', () =>
+      apiClient.DELETE('/games/{game_id}/players/{player_id}', {
+        params: { path: { game_id: game.id, player_id: player.id } },
+      })
+    );
   }
 
   async function handleStart(game: Game) {
     if (!player) return;
-    const { data } = await apiClient.POST('/games/{game_id}/start', {
-      params: { path: { game_id: game.id } },
-      body: { player_id: player.id },
-    });
-    if (data) navigate(`/games/${data.id}`);
+    try {
+      const { data, error } = await apiClient.POST('/games/{game_id}/start', {
+        params: { path: { game_id: game.id } },
+        body: { player_id: player.id },
+      });
+      if (error || !data) throw error ?? new Error('Failed to start game');
+      navigate(`/games/${data.id}`);
+    } catch {
+      errorToast('Failed to start game');
+    }
   }
 
   return (
@@ -97,8 +123,15 @@ export function LobbyScreen() {
           <CreateGameButton onCreate={handleCreate} loading={creating} />
         </div>
         <div className="flex items-center justify-between text-sm text-gray-400">
-          <span>Playing as <span className="text-white font-medium">{player?.name}</span></span>
-          <Button variant="ghost" size="sm" className="text-gray-500 hover:text-white" onClick={() => navigate('/')}>
+          <span>
+            Playing as <span className="text-white font-medium">{player?.name}</span>
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-gray-500 hover:text-white"
+            onClick={() => navigate('/')}
+          >
             Change player
           </Button>
         </div>

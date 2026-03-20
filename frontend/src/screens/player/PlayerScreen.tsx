@@ -2,6 +2,7 @@ import { apiClient } from '@/api';
 import type { components } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePlayer } from '@/hooks/PlayerContext';
+import { useErrorToast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CreatePlayerForm } from './CreatePlayerForm';
@@ -13,6 +14,7 @@ export function PlayerScreen() {
   const [players, setPlayers] = useState<Player[]>([]);
   const { setPlayer } = usePlayer();
   const navigate = useNavigate();
+  const errorToast = useErrorToast();
 
   useEffect(() => {
     apiClient.GET('/players').then(({ data }) => {
@@ -22,25 +24,31 @@ export function PlayerScreen() {
 
   async function handleCreate(name: string) {
     const { data, error } = await apiClient.POST('/players', { body: { name } });
-    if (error) throw error;
-    if (data) {
-      setPlayer(data);
-      navigate('/lobby');
-    }
+    if (error || !data) throw error ?? new Error('Failed to create player');
+    setPlayer(data);
+    navigate('/lobby');
   }
 
   async function handleUpdate(player: Player, newName: string) {
-    const { data } = await apiClient.PUT('/players/{player_id}', {
+    const { data, error } = await apiClient.PUT('/players/{player_id}', {
       params: { path: { player_id: player.id } },
       body: { name: newName },
     });
-    if (data) setPlayers((prev) => prev.map((p) => (p.id === data.id ? data : p)));
+    if (error || !data) {
+      errorToast('Failed to update player');
+      throw error ?? new Error('Failed to update player');
+    }
+    setPlayers((prev) => prev.map((p) => (p.id === data.id ? data : p)));
   }
 
   async function handleDelete(player: Player) {
-    await apiClient.DELETE('/players/{player_id}', {
+    const { error } = await apiClient.DELETE('/players/{player_id}', {
       params: { path: { player_id: player.id } },
     });
+    if (error) {
+      errorToast('Failed to delete player');
+      return;
+    }
     setPlayers((prev) => prev.filter((p) => p.id !== player.id));
   }
 

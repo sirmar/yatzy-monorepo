@@ -16,7 +16,15 @@ interface Props {
   onLeave: (game: Game) => Promise<void>;
 }
 
-export function GameCard({ game, currentPlayerId, playerNames, onJoin, onDelete, onStart, onLeave }: Props) {
+export function GameCard({
+  game,
+  currentPlayerId,
+  playerNames,
+  onJoin,
+  onDelete,
+  onStart,
+  onLeave,
+}: Props) {
   const isCreator = game.creator_id === currentPlayerId;
   const hasJoined = game.player_ids.includes(currentPlayerId);
   const names = game.player_ids.map((id) => playerNames[id] ?? `Player ${id}`).join(', ');

@@ -13,7 +13,15 @@ interface Props {
   onLeave: (game: Game) => Promise<void>;
 }
 
-export function GameList({ games, currentPlayerId, playerNames, onJoin, onDelete, onStart, onLeave }: Props) {
+export function GameList({
+  games,
+  currentPlayerId,
+  playerNames,
+  onJoin,
+  onDelete,
+  onStart,
+  onLeave,
+}: Props) {
   if (games.length === 0) {
     return (
       <p className="text-center text-gray-500 py-8">No open games — create one to get started!</p>

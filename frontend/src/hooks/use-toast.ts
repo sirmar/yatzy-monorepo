@@ -186,4 +186,10 @@ function useToast() {
   };
 }
 
-export { useToast, toast };
+function useErrorToast() {
+  const { toast } = useToast();
+  return (title: string) =>
+    toast({ variant: 'destructive', title, description: 'Please try again.' });
+}
+
+export { useToast, toast, useErrorToast };

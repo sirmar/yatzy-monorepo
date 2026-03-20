@@ -2,7 +2,7 @@ import type { components } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 type Player = components['schemas']['Player'];
 
@@ -16,7 +16,6 @@ interface Props {
 export function PlayerRow({ player, onSelect, onUpdate, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(player.name);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   async function handleSave() {
     if (!name.trim() || name === player.name) {
@@ -24,8 +23,12 @@ export function PlayerRow({ player, onSelect, onUpdate, onDelete }: Props) {
       setName(player.name);
       return;
     }
-    await onUpdate(player, name.trim());
-    setEditing(false);
+    try {
+      await onUpdate(player, name.trim());
+      setEditing(false);
+    } catch {
+      // parent already toasted; keep editor open
+    }
   }
 
   function handleCancel() {
@@ -37,7 +40,6 @@ export function PlayerRow({ player, onSelect, onUpdate, onDelete }: Props) {
     return (
       <div className="flex gap-2">
         <Input
-          ref={inputRef}
           aria-label="Edit name"
           value={name}
           onChange={(e) => setName(e.target.value)}

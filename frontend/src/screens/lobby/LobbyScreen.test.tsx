@@ -69,14 +69,14 @@ describe('LobbyScreen', () => {
       givenPlayers([PLAYER, BOB]);
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
       whenRendered();
-      await screen.findByText('Bob');
+      await thenPlayerNameIsVisible('Bob');
     });
 
     it('shows creator name on game cards', async () => {
       givenPlayers([PLAYER, BOB]);
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
       whenRendered();
-      await screen.findByText(/created by Bob/i);
+      await thenCreatorNameIsVisible('Bob');
     });
   });
 
@@ -91,17 +91,39 @@ describe('LobbyScreen', () => {
       });
       whenRendered();
       await whenNewGameClicked();
-      expect(mockNavigate).not.toHaveBeenCalled();
+      thenStaysOnLobby();
     });
 
-    it('shows own game with Start button', async () => {
+    it('shows error toast when create fails', async () => {
+      givenCreateGameFails();
+      whenRendered();
+      await whenNewGameClicked();
+      await thenErrorToastIsVisible('Failed to create game');
+    });
+
+    it('shows own game with Start and Delete buttons', async () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       whenRendered();
-      await screen.findByRole('button', { name: 'Start game 42' });
+      await thenButtonIsVisible('Start game 42');
+      await thenButtonIsVisible('Delete game 42');
+    });
+
+    it('shows yours badge on own game', async () => {
+      givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
+      whenRendered();
+      await thenYoursBadgeIsVisible();
     });
   });
 
   describe('joining a game', () => {
+    it('shows error toast when join fails', async () => {
+      givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
+      givenJoinGameFails(10);
+      whenRendered();
+      await whenJoinClicked(10);
+      await thenErrorToastIsVisible('Failed to join game');
+    });
+
     it('joins a game and stays on lobby', async () => {
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
       givenJoinGameSucceeds(10, {
@@ -113,17 +135,40 @@ describe('LobbyScreen', () => {
       });
       whenRendered();
       await whenJoinClicked(10);
-      expect(mockNavigate).not.toHaveBeenCalled();
+      thenStaysOnLobby();
+    });
+
+    it('shows Waiting and Leave button after joining', async () => {
+      givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
+      givenJoinGameSucceeds(10, {
+        id: 10,
+        status: 'lobby',
+        creator_id: 2,
+        player_ids: [2, 1],
+        created_at: '',
+      });
+      whenRendered();
+      await whenJoinClicked(10);
+      await thenWaitingIsVisible();
+      await thenButtonIsVisible('Leave game 10');
     });
 
     it('shows Waiting on a game already joined', async () => {
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2, 1], created_at: '' }]);
       whenRendered();
-      await screen.findByText('Waiting...');
+      await thenWaitingIsVisible();
     });
   });
 
   describe('deleting a game (creator)', () => {
+    it('shows error toast when delete fails', async () => {
+      givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
+      givenDeleteGameFails(42);
+      whenRendered();
+      await whenDeleteClicked(42);
+      await thenErrorToastIsVisible('Failed to delete game');
+    });
+
     it('deletes own game and removes it from the list', async () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       givenDeleteGameSucceeds(42);
@@ -134,6 +179,14 @@ describe('LobbyScreen', () => {
   });
 
   describe('starting a game (creator)', () => {
+    it('shows error toast when start fails', async () => {
+      givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
+      givenStartGameFails(42);
+      whenRendered();
+      await whenStartClicked(42);
+      await thenErrorToastIsVisible('Failed to start game');
+    });
+
     it('starts the game and navigates to it', async () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       givenStartGameSucceeds(42, {
@@ -152,23 +205,39 @@ describe('LobbyScreen', () => {
   describe('changing player', () => {
     it('shows the current player name', async () => {
       whenRendered();
-      await screen.findByText('Alice');
+      await thenPlayerNameIsVisible('Alice');
     });
 
     it('navigates to player screen when Change is clicked', async () => {
       whenRendered();
-      await userEvent.click(await screen.findByRole('button', { name: /change player/i }));
-      expect(mockNavigate).toHaveBeenCalledWith('/');
+      await whenChangePlayerClicked();
+      await thenNavigatedTo('/');
     });
   });
 
   describe('leaving a game', () => {
+    it('shows error toast when leave fails', async () => {
+      givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2, 1], created_at: '' }]);
+      givenLeaveGameFails(10);
+      whenRendered();
+      await whenLeaveClicked(10);
+      await thenErrorToastIsVisible('Failed to leave game');
+    });
+
     it('leaves a game and stays on lobby', async () => {
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2, 1], created_at: '' }]);
       givenLeaveGameSucceeds(10);
       whenRendered();
       await whenLeaveClicked(10);
-      expect(mockNavigate).not.toHaveBeenCalled();
+      thenStaysOnLobby();
+    });
+
+    it('shows Join button after leaving', async () => {
+      givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2, 1], created_at: '' }]);
+      givenLeaveGameSucceeds(10);
+      whenRendered();
+      await whenLeaveClicked(10);
+      await thenButtonIsVisible('Join game 10');
     });
   });
 
@@ -207,8 +276,43 @@ describe('LobbyScreen', () => {
     server.use(http.post(GAMES_URL, () => HttpResponse.json(game, { status: 201 })));
   }
 
+  function givenCreateGameFails() {
+    server.use(http.post(GAMES_URL, () => HttpResponse.json({ detail: 'Error' }, { status: 500 })));
+  }
+
+  function givenJoinGameFails(gameId: number) {
+    server.use(
+      http.post(JOIN_URL(gameId), () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
+    );
+  }
+
+  function givenDeleteGameFails(gameId: number) {
+    server.use(
+      http.delete(DELETE_URL(gameId), () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
+    );
+  }
+
+  function givenStartGameFails(gameId: number) {
+    server.use(
+      http.post(START_URL(gameId), () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
+    );
+  }
+
+  function givenLeaveGameFails(gameId: number) {
+    server.use(
+      http.delete(LEAVE_URL(gameId, PLAYER.id), () =>
+        HttpResponse.json({ detail: 'Error' }, { status: 500 })
+      )
+    );
+  }
+
   function givenJoinGameSucceeds(gameId: number, game: GameData) {
-    server.use(http.post(JOIN_URL(gameId), () => HttpResponse.json(game)));
+    server.use(
+      http.post(JOIN_URL(gameId), () => {
+        givenGames([game]);
+        return HttpResponse.json(game);
+      })
+    );
   }
 
   function givenStartGameSucceeds(gameId: number, game: GameData) {
@@ -227,8 +331,16 @@ describe('LobbyScreen', () => {
   function givenLeaveGameSucceeds(gameId: number) {
     server.use(
       http.delete(LEAVE_URL(gameId, PLAYER.id), () => {
-        givenGames([{ id: gameId, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
-        return HttpResponse.json({ id: gameId, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' });
+        givenGames([
+          { id: gameId, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' },
+        ]);
+        return HttpResponse.json({
+          id: gameId,
+          status: 'lobby',
+          creator_id: 2,
+          player_ids: [2],
+          created_at: '',
+        });
       })
     );
   }
@@ -257,6 +369,10 @@ describe('LobbyScreen', () => {
     await userEvent.click(await screen.findByRole('button', { name: `Leave game ${gameId}` }));
   }
 
+  async function whenChangePlayerClicked() {
+    await userEvent.click(await screen.findByRole('button', { name: /change player/i }));
+  }
+
   async function thenGameIsVisible(gameId: number) {
     await screen.findByText(`Game #${gameId}`);
   }
@@ -265,7 +381,35 @@ describe('LobbyScreen', () => {
     await screen.findByText(/no open games/i);
   }
 
+  async function thenPlayerNameIsVisible(name: string) {
+    await screen.findByText(name);
+  }
+
+  async function thenCreatorNameIsVisible(name: string) {
+    await screen.findByText(new RegExp(`created by ${name}`, 'i'));
+  }
+
+  async function thenButtonIsVisible(name: string) {
+    await screen.findByRole('button', { name });
+  }
+
+  async function thenWaitingIsVisible() {
+    await screen.findByText('Waiting...');
+  }
+
+  async function thenYoursBadgeIsVisible() {
+    await screen.findByText('★ yours');
+  }
+
+  function thenStaysOnLobby() {
+    expect(mockNavigate).not.toHaveBeenCalled();
+  }
+
   async function thenNavigatedTo(path: string) {
     await vi.waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
+  }
+
+  async function thenErrorToastIsVisible(title: string) {
+    await screen.findByText(title);
   }
 });

@@ -1,3 +1,4 @@
+import { Toaster } from '@/components/ui/toaster';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { EndScreen } from '@/screens/end/EndScreen';
 import { GameScreen } from '@/screens/game/GameScreen';
@@ -12,32 +13,35 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<PlayerScreen />} />
-      <Route
-        path="/lobby"
-        element={
-          <ProtectedRoute>
-            <LobbyScreen />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/games/:gameId"
-        element={
-          <ProtectedRoute>
-            <GameScreen />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/games/:gameId/end"
-        element={
-          <ProtectedRoute>
-            <EndScreen />
-          </ProtectedRoute>
-        }
-      />
-    </Routes>
+    <>
+      <Routes>
+        <Route path="/" element={<PlayerScreen />} />
+        <Route
+          path="/lobby"
+          element={
+            <ProtectedRoute>
+              <LobbyScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/:gameId"
+          element={
+            <ProtectedRoute>
+              <GameScreen />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/games/:gameId/end"
+          element={
+            <ProtectedRoute>
+              <EndScreen />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+      <Toaster />
+    </>
   );
 }

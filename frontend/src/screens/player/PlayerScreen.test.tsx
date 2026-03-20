@@ -17,6 +17,7 @@ beforeAll(() => server.listen());
 afterEach(() => {
   server.resetHandlers();
   mockNavigate.mockReset();
+  sessionStorage.clear();
 });
 afterAll(() => server.close());
 
@@ -70,6 +71,24 @@ describe('PlayerScreen', () => {
   });
 
   describe('editing a player', () => {
+    it('shows error toast when update fails', async () => {
+      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenUpdatePlayerFails(1);
+      whenRendered();
+      await whenEditClicked('Alice');
+      await whenNameUpdatedTo('Alicia');
+      await thenErrorToastIsVisible('Failed to update player');
+    });
+
+    it('keeps editor open when update fails', async () => {
+      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenUpdatePlayerFails(1);
+      whenRendered();
+      await whenEditClicked('Alice');
+      await whenNameUpdatedTo('Alicia');
+      thenEditInputIsVisible();
+    });
+
     it('shows edit input pre-filled with current name', async () => {
       givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
       whenRendered();
@@ -96,6 +115,22 @@ describe('PlayerScreen', () => {
   });
 
   describe('deleting a player', () => {
+    it('shows error toast when delete fails', async () => {
+      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenDeletePlayerFails(1);
+      whenRendered();
+      await whenDeleteClicked('Alice');
+      await thenErrorToastIsVisible('Failed to delete player');
+    });
+
+    it('keeps player in list when delete fails', async () => {
+      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenDeletePlayerFails(1);
+      whenRendered();
+      await whenDeleteClicked('Alice');
+      await thenPlayerIsVisible('Alice');
+    });
+
     it('removes player from the list', async () => {
       givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
       givenDeletePlayerSucceeds(1);
@@ -123,8 +158,20 @@ describe('PlayerScreen', () => {
     server.use(http.put(PLAYER_URL(player.id), () => HttpResponse.json(player)));
   }
 
+  function givenUpdatePlayerFails(id: number) {
+    server.use(
+      http.put(PLAYER_URL(id), () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
+    );
+  }
+
   function givenDeletePlayerSucceeds(id: number) {
     server.use(http.delete(PLAYER_URL(id), () => new HttpResponse(null, { status: 204 })));
+  }
+
+  function givenDeletePlayerFails(id: number) {
+    server.use(
+      http.delete(PLAYER_URL(id), () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
+    );
   }
 
   function whenRendered() {
@@ -181,5 +228,13 @@ describe('PlayerScreen', () => {
 
   function thenNavigatedTo(path: string) {
     expect(mockNavigate).toHaveBeenCalledWith(path);
+  }
+
+  async function thenErrorToastIsVisible(title: string) {
+    await screen.findByText(title);
+  }
+
+  function thenEditInputIsVisible() {
+    expect(screen.getByRole('textbox', { name: /edit name/i })).toBeInTheDocument();
   }
 });
