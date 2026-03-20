@@ -33,7 +33,8 @@ class GamePlayerRepository:
     cursor = await self._conn.cursor()
     try:
       await cursor.execute(
-        'INSERT INTO game_players (game_id, player_id, join_order) VALUES (%s, %s, %s)',
+        'INSERT INTO game_players (game_id, player_id, join_order) VALUES (%s, %s, %s) '
+        'ON DUPLICATE KEY UPDATE deleted_at = NULL, join_order = VALUES(join_order)',
         (game_id, player_id, join_order),
       )
     finally:
