@@ -26,6 +26,7 @@
       "node_modules",
       "dist",
       "coverage",
+      ".vite",
       "src/api/schema.ts",
       "src/components/ui",
       "src/hooks/use-toast.ts"
