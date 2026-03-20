@@ -11,9 +11,9 @@
 - [x] **2. shadcn/ui Setup**
 - [x] **3. GitHub Actions CI**
 - [x] **4. Docker Setup (local dev)**
-- [ ] **5. API Client**
-- [ ] **6. Test Infrastructure**
-- [ ] **7. Pure Utilities (TDD)**
+- [x] **5. API Client**
+- [x] **6. Test Infrastructure**
+- [x] **7. Pure Utilities (TDD)** — skipped; backend provides scoring options, formatting inlined where needed
 - [ ] **8. Shared Hooks**
 - [ ] **9. App Entry + Routing**
 - [ ] **10. Player Screen**
