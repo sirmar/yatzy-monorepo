@@ -7,3 +7,16 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+
+  app:
+    build:
+      context: .
+      target: production
+    ports:
+      - '80:80'
+    networks:
+      - yatzy
+
+networks:
+  yatzy:
+    external: true

@@ -8,9 +8,9 @@
 ## Steps
 
 - [x] **1. Project Scaffold**
-- [ ] **2. shadcn/ui Setup**
-- [ ] **3. GitHub Actions CI**
-- [ ] **4. Docker Setup (local dev)**
+- [x] **2. shadcn/ui Setup**
+- [x] **3. GitHub Actions CI**
+- [x] **4. Docker Setup (local dev)**
 - [ ] **5. API Client**
 - [ ] **6. Test Infrastructure**
 - [ ] **7. Pure Utilities (TDD)**
