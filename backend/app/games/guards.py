@@ -46,6 +46,13 @@ def assert_is_creator(game: Game, player_id: int) -> None:
     raise HTTPException(status_code=403, detail='Only the creator can start the game')
 
 
+def assert_not_creator(game: Game, player_id: int) -> None:
+  if player_id == game.creator_id:
+    raise HTTPException(
+      status_code=403, detail='Creator cannot leave — delete the game instead'
+    )
+
+
 def assert_turn_active(
   turn_info: tuple[int, int, int, int] | None,
 ) -> tuple[int, int, int, int]:

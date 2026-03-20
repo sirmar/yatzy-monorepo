@@ -18,6 +18,17 @@ class GamePlayerRepository:
     finally:
       await cursor.close()
 
+  async def remove(self, game_id: int, player_id: int) -> None:
+    cursor = await self._conn.cursor()
+    try:
+      await cursor.execute(
+        'UPDATE game_players SET deleted_at = NOW() '
+        'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
+        (game_id, player_id),
+      )
+    finally:
+      await cursor.close()
+
   async def add(self, game_id: int, player_id: int, join_order: int) -> None:
     cursor = await self._conn.cursor()
     try:

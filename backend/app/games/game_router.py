@@ -9,9 +9,11 @@ from app.games.guards import (
   assert_game_active,
   assert_game_in_lobby,
   assert_game_deletable,
+  assert_player_in_game,
   assert_player_not_in_game,
   assert_game_not_full,
   assert_is_creator,
+  assert_not_creator,
   assert_turn_active,
   assert_current_player,
   assert_rolls_remaining,
@@ -83,6 +85,31 @@ def create_game_router(database: Database) -> APIRouter:
     game = assert_game_exists(await repo.get_by_id(game_id))
     assert_game_deletable(game)
     await repo.soft_delete(game_id)
+
+  @router.delete(
+    '/games/{game_id}/players/{player_id}',
+    response_model=Game,
+    responses={
+      403: {'description': 'Creator cannot leave the game'},
+      404: {'description': 'Game not found'},
+      409: {'description': 'Player not in game or game is not in lobby'},
+    },
+  )
+  async def leave_game(
+    game_id: int,
+    player_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+  ) -> Game:
+    """Leave a lobby game. The creator cannot leave — delete the game instead."""
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    assert_game_in_lobby(game)
+    assert_player_in_game(game, player_id)
+    assert_not_creator(game, player_id)
+    await GamePlayerRepository(conn).remove(game_id, player_id)
+    updated = await GameRepository(conn).get_by_id(game_id)
+    if updated is None:
+      raise HTTPException(status_code=409, detail='Game could not be retrieved')
+    return updated
 
   @router.post(
     '/games/{game_id}/join',
