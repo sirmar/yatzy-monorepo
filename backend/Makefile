@@ -1,4 +1,10 @@
-.PHONY: format lint types security unit e2e test check
+.PHONY: format lint types security unit e2e test check network start
+
+network:
+	docker network inspect yatzy >/dev/null 2>&1 || docker network create yatzy
+
+start: network
+	docker compose up app db -d --wait
 
 format:
 	docker compose run --rm dev sh -c 'uv run ruff format app/ && uv run ruff check --fix app/'

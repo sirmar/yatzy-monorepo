@@ -56,6 +56,15 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      default:
+      yatzy:
+        aliases:
+          - backend
 
 volumes:
   db_data:
+
+networks:
+  yatzy:
+    external: true
