@@ -23,5 +23,6 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
+    env: { VITE_API_BASE_URL: 'http://localhost/api' },
   },
 });

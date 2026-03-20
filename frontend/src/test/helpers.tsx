@@ -5,7 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <PlayerProvider>{children}</PlayerProvider>
     </BrowserRouter>
   );
