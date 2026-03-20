@@ -24,3 +24,7 @@ coverage
 *.sln
 *.sw?
 .vite
+
+# Playwright
+playwright-report
+test-results

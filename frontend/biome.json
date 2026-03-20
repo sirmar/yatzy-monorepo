@@ -29,7 +29,9 @@
       ".vite",
       "src/api/schema.ts",
       "src/components/ui",
-      "src/hooks/use-toast.ts"
+      "src/hooks/use-toast.ts",
+      "test-results",
+      "playwright-report"
     ]
   }
 }
