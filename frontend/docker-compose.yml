@@ -15,7 +15,9 @@ services:
     ports:
       - '80:80'
     networks:
-      - yatzy
+      yatzy:
+        aliases:
+          - frontend
 
 networks:
   yatzy:

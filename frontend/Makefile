@@ -1,4 +1,4 @@
-.PHONY: format lint types unit check network start schema
+.PHONY: format lint types unit e2e check network start schema
 
 network:
 	docker network inspect yatzy >/dev/null 2>&1 || docker network create yatzy
@@ -21,4 +21,11 @@ types:
 unit:
 	docker compose run --rm dev pnpm vitest run --coverage --passWithNoTests
 
-check: lint types unit
+e2e: start
+	docker run --rm --network yatzy \
+		-v .:/app -w /app \
+		-e BASE_URL=http://frontend:80 \
+		mcr.microsoft.com/playwright:v1.58.2-noble \
+		npx playwright test
+
+check: lint types unit e2e
