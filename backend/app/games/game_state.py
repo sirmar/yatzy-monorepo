@@ -17,6 +17,12 @@ class GameState(BaseModel):
   dice: list[Die] | None = Field(
     default=None, description='Current dice state; null when game is not active'
   )
+  rolls_remaining: int | None = Field(
+    default=None, description='Regular rolls left this turn'
+  )
+  saved_rolls: int | None = Field(
+    default=None, description='Saved bonus rolls from previous turns'
+  )
   winner_ids: list[int] | None = Field(
     default=None, description='IDs of the winner(s); set when game has ended'
   )

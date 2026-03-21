@@ -202,12 +202,14 @@ def create_game_router(database: Database) -> APIRouter:
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_active(game)
     roll_repo = RollRepository(conn)
-    turn_id, current_player_id, rolls_used, rolls_remaining = assert_turn_active(
+    turn_id, current_player_id, rolls_remaining, saved_rolls = assert_turn_active(
       await roll_repo.get_turn_info(game_id)
     )
     assert_current_player(body.player_id, current_player_id)
-    assert_rolls_remaining(rolls_used, rolls_remaining)
-    dice = await roll_repo.execute(turn_id, body.kept_dice)
+    assert_rolls_remaining(rolls_remaining, saved_rolls)
+    dice = await roll_repo.execute(
+      turn_id, game_id, body.player_id, rolls_remaining, body.kept_dice
+    )
     return DiceResponse(dice=dice)
 
   @router.get(

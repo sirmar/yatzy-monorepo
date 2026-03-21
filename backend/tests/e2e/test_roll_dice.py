@@ -2,6 +2,7 @@ from httpx import AsyncClient
 from tests.e2e.games import Game
 from tests.e2e.players import Player
 from tests.e2e.helpers import lobby_game, active_game
+from tests.e2e.scorecards import Scorecard
 
 
 async def test_roll_returns_200(client: AsyncClient):
@@ -48,3 +49,14 @@ async def test_roll_no_rolls_remaining(client: AsyncClient):
   await game.roll(game.id, player.id)
   await game.roll(game.id, player.id)
   game.assert_status(409).assert_has_detail()
+
+
+async def test_roll_uses_saved_rolls_when_regular_rolls_exhausted(client: AsyncClient):
+  player, game = await active_game(client)
+  await game.roll(game.id, player.id)
+  await Scorecard(client).score(game.id, player.id, 'chance')
+  await game.roll(game.id, player.id)
+  await game.roll(game.id, player.id)
+  await game.roll(game.id, player.id)
+  await game.roll(game.id, player.id)
+  game.assert_status(200)

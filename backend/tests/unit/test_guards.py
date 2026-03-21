@@ -165,28 +165,23 @@ class TestAssertCurrentPlayer:
 
 
 class TestAssertRollsRemaining:
-  def test_passes_when_rolls_available(self):
-    assert_rolls_remaining(rolls_used=1, rolls_remaining=0)
+  def test_passes_when_regular_rolls_available(self):
+    assert_rolls_remaining(rolls_remaining=2, saved_rolls=0)
 
-  def test_passes_when_bonus_rolls_available(self):
-    assert_rolls_remaining(rolls_used=3, rolls_remaining=2)
+  def test_passes_when_only_saved_rolls_available(self):
+    assert_rolls_remaining(rolls_remaining=0, saved_rolls=2)
 
-  def test_raises_409_when_base_rolls_exhausted(self):
+  def test_raises_409_when_no_rolls_of_any_kind(self):
     with pytest.raises(HTTPException) as exc:
-      assert_rolls_remaining(rolls_used=3, rolls_remaining=0)
-    assert exc.value.status_code == 409
-
-  def test_raises_409_when_all_rolls_including_bonus_exhausted(self):
-    with pytest.raises(HTTPException) as exc:
-      assert_rolls_remaining(rolls_used=5, rolls_remaining=2)
+      assert_rolls_remaining(rolls_remaining=0, saved_rolls=0)
     assert exc.value.status_code == 409
 
 
 class TestAssertHasRolled:
   def test_passes_when_rolled_at_least_once(self):
-    assert_has_rolled(rolls_used=1)
+    assert_has_rolled(rolls_remaining=2)
 
   def test_raises_409_when_not_yet_rolled(self):
     with pytest.raises(HTTPException) as exc:
-      assert_has_rolled(rolls_used=0)
+      assert_has_rolled(rolls_remaining=3)
     assert exc.value.status_code == 409

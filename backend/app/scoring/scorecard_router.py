@@ -69,11 +69,11 @@ def create_scorecard_router(database: Database) -> APIRouter:
     assert_game_active(game)
 
     roll_repo = RollRepository(conn)
-    turn_id, current_player_id, rolls_used, rolls_remaining = assert_turn_active(
+    turn_id, current_player_id, rolls_remaining, saved_rolls = assert_turn_active(
       await roll_repo.get_turn_info(game_id)
     )
     assert_current_player(player_id, current_player_id)
-    assert_has_rolled(rolls_used)
+    assert_has_rolled(rolls_remaining)
 
     scorecard_repo = ScorecardRepository(conn)
     if await scorecard_repo.is_category_scored(game_id, player_id, body.category):
@@ -83,10 +83,8 @@ def create_scorecard_router(database: Database) -> APIRouter:
     score = calculate(body.category, dice)
     await scorecard_repo.save(game_id, player_id, body.category, score)
 
-    new_remaining = max(0, 3 + rolls_remaining - rolls_used)
-    await GamePlayerRepository(conn).update_rolls_remaining(
-      game_id, player_id, new_remaining
-    )
+    new_saved = saved_rolls + rolls_remaining
+    await GamePlayerRepository(conn).update_saved_rolls(game_id, player_id, new_saved)
 
     turn_repo = TurnRepository(conn)
     total_scored = await scorecard_repo.count_all_scored(game_id)

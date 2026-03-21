@@ -52,8 +52,11 @@ class GameStateRepository:
       if status != GameStatus.ACTIVE or current_turn is None:
         return GameState(status=status)
       await cursor.execute(
-        'SELECT player_id FROM turns WHERE id = %s AND deleted_at IS NULL',
-        (current_turn,),
+        'SELECT t.player_id, t.rolls_remaining, gp.saved_rolls '
+        'FROM turns t '
+        'JOIN game_players gp ON t.player_id = gp.player_id AND gp.game_id = %s '
+        'WHERE t.id = %s AND t.deleted_at IS NULL AND gp.deleted_at IS NULL',
+        (game_id, current_turn),
       )
       turn_row = await cursor.fetchone()
       await cursor.execute(
@@ -62,6 +65,12 @@ class GameStateRepository:
       )
       dice_rows = await cursor.fetchall()
       dice = [Die(index=r[0], value=r[1], kept=bool(r[2])) for r in dice_rows]
-      return GameState(status=status, current_player_id=turn_row[0], dice=dice)
+      return GameState(
+        status=status,
+        current_player_id=turn_row[0],
+        dice=dice,
+        rolls_remaining=turn_row[1],
+        saved_rolls=turn_row[2],
+      )
     finally:
       await cursor.close()

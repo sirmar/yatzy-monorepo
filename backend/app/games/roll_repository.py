@@ -11,7 +11,7 @@ class RollRepository:
     cursor = await self._conn.cursor()
     try:
       await cursor.execute(
-        'SELECT t.id, t.player_id, t.rolls_used, gp.rolls_remaining '
+        'SELECT t.id, t.player_id, t.rolls_remaining, gp.saved_rolls '
         'FROM games g '
         'JOIN turns t ON g.current_turn = t.id '
         'JOIN game_players gp ON g.id = gp.game_id AND t.player_id = gp.player_id '
@@ -34,7 +34,14 @@ class RollRepository:
     finally:
       await cursor.close()
 
-  async def execute(self, turn_id: int, kept_dice: list[int]) -> list[Die]:
+  async def execute(
+    self,
+    turn_id: int,
+    game_id: int,
+    player_id: int,
+    rolls_remaining: int,
+    kept_dice: list[int],
+  ) -> list[Die]:
     cursor = await self._conn.cursor()
     try:
       kept_set = set(kept_dice)
@@ -52,10 +59,17 @@ class RollRepository:
           'UPDATE turn_dice SET value = %s, kept = FALSE WHERE turn_id = %s AND die_index = %s',
           (value, turn_id, idx),
         )
-      await cursor.execute(
-        'UPDATE turns SET rolls_used = rolls_used + 1 WHERE id = %s',
-        (turn_id,),
-      )
+      if rolls_remaining > 0:
+        await cursor.execute(
+          'UPDATE turns SET rolls_remaining = rolls_remaining - 1 WHERE id = %s',
+          (turn_id,),
+        )
+      else:
+        await cursor.execute(
+          'UPDATE game_players SET saved_rolls = saved_rolls - 1 '
+          'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
+          (game_id, player_id),
+        )
       await cursor.execute(
         'SELECT die_index, value, kept FROM turn_dice WHERE turn_id = %s ORDER BY die_index',
         (turn_id,),

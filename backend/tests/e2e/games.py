@@ -126,3 +126,11 @@ class Game:
   def assert_has_final_scores(self) -> 'Game':
     assert self.json.get('final_scores') is not None
     return self
+
+  def assert_rolls_remaining(self, value: int) -> 'Game':
+    assert self.json.get('rolls_remaining') == value
+    return self
+
+  def assert_saved_rolls(self, value: int) -> 'Game':
+    assert self.json.get('saved_rolls') == value
+    return self

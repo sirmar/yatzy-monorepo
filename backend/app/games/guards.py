@@ -66,11 +66,11 @@ def assert_current_player(player_id: int, current_player_id: int) -> None:
     raise HTTPException(status_code=403, detail='Not your turn')
 
 
-def assert_rolls_remaining(rolls_used: int, rolls_remaining: int) -> None:
-  if rolls_used >= BASE_ROLLS_PER_TURN + rolls_remaining:
+def assert_rolls_remaining(rolls_remaining: int, saved_rolls: int) -> None:
+  if rolls_remaining + saved_rolls == 0:
     raise HTTPException(status_code=409, detail='No rolls remaining')
 
 
-def assert_has_rolled(rolls_used: int) -> None:
-  if rolls_used == 0:
+def assert_has_rolled(rolls_remaining: int) -> None:
+  if rolls_remaining == BASE_ROLLS_PER_TURN:
     raise HTTPException(status_code=409, detail='Must roll before scoring')
