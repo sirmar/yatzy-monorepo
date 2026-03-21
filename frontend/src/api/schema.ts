@@ -393,6 +393,16 @@ export interface components {
              */
             dice?: components["schemas"]["Die"][] | null;
             /**
+             * Rolls Remaining
+             * @description Regular rolls left this turn
+             */
+            rolls_remaining?: number | null;
+            /**
+             * Saved Rolls
+             * @description Saved bonus rolls from previous turns
+             */
+            saved_rolls?: number | null;
+            /**
              * Winner Ids
              * @description IDs of the winner(s); set when game has ended
              */
