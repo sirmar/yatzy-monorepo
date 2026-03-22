@@ -1,11 +1,12 @@
 import type { components } from '@/api';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
+import { Die } from './Die';
 
-type Die = components['schemas']['Die'];
+type DieType = components['schemas']['Die'];
 
 interface Props {
-  dice: Die[];
+  dice: DieType[];
+  rollCount: number;
   canRoll: boolean;
   hasRolled: boolean;
   rollsRemaining: number;
@@ -17,6 +18,7 @@ interface Props {
 
 export function DiceRoller({
   dice,
+  rollCount,
   canRoll,
   hasRolled,
   rollsRemaining,
@@ -31,27 +33,17 @@ export function DiceRoller({
     <div className="flex items-center gap-4">
       <div className="flex gap-2">
         {dice.map((die) => (
-          <button
+          <Die
             key={die.index}
-            type="button"
-            aria-label={`Die ${die.index}`}
-            aria-pressed={die.kept}
-            disabled={!hasRolled}
-            onClick={() => onToggle(die.index)}
-            className={cn(
-              'h-12 w-12 rounded-lg border-2 flex items-center justify-center text-lg font-bold transition-colors',
-              die.kept
-                ? 'border-yellow-400 bg-yellow-400/20 text-yellow-300'
-                : 'border-gray-600 bg-gray-800 text-white',
-              !hasRolled && 'opacity-50 cursor-not-allowed'
-            )}
-          >
-            {die.value ?? '—'}
-          </button>
+            die={die}
+            rollCount={rollCount}
+            hasRolled={hasRolled}
+            onToggle={() => onToggle(die.index)}
+          />
         ))}
       </div>
-      <Button onClick={onRoll} disabled={!canRoll}>
-        Roll
+      <Button onClick={onRoll} disabled={!canRoll} style={{ minWidth: '7rem' }}>
+        {rollsRemaining === 0 ? 'Roll saved' : 'Roll'}
       </Button>
       <div className="ml-auto text-sm text-gray-300 text-right flex flex-col gap-1">
         <span>Rolls remaining: {rollsRemaining}</span>

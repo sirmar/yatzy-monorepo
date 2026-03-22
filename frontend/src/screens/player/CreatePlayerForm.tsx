@@ -36,12 +36,7 @@ export function CreatePlayerForm({ onCreated }: Props) {
           disabled={loading}
           className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-500 hover:border-yellow-400/50 focus-visible:ring-yellow-400/50"
         />
-        <Button
-          type="submit"
-          variant="outline"
-          disabled={loading || !name.trim()}
-          className="bg-gray-800 text-white border-gray-600 transition-colors hover:!bg-yellow-400/10 hover:!text-yellow-300 hover:border-yellow-400/50"
-        >
+        <Button type="submit" disabled={loading || !name.trim()}>
           Create
         </Button>
       </div>

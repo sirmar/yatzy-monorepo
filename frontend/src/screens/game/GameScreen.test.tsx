@@ -140,7 +140,9 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await screen.findByText('3');
+      await vi.waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Die 0' })).toHaveAttribute('data-value', '3')
+      );
     });
 
     it('disables roll button after 3 rolls', async () => {
@@ -175,7 +177,9 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await screen.findByText('3');
+      await vi.waitFor(() =>
+        expect(screen.getByRole('button', { name: 'Die 0' })).not.toBeDisabled()
+      );
       await whenDieClicked(0);
       thenDieIsKept(0);
     });
@@ -227,6 +231,22 @@ describe('GameScreen', () => {
     it('navigates to /games/42/end when game state is finished', async () => {
       givenGameState({ status: 'finished', current_player_id: null, dice: null });
       whenRendered();
+      await thenNavigatedTo('/games/42/end');
+    });
+
+    it('navigates to /games/42/end when scoring the last category ends the game', async () => {
+      givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+      givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+      server.use(
+        http.put(SCORE_URL(ALICE.id), () => {
+          givenGameState({ status: 'finished', current_player_id: null, dice: null });
+          return HttpResponse.json(makeScorecard(ALICE.id, { ones: 3 }));
+        })
+      );
+      whenRendered();
+      await whenRollClicked();
+      await thenScoringOptionVisible('Ones', 3);
+      await whenCategoryClicked('Ones');
       await thenNavigatedTo('/games/42/end');
     });
   });

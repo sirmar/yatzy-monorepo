@@ -59,11 +59,7 @@ export function GameCard({
               >
                 Delete
               </Button>
-              <Button
-                aria-label={`Start game ${game.id}`}
-                onClick={() => onStart(game)}
-                className="bg-yellow-500 text-gray-900 hover:bg-yellow-400"
-              >
+              <Button aria-label={`Start game ${game.id}`} onClick={() => onStart(game)}>
                 Start
               </Button>
             </>
@@ -80,12 +76,7 @@ export function GameCard({
               </Button>
             </>
           ) : (
-            <Button
-              variant="outline"
-              aria-label={`Join game ${game.id}`}
-              onClick={() => onJoin(game)}
-              className="bg-gray-700 text-white border-gray-600 hover:!bg-yellow-400/10 hover:!text-yellow-300 hover:border-yellow-400/50"
-            >
+            <Button aria-label={`Join game ${game.id}`} onClick={() => onJoin(game)}>
               Join
             </Button>
           )}

@@ -22,6 +22,7 @@ export function GameScreen() {
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [dice, setDice] = useState<Die[]>([]);
+  const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
   const [scoringOptions, setScoringOptions] = useState<ScoringOption[] | null>(null);
   const [playerNames, setPlayerNames] = useState<Record<number, string>>({});
@@ -111,6 +112,7 @@ export function GameScreen() {
       return;
     }
     setDice(data.dice);
+    setRollCount((c) => c + 1);
     setGameState((prev) => {
       if (!prev) return prev;
       if ((prev.rolls_remaining ?? 0) > 0) {
@@ -154,6 +156,9 @@ export function GameScreen() {
       prevPlayerIdRef.current = newState.current_player_id;
       setGameState(newState);
       setDice(newState.dice ?? []);
+      if (newState.status === 'finished') {
+        navigate(`/games/${gameId}/end`);
+      }
     }
     if (board) setScoreboard(board);
   }
@@ -173,6 +178,7 @@ export function GameScreen() {
         )}
         <DiceRoller
           dice={dice}
+          rollCount={rollCount}
           canRoll={canRoll}
           hasRolled={hasRolled}
           rollsRemaining={rollsRemaining}
