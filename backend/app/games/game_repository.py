@@ -36,8 +36,7 @@ class GameRepository:
     return self._to_game(row, [r[0] for r in player_rows])
 
   async def create(self, creator_id: int) -> Game:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'INSERT INTO games (creator_id) VALUES (%s)',
         (creator_id,),
@@ -48,12 +47,9 @@ class GameRepository:
         (game_id, creator_id),
       )
       return await self._fetch_game(cursor, game_id)
-    finally:
-      await cursor.close()
 
   async def end(self, game_id: int) -> Game | None:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'UPDATE games SET status = %s, ended_at = NOW() '
         'WHERE id = %s AND status = %s AND deleted_at IS NULL',
@@ -62,12 +58,9 @@ class GameRepository:
       if cursor.rowcount == 0:
         return None
       return await self._fetch_game(cursor, game_id)
-    finally:
-      await cursor.close()
 
   async def start(self, game_id: int, turn_id: int) -> Game | None:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'UPDATE games SET status = %s, started_at = NOW(), current_turn = %s '
         'WHERE id = %s AND status = %s AND deleted_at IS NULL',
@@ -76,12 +69,9 @@ class GameRepository:
       if cursor.rowcount == 0:
         return None
       return await self._fetch_game(cursor, game_id)
-    finally:
-      await cursor.close()
 
   async def get_by_id(self, game_id: int) -> Game | None:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT id FROM games WHERE id = %s AND deleted_at IS NULL',
         (game_id,),
@@ -89,34 +79,25 @@ class GameRepository:
       if await cursor.fetchone() is None:
         return None
       return await self._fetch_game(cursor, game_id)
-    finally:
-      await cursor.close()
 
   async def soft_delete(self, game_id: int) -> bool:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'UPDATE games SET deleted_at = NOW() '
         'WHERE id = %s AND status IN (%s, %s) AND deleted_at IS NULL',
         (game_id, GameStatus.LOBBY, GameStatus.FINISHED),
       )
       return cursor.rowcount > 0
-    finally:
-      await cursor.close()
 
   async def set_current_turn(self, game_id: int, turn_id: int) -> None:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'UPDATE games SET current_turn = %s WHERE id = %s AND deleted_at IS NULL',
         (turn_id, game_id),
       )
-    finally:
-      await cursor.close()
 
   async def list_all(self, status: GameStatus | None = None) -> list[Game]:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       query = (
         'SELECT id, status, creator_id, created_at, started_at, ended_at '
         'FROM games WHERE deleted_at IS NULL'
@@ -144,5 +125,3 @@ class GameRepository:
       for game_id, player_id in player_rows:
         players_by_game[game_id].append(player_id)
       return [self._to_game(row, players_by_game[row[0]]) for row in game_rows]
-    finally:
-      await cursor.close()

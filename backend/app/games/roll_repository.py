@@ -8,8 +8,7 @@ class RollRepository:
     self._conn = conn
 
   async def get_turn_info(self, game_id: int) -> tuple[int, int, int, int] | None:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT t.id, t.player_id, t.rolls_remaining, gp.saved_rolls '
         'FROM games g '
@@ -19,20 +18,15 @@ class RollRepository:
         (game_id,),
       )
       return await cursor.fetchone()
-    finally:
-      await cursor.close()
 
   async def get_dice_values(self, turn_id: int) -> list[int]:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT value FROM turn_dice WHERE turn_id = %s ORDER BY die_index',
         (turn_id,),
       )
       rows = await cursor.fetchall()
       return [r[0] for r in rows]
-    finally:
-      await cursor.close()
 
   async def execute(
     self,
@@ -42,8 +36,7 @@ class RollRepository:
     rolls_remaining: int,
     kept_dice: list[int],
   ) -> list[Die]:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       kept_set = set(kept_dice)
       if kept_set:
         kept_indices = sorted(kept_set)
@@ -76,5 +69,3 @@ class RollRepository:
       )
       rows = await cursor.fetchall()
       return [Die(index=r[0], value=r[1], kept=bool(r[2])) for r in rows]
-    finally:
-      await cursor.close()

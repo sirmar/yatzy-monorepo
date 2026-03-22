@@ -10,8 +10,7 @@ class GameStateRepository:
     self._conn = conn
 
   async def get(self, game_id: int) -> GameState | None:
-    cursor = await self._conn.cursor()
-    try:
+    async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT status, current_turn FROM games WHERE id = %s AND deleted_at IS NULL',
         (game_id,),
@@ -72,5 +71,3 @@ class GameStateRepository:
         rolls_remaining=turn_row[1],
         saved_rolls=turn_row[2],
       )
-    finally:
-      await cursor.close()
