@@ -6,6 +6,7 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Packages: FastAPI (with Pydantic and aiomysql) and MySQL. No ORM.
 - Dev packages: Ruff for lint and code formatting. Ty for static type checking.
 - Always commit and push using the `/commit` skill — never raw `git commit`/`git push`
+- Never run `/commit` automatically — only commit when explicitly asked
 - Always build and run using Docker
 - Use `make` targets for all dev workflow — never raw `docker compose` or `uvicorn` commands. Key targets: `dev` (hot reload), `start` (prod), `build`, `rebuild`, `stop`, `logs`, `ps`, `clean`, `shell`, `db`, `check`, `release-patch/minor/major`.
 - Use uv for package management
