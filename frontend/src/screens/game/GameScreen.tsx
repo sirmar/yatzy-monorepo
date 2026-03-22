@@ -169,10 +169,7 @@ export function GameScreen() {
   return (
     <div className="min-h-screen bg-gray-950 p-4">
       <div className="max-w-4xl mx-auto flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Yatzy</h1>
-          <p className="text-gray-400 text-sm">Game #{gameId}</p>
-        </div>
+        <h1 className="text-2xl font-bold text-white">Game #{gameId}</h1>
         {currentPlayerName && (
           <p className="text-white text-lg font-semibold">{currentPlayerName}'s turn</p>
         )}

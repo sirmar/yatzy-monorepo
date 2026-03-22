@@ -4,9 +4,17 @@ services:
     build:
       context: .
       target: dev
+    command: pnpm dev
+    ports:
+      - '5173:5173'
+    environment:
+      - API_PROXY_TARGET=http://backend:8000
     volumes:
       - .:/app
       - /app/node_modules
+    networks:
+      - yatzy
+      - default
 
   app:
     build:

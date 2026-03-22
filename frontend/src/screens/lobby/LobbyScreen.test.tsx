@@ -202,19 +202,6 @@ describe('LobbyScreen', () => {
     });
   });
 
-  describe('changing player', () => {
-    it('shows the current player name', async () => {
-      whenRendered();
-      await thenPlayerNameIsVisible('Alice');
-    });
-
-    it('navigates to player screen when Change is clicked', async () => {
-      whenRendered();
-      await whenChangePlayerClicked();
-      await thenNavigatedTo('/');
-    });
-  });
-
   describe('leaving a game', () => {
     it('shows error toast when leave fails', async () => {
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2, 1], created_at: '' }]);
@@ -238,14 +225,6 @@ describe('LobbyScreen', () => {
       whenRendered();
       await whenLeaveClicked(10);
       await thenButtonIsVisible('Join game 10');
-    });
-  });
-
-  describe('auto-redirect', () => {
-    it('redirects to active game if player is already in one', async () => {
-      givenGames([{ id: 99, status: 'active', creator_id: 1, player_ids: [1, 2], created_at: '' }]);
-      whenRendered();
-      await thenNavigatedTo('/games/99');
     });
   });
 
@@ -367,10 +346,6 @@ describe('LobbyScreen', () => {
 
   async function whenLeaveClicked(gameId: number) {
     await userEvent.click(await screen.findByRole('button', { name: `Leave game ${gameId}` }));
-  }
-
-  async function whenChangePlayerClicked() {
-    await userEvent.click(await screen.findByRole('button', { name: /change player/i }));
   }
 
   async function thenGameIsVisible(gameId: number) {

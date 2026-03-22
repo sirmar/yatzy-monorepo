@@ -1,6 +1,5 @@
 import { apiClient } from '@/api';
 import type { components } from '@/api';
-import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { usePolling } from '@/hooks/usePolling';
@@ -29,20 +28,9 @@ export function LobbyScreen() {
 
   const fetchGames = useCallback(async () => {
     if (!player) return;
-
-    const [{ data: lobbyGames }, { data: activeGames }] = await Promise.all([
-      apiClient.GET('/games', { params: { query: { status: 'lobby' } } }),
-      apiClient.GET('/games', { params: { query: { status: 'active' } } }),
-    ]);
-
-    const active = activeGames?.find((g) => g.player_ids.includes(player.id));
-    if (active) {
-      navigate(`/games/${active.id}`);
-      return;
-    }
-
-    setGames(lobbyGames ?? []);
-  }, [player, navigate]);
+    const { data } = await apiClient.GET('/games', { params: { query: { status: 'lobby' } } });
+    setGames(data ?? []);
+  }, [player]);
 
   useEffect(() => {
     fetchGames();
@@ -121,19 +109,6 @@ export function LobbyScreen() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Lobby</h1>
           <CreateGameButton onCreate={handleCreate} loading={creating} />
-        </div>
-        <div className="flex items-center justify-between text-sm text-gray-400">
-          <span>
-            Playing as <span className="text-white font-medium">{player?.name}</span>
-          </span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-gray-500 hover:text-white"
-            onClick={() => navigate('/')}
-          >
-            Change player
-          </Button>
         </div>
         <GameList
           games={games}

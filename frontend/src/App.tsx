@@ -1,14 +1,21 @@
+import { NavBar } from '@/components/NavBar';
 import { Toaster } from '@/components/ui/toaster';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { EndScreen } from '@/screens/end/EndScreen';
 import { GameScreen } from '@/screens/game/GameScreen';
 import { LobbyScreen } from '@/screens/lobby/LobbyScreen';
 import { PlayerScreen } from '@/screens/player/PlayerScreen';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, Routes } from 'react-router-dom';
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedLayout() {
   const { player } = usePlayer();
-  return player ? <>{children}</> : <Navigate to="/" replace />;
+  if (!player) return <Navigate to="/" replace />;
+  return (
+    <>
+      <NavBar />
+      <Outlet />
+    </>
+  );
 }
 
 export default function App() {
@@ -16,30 +23,11 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<PlayerScreen />} />
-        <Route
-          path="/lobby"
-          element={
-            <ProtectedRoute>
-              <LobbyScreen />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/games/:gameId"
-          element={
-            <ProtectedRoute>
-              <GameScreen />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/games/:gameId/end"
-          element={
-            <ProtectedRoute>
-              <EndScreen />
-            </ProtectedRoute>
-          }
-        />
+        <Route element={<ProtectedLayout />}>
+          <Route path="/lobby" element={<LobbyScreen />} />
+          <Route path="/games/:gameId" element={<GameScreen />} />
+          <Route path="/games/:gameId/end" element={<EndScreen />} />
+        </Route>
       </Routes>
       <Toaster />
     </>
