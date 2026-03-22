@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+playwright-report
+.git
+.gitignore
+*.local
+.env*
+e2e
+PLAN.md
+README.md
