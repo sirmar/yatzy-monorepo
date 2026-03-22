@@ -1,10 +1,16 @@
-name: CI
+name: Frontend CI
 
 on:
   push:
     branches: ['**']
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
   pull_request:
     branches: ['**']
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend.yml'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -26,12 +32,12 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: frontend
           target: dev
           push: true
-          tags: ghcr.io/${{ github.repository }}:dev-${{ github.sha }}
-          cache-from: type=gha,scope=dev
-          cache-to: type=gha,mode=max,scope=dev
+          tags: ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
+          cache-from: type=gha,scope=frontend-dev
+          cache-to: type=gha,mode=max,scope=frontend-dev
 
   lint:
     needs: build
@@ -44,9 +50,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          docker pull ghcr.io/${{ github.repository }}:dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:dev-${{ github.sha }} frontend-dev:latest
-      - run: make lint
+          docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev:latest
+      - run: cd frontend && make lint
 
   types:
     needs: build
@@ -59,9 +65,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          docker pull ghcr.io/${{ github.repository }}:dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:dev-${{ github.sha }} frontend-dev:latest
-      - run: make types
+          docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev:latest
+      - run: cd frontend && make types
 
   unit:
     needs: build
@@ -74,12 +80,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-          docker pull ghcr.io/${{ github.repository }}:dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:dev-${{ github.sha }} frontend-dev:latest
-      - run: make unit
+          docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev:latest
+      - run: cd frontend && make unit
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: coverage
+          path: frontend/coverage
           include-hidden-files: true
-
