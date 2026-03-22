@@ -25,5 +25,26 @@ export default defineConfig({
     css: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
     env: { VITE_API_BASE_URL: 'http://localhost/api' },
+    coverage: {
+      provider: 'v8',
+      include: ['src/**'],
+      exclude: [
+        'src/api/schema.ts',
+        'src/main.tsx',
+        'src/App.tsx',
+        'src/components/ui/**',
+        'src/hooks/use-toast.ts',
+        'src/test/**',
+        'src/**/*.test.*',
+        'src/vite-env.d.ts',
+      ],
+      reporter: ['text', 'html', 'json-summary'],
+      thresholds: {
+        statements: 90,
+        branches: 80,
+        functions: 90,
+        lines: 90,
+      },
+    },
   },
 });
