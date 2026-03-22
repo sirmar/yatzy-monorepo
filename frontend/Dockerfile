@@ -1,12 +1,15 @@
-FROM node:22-alpine AS dev
+FROM node:22-slim AS deps
 RUN npm install -g pnpm
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm install --frozen-lockfile
+
+FROM deps AS dev
 COPY . .
 
-FROM dev AS builder
+FROM deps AS builder
+COPY . .
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
     pnpm build
 
@@ -15,10 +18,6 @@ COPY --from=builder /app/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 
-FROM mcr.microsoft.com/playwright:v1.58.2-noble AS e2e
-RUN npm install -g pnpm
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+FROM deps AS e2e
+RUN pnpm exec playwright install chromium --with-deps
 COPY . .
