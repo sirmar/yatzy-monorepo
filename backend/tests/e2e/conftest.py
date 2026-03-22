@@ -9,8 +9,7 @@ os.environ.update({
 })
 
 from app.main import app, database  # noqa: E402
-from app.database import execute_sql_script  # noqa: E402
-import glob  # noqa: E402
+from app.database import run_migrations, _MIGRATIONS_TABLE  # noqa: E402
 import pytest  # noqa: E402
 import aiomysql  # noqa: E402
 from httpx import AsyncClient, ASGITransport  # noqa: E402
@@ -27,6 +26,15 @@ async def _connect() -> aiomysql.Connection:
   )
 
 
+async def _list_tables(cursor: aiomysql.Cursor) -> list[str]:
+  await cursor.execute(
+    'SELECT table_name FROM information_schema.tables '
+    'WHERE table_schema = %s AND table_type = \'BASE TABLE\'',
+    (os.environ['DB_NAME'],),
+  )
+  return [row[0] for row in await cursor.fetchall()]
+
+
 @pytest.fixture(autouse=True)
 async def connect_database():
   await database.connect()
@@ -35,14 +43,16 @@ async def connect_database():
 
 
 @pytest.fixture(scope='session', autouse=True)
-async def run_migrations():
+async def migrate():
   conn = await _connect()
   cursor = await conn.cursor()
-  migration_files = sorted(glob.glob('migrations/*.sql'))
-  for path in migration_files:
-    with open(path) as f:
-      sql = f.read()
-    await execute_sql_script(cursor, sql)
+  tables = await _list_tables(cursor)
+  if tables:
+    await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
+    quoted = ', '.join(f'`{t}`' for t in tables)
+    await cursor.execute(f'DROP TABLE IF EXISTS {quoted}')
+    await cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
+  await run_migrations(cursor)
   await cursor.close()
   conn.close()
 
@@ -52,16 +62,12 @@ async def truncate_tables():
   yield
   conn = await _connect()
   cursor = await conn.cursor()
-  await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
-  await cursor.execute(
-    'SELECT table_name FROM information_schema.tables '
-    'WHERE table_schema = %s AND table_type = \'BASE TABLE\'',
-    (os.environ['DB_NAME'],),
-  )
-  tables = await cursor.fetchall()
-  for (table,) in tables:
-    await cursor.execute(f'TRUNCATE TABLE `{table}`')
-  await cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
+  tables = [t for t in await _list_tables(cursor) if t != _MIGRATIONS_TABLE]
+  if tables:
+    await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
+    for table in tables:
+      await cursor.execute(f'TRUNCATE TABLE `{table}`')
+    await cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
   await cursor.close()
   conn.close()
 
