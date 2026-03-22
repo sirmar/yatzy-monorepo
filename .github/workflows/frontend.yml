@@ -51,8 +51,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev:latest
-      - run: cd frontend && make lint
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev
+      - run: make frontend/lint
 
   types:
     needs: build
@@ -66,8 +66,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev:latest
-      - run: cd frontend && make types
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev
+      - run: make frontend/types
 
   unit:
     needs: build
@@ -81,10 +81,42 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev:latest
-      - run: cd frontend && make unit
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev
+      - run: make frontend/unit
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
           path: frontend/coverage
           include-hidden-files: true
+
+  coverage:
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+      - name: Write coverage summary
+        run: |
+          echo '## Coverage' >> $GITHUB_STEP_SUMMARY
+          jq -r '
+            .total |
+            "| Metric | % |\n|--------|---|\n| Statements | \(.statements.pct)% |\n| Branches | \(.branches.pct)% |\n| Functions | \(.functions.pct)% |\n| Lines | \(.lines.pct)% |"
+          ' coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
+
+  e2e:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - run: |
+          docker pull ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }}
+          docker tag ghcr.io/${{ github.repository }}:frontend-dev-${{ github.sha }} frontend-dev
+      - run: make frontend/e2e

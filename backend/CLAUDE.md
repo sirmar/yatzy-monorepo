@@ -1,3 +1,6 @@
+**Monorepo**
+This is the `backend/` package in the Yatzy monorepo. The frontend lives at `../frontend/`.
+
 **Goal**
 A REST API for a Yatzy game. It should keep track of players, games, dice, score and so on.
 
@@ -5,10 +8,7 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Language: Python 3.14
 - Packages: FastAPI (with Pydantic and aiomysql) and MySQL. No ORM.
 - Dev packages: Ruff for lint and code formatting. Ty for static type checking.
-- Always commit and push using the `/commit` skill — never raw `git commit`/`git push`
-- Never run `/commit` automatically — only commit when explicitly asked
-- Always build and run using Docker
-- Use `make` targets for all dev workflow — never raw `docker compose` or `uvicorn` commands. Key targets: `dev` (hot reload), `start` (prod), `build`, `rebuild`, `stop`, `logs`, `ps`, `clean`, `shell`, `db`, `check`, `release-patch/minor/major`.
+- Always build and run using Docker via `make` targets from the repo root — never raw `docker compose` or `uvicorn` commands. Key targets: `backend/dev`, `backend/shell`, `backend/check`, `backend/test`, `backend/lint`, `backend/types`, `backend/format`, `backend/security`, `backend/migrate`, `backend/db`.
 - Use uv for package management
 - Configure project using pyproject.toml
 - Organise `app/` into domain subdirectories: `players/`, `games/`, `scoring/`. Infrastructure files (`config.py`, `database.py`, `main.py`) stay at the root. Tests stay flat under `tests/unit/` and `tests/e2e/`.
@@ -24,7 +24,6 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Unit test business logic (score calculation, guard rules). Do not unit test repositories — their correctness is verified by e2e tests against a real database.
 - E2e tests use a separate test database.
 - Use PyTest for both unit tests and end-to-end tests
-- Write tests first
 - Provision database using a separate Docker container
 - Unit tests follow BDD style: a test class per subject, `setup_method` for mock setup, then test methods, then shared `GivenX`, `WhenX`, `ThenX` methods in that order. Results are stored as `self` fields, not passed as parameters. The specific values being tested must appear in the test method body as arguments to Given/When/Then — not hardcoded inside the helpers. Example:
   ```python
@@ -49,9 +48,7 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
   ```
 
 **Documentation**
-- Avoid comments in code
 - Swagger for API documentation
-- README.md with repository purpose and developer focused information.
 
 **Interface**
 - REST API with json requests and responses
@@ -69,12 +66,3 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Roll dice including which to keep and which to reroll. Dice rolling is per game and player.
 - Game state endpoint for polling.
 - No auth management at this point. Players should be separate from user management.
-
-**Game lifecycle**
-- A player creates a game. Other players list and join games. When enough has joined, the game is started.
-- Only creator can start game.
-
-**Domain**
-- Rules: Swedish Maxi Yatzy (6 dice, up to 3 rolls per turn, save unused rolls for later). Bonus is 100 points at 84 or more. Yatzy is also worth 100.
-- Categories: standard Swedish Maxi Yatzy scoring categories
-- 1 to 6 players per game, turn-based

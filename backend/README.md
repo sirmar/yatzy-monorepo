@@ -1,22 +1,15 @@
-# Purpose
-The purpose of this project is not to write another yatzy service but to practice using AI-assisted
-  development. All code, infrastructure and commits will be done with the AI tool. The only thing written directly by me is this paragraph as well as the CLAUDE.md file.
-
 # Yatzy Backend
 
-REST API backend for a Yatzy game. Tracks players, games, dice rolls and scores. Implements Swedish Maxi Yatzy rules (6 dice, up to 3 rolls per turn, unused rolls can be saved).
+REST API for a Yatzy game. Tracks players, games, dice rolls and scores. Implements Swedish Maxi Yatzy rules (6 dice, up to 3 rolls per turn, unused rolls can be saved).
 
 Built with FastAPI + MySQL (no ORM), Python 3.14, Docker.
 
-## Prerequisites
+## Getting started
 
-- [Docker](https://docs.docker.com/get-docker/) (includes Docker Compose)
-
-## Running the service
+From the repo root:
 
 ```bash
-cp .env.example .env
-docker compose up
+make backend/dev
 ```
 
 - API: http://localhost:8000
@@ -24,12 +17,18 @@ docker compose up
 
 ## Development
 
+All commands run from the repo root.
+
 ```bash
-make format     # auto-fix formatting and lint issues
-make lint       # check formatting and lint
-make types      # type check
-make security   # security scan
-make unit       # unit tests
-make e2e        # e2e tests (starts and stops db-test automatically)
-make check      # lint + types + security + all tests
+make backend/format     # auto-fix formatting and lint issues
+make backend/lint       # check formatting and lint
+make backend/types      # type check
+make backend/security   # security scan
+make backend/unit       # unit tests
+make backend/e2e        # e2e tests (starts and stops db-test automatically)
+make backend/check      # lint + types + security + all tests
+
+make backend/shell      # open a shell in the backend container
+make backend/db         # open a MySQL shell
+make backend/migrate    # run database migrations
 ```

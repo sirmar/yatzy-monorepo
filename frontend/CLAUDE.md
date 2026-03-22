@@ -1,3 +1,6 @@
+**Monorepo**
+This is the `frontend/` package in the Yatzy monorepo. The backend lives at `../backend/`.
+
 **Goal**
 A web frontend for the Yatzy REST API. Allows players to create and join games, roll dice, fill in scorecards and see results.
 
@@ -10,13 +13,11 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 - API client: generated from the backend's OpenAPI schema (backend runs at http://localhost:8000, Swagger at /docs)
 - Package manager: pnpm
 - Linting and formatting: Biome
-- Build: multi-stage Dockerfile (Node to build, Nginx to serve static files)
+- Build: multi-stage Dockerfile (`dev` for Node/pnpm, `production` for Nginx, `e2e` for Playwright)
 
 **Docker**
-- Multi-stage Dockerfile: Node stage builds the Vite app, Nginx stage serves the static output
-- All local development commands run via Docker
-- Nginx proxies /api requests to the backend (http://backend:8000) to avoid CORS
-- Use docker compose for local development with frontend and backend running together
+- Nginx serves the production build and proxies `/api/` requests to `http://backend:8000` to avoid CORS
+- All dev workflow runs via `make` targets from the repo root
 
 **Folder structure**
 - `src/api/` — generated API client and schema
@@ -37,7 +38,6 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 - Unit test pure logic (score calculation helpers, formatting) with Vitest
 - Component tests with React Testing Library + jsdom: render components, interact with them and assert what is visible. Mock API calls. This is the primary way to verify component behaviour.
 - Smoke tests with Playwright for the real browser: a minimal suite that verifies the app loads and the happy path works in the target environment. Not a substitute for component tests.
-- Write tests first
 - Component tests follow BDD style using `describe`/`it`/`beforeEach` with `givenX`, `whenX`, `thenX` helper functions scoped inside the `describe` block. Example:
   ```typescript
   describe('ScoreCard', () => {
@@ -56,19 +56,15 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
   })
   ```
 
-**Documentation**
-- Avoid comments in code
-- README.md with repository purpose and developer focused information
-
 **Code style**
 - Enforced by Biome
 
 **API**
 - Backend repo: ../backend
 - Base URL: http://localhost:8000
-- Regenerate the API client from the OpenAPI schema whenever the backend changes: pnpm dlx openapi-typescript http://localhost:8000/openapi.json -o src/api/schema.ts
+- Regenerate the API client from the OpenAPI schema whenever the backend changes: `make frontend/schema` from the repo root (starts the backend if needed)
 
-**Game screens**
+**Screens**
 - Player creation / selection
 - Lobby: list open games, create game, join game
 - Game: dice rolling, scorecard, scoring options, game state polling

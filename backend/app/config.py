@@ -5,11 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
   model_config = SettingsConfigDict(env_file='.env')
 
-  db_host: str = 'db'
-  db_port: int = 3306
-  db_user: str = 'root'
-  db_password: str = 'root'
-  db_name: str = 'yatzy'
+  database_url: str = 'mysql://root:root@db:3306/yatzy'
 
 
 @lru_cache

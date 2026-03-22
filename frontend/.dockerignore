@@ -6,6 +6,5 @@ playwright-report
 .gitignore
 *.local
 .env*
-e2e
 PLAN.md
 README.md

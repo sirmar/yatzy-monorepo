@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from urllib.parse import urlparse
 import aiomysql
 from app.config import Settings
 
@@ -9,12 +10,13 @@ class Database:
     self._pool: aiomysql.Pool | None = None
 
   async def connect(self) -> None:
+    url = urlparse(self._settings.database_url)
     self._pool = await aiomysql.create_pool(
-      host=self._settings.db_host,
-      port=self._settings.db_port,
-      user=self._settings.db_user,
-      password=self._settings.db_password,
-      db=self._settings.db_name,
+      host=url.hostname,
+      port=url.port or 3306,
+      user=url.username,
+      password=url.password,
+      db=url.path.lstrip('/'),
       autocommit=True,
     )
 

@@ -1,14 +1,10 @@
 import asyncio
 import os
 import subprocess
+from urllib.parse import urlparse
 
-os.environ.update({
-  'DB_HOST': os.environ.get('TEST_DB_HOST', '127.0.0.1'),
-  'DB_PORT': os.environ.get('TEST_DB_PORT', '3307'),
-  'DB_USER': os.environ.get('TEST_DB_USER', 'root'),
-  'DB_PASSWORD': os.environ.get('TEST_DB_PASSWORD', 'test'),
-  'DB_NAME': os.environ.get('TEST_DB_NAME', 'yatzy_test'),
-})
+TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL', 'mysql://root:test@127.0.0.1:3307/yatzy_test')
+os.environ['DATABASE_URL'] = TEST_DATABASE_URL
 
 from app.main import app, database  # noqa: E402
 import pytest  # noqa: E402
@@ -16,22 +12,27 @@ import aiomysql  # noqa: E402
 from httpx import AsyncClient, ASGITransport  # noqa: E402
 
 
+def _parse_url(url: str) -> dict:
+  parsed = urlparse(url)
+  return {
+    'host': parsed.hostname,
+    'port': parsed.port or 3306,
+    'user': parsed.username,
+    'password': parsed.password,
+    'db': parsed.path.lstrip('/'),
+  }
+
+
 async def _connect() -> aiomysql.Connection:
-  return await aiomysql.connect(
-    host=os.environ['DB_HOST'],
-    port=int(os.environ['DB_PORT']),
-    user=os.environ['DB_USER'],
-    password=os.environ['DB_PASSWORD'],
-    db=os.environ['DB_NAME'],
-    autocommit=True,
-  )
+  return await aiomysql.connect(**_parse_url(TEST_DATABASE_URL), autocommit=True)
 
 
 async def _list_tables(cursor: aiomysql.Cursor) -> list[str]:
+  db = _parse_url(TEST_DATABASE_URL)['db']
   await cursor.execute(
     'SELECT table_name FROM information_schema.tables '
     'WHERE table_schema = %s AND table_type = \'BASE TABLE\'',
-    (os.environ['DB_NAME'],),
+    (db,),
   )
   return [row[0] for row in await cursor.fetchall()]
 
@@ -56,13 +57,9 @@ async def migrate():
   await cursor.close()
   conn.close()
 
-  db_url = (
-    f"mysql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}"
-    f"@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
-  )
   await asyncio.to_thread(
     subprocess.run,
-    ['dbmate', '--url', db_url, '--migrations-dir', 'migrations', '--no-dump-schema', 'up'],
+    ['dbmate', '--url', TEST_DATABASE_URL, '--migrations-dir', 'migrations', '--no-dump-schema', 'up'],
     check=True,
   )
 

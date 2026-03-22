@@ -51,8 +51,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev:latest
-      - run: cd backend && make lint
+          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+      - run: make backend/lint
 
   types:
     needs: build
@@ -66,8 +66,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev:latest
-      - run: cd backend && make types
+          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+      - run: make backend/types
 
   security:
     needs: build
@@ -81,8 +81,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev:latest
-      - run: cd backend && make security
+          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+      - run: make backend/security
 
   unit:
     needs: build
@@ -96,8 +96,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev:latest
-      - run: cd backend && make unit
+          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+      - run: make backend/unit
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-unit
@@ -112,12 +112,6 @@ jobs:
         shard: [0, 1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
-      - name: Start MySQL
-        run: |
-          sudo sed -i 's/bind-address.*/bind-address = 0.0.0.0/' /etc/mysql/mysql.conf.d/mysqld.cnf
-          sudo systemctl start mysql
-          mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS yatzy_test;"
-          mysql -uroot -proot -e "CREATE USER IF NOT EXISTS 'test'@'%' IDENTIFIED BY 'test'; GRANT ALL ON yatzy_test.* TO 'test'@'%';"
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -125,8 +119,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - run: |
           docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev:latest
-      - run: cd backend && docker compose run --rm -e TEST_DB_HOST=host.docker.internal -e TEST_DB_PORT=3306 -e TEST_DB_USER=test -e TEST_DB_PASSWORD=test dev uv run pytest tests/e2e/ -v --cov=app --shard-id=${{ matrix.shard }} --num-shards=5
+          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+      - run: make backend/e2e SHARD_ID=${{ matrix.shard }} NUM_SHARDS=5
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-e2e-${{ matrix.shard }}
@@ -145,13 +139,16 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: coverage-unit
-          path: coverage-unit
+          path: backend/coverage-unit
       - uses: actions/download-artifact@v4
         with:
           pattern: coverage-e2e-*
-          path: coverage-e2e
-      - run: coverage combine coverage-unit/.coverage coverage-e2e/*/.coverage && coverage report --show-missing --fail-under=90
+          path: backend/coverage-e2e
+      - run: |
+          cd backend
+          coverage combine coverage-unit/.coverage coverage-e2e/*/.coverage
+          coverage report --show-missing --fail-under=90
       - name: Write coverage summary
         run: |
           echo '## Coverage' >> $GITHUB_STEP_SUMMARY
-          coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+          cd backend && coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
