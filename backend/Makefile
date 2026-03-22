@@ -1,4 +1,4 @@
-.PHONY: format lint types security unit e2e test check network start dev build rebuild stop logs ps clean db shell release-major release-minor release-patch
+.PHONY: format lint types security unit e2e test check network migrate start dev build rebuild stop logs ps clean db shell release-major release-minor release-patch
 
 network:
 	docker network inspect yatzy >/dev/null 2>&1 || docker network create yatzy
@@ -8,6 +8,9 @@ build: network
 
 rebuild: network
 	docker compose up app db -d --wait --build
+
+migrate: network
+	docker compose run --rm migrate
 
 start: network
 	docker compose up app db -d --wait

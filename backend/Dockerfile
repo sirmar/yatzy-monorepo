@@ -1,6 +1,7 @@
 FROM python:3.14-slim AS base
 WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=ghcr.io/amacneil/dbmate /usr/local/bin/dbmate /usr/local/bin/dbmate
 COPY pyproject.toml uv.lock ./
 
 FROM base AS dev

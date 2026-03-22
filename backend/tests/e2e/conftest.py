@@ -1,4 +1,6 @@
+import asyncio
 import os
+import subprocess
 
 os.environ.update({
   'DB_HOST': os.environ.get('TEST_DB_HOST', '127.0.0.1'),
@@ -9,7 +11,6 @@ os.environ.update({
 })
 
 from app.main import app, database  # noqa: E402
-from app.database import run_migrations, _MIGRATIONS_TABLE  # noqa: E402
 import pytest  # noqa: E402
 import aiomysql  # noqa: E402
 from httpx import AsyncClient, ASGITransport  # noqa: E402
@@ -50,11 +51,20 @@ async def migrate():
   if tables:
     await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
     quoted = ', '.join(f'`{t}`' for t in tables)
-    await cursor.execute(f'DROP TABLE IF EXISTS {quoted}')
+    await cursor.execute(f'DROP TABLE IF EXISTS {quoted}')  # nosec B608
     await cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
-  await run_migrations(cursor)
   await cursor.close()
   conn.close()
+
+  db_url = (
+    f"mysql://{os.environ['DB_USER']}:{os.environ['DB_PASSWORD']}"
+    f"@{os.environ['DB_HOST']}:{os.environ['DB_PORT']}/{os.environ['DB_NAME']}"
+  )
+  await asyncio.to_thread(
+    subprocess.run,
+    ['dbmate', '--url', db_url, '--migrations-dir', 'migrations', '--no-dump-schema', 'up'],
+    check=True,
+  )
 
 
 @pytest.fixture(autouse=True)
@@ -62,7 +72,7 @@ async def truncate_tables():
   yield
   conn = await _connect()
   cursor = await conn.cursor()
-  tables = [t for t in await _list_tables(cursor) if t != _MIGRATIONS_TABLE]
+  tables = await _list_tables(cursor)
   if tables:
     await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
     for table in tables:

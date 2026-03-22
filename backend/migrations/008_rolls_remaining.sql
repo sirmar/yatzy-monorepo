@@ -1,2 +1,0 @@
-ALTER TABLE turns
-  CHANGE COLUMN rolls_used rolls_remaining TINYINT UNSIGNED NOT NULL DEFAULT 3;

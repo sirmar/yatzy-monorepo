@@ -44,6 +44,18 @@ services:
       TEST_DB_PASSWORD: test
       TEST_DB_NAME: yatzy_test
 
+  migrate:
+    image: ghcr.io/amacneil/dbmate
+    command: ['--migrations-dir', '/db/migrations', '--no-dump-schema', 'up']
+    volumes:
+      - ./migrations:/db/migrations
+    env_file:
+      - path: .env
+        required: false
+    depends_on:
+      db:
+        condition: service_healthy
+
   app-dev:
     image: backend-dev
     build:
@@ -79,6 +91,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     networks:
       default:
       yatzy:

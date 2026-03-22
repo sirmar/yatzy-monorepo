@@ -13,7 +13,6 @@ database = Database(get_settings())
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
   await database.connect()
-  await database.run_migrations()
   yield
   await database.disconnect()
 

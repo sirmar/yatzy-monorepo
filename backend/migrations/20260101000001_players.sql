@@ -1,6 +1,9 @@
-CREATE TABLE IF NOT EXISTS players (
+-- migrate:up
+CREATE TABLE players (
   id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   name       VARCHAR(64) NOT NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   deleted_at DATETIME DEFAULT NULL
 );
+
+-- migrate:down

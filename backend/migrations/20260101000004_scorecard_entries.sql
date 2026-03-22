@@ -1,4 +1,5 @@
-CREATE TABLE IF NOT EXISTS scorecard_entries (
+-- migrate:up
+CREATE TABLE scorecard_entries (
   id         INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   game_id    INT UNSIGNED NOT NULL,
   player_id  INT UNSIGNED NOT NULL,
@@ -10,3 +11,5 @@ CREATE TABLE IF NOT EXISTS scorecard_entries (
   FOREIGN KEY (game_id)   REFERENCES games(id),
   FOREIGN KEY (player_id) REFERENCES players(id)
 );
+
+-- migrate:down
