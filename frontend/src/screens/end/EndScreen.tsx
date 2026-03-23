@@ -3,17 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { useErrorToast } from '@/hooks/use-toast';
 
 type PlayerScore = components['schemas']['PlayerScore'];
-
-function errorToast(title: string) {
-  toast({ variant: 'destructive', title, description: 'Please try again.' });
-}
 
 export function EndScreen() {
   const { gameId } = useParams<{ gameId: string }>();
   const navigate = useNavigate();
+  const errorToast = useErrorToast();
 
   const [finalScores, setFinalScores] = useState<PlayerScore[]>([]);
   const [winnerIds, setWinnerIds] = useState<number[]>([]);
@@ -40,17 +37,12 @@ export function EndScreen() {
         setWinnerIds(state.winner_ids ?? []);
       })
       .catch(() => errorToast('Failed to load results'));
-  }, [gameId, navigate]);
+  }, [gameId, navigate, errorToast]);
 
   const sorted = [...finalScores].sort((a, b) => b.total - a.total);
 
-  const ranked = sorted.map((score, index) => {
-    const rank = index === 0 ? 1 : sorted[index - 1].total === score.total ? 0 : index + 1;
-    return { ...score, rank };
-  });
-
   let rankCounter = 1;
-  const withRanks = ranked.map((score, index) => {
+  const withRanks = sorted.map((score, index) => {
     if (index === 0) {
       rankCounter = 1;
     } else if (sorted[index - 1].total !== score.total) {
