@@ -1,8 +1,6 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
@@ -15,6 +13,11 @@
     "indentWidth": 2,
     "lineWidth": 100
   },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
+  },
   "javascript": {
     "formatter": {
       "quoteStyle": "single",
@@ -22,17 +25,18 @@
     }
   },
   "files": {
-    "ignore": [
-      "node_modules",
-      ".pnpm-store",
-      "dist",
-      "coverage",
-      ".vite",
-      "src/api/schema.ts",
-      "src/components/ui",
-      "src/hooks/use-toast.ts",
-      "test-results",
-      "playwright-report"
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.pnpm-store",
+      "!**/dist",
+      "!**/coverage",
+      "!**/.vite",
+      "!**/src/api/schema.ts",
+      "!**/src/components/ui",
+      "!**/src/hooks/use-toast.ts",
+      "!**/test-results",
+      "!**/playwright-report"
     ]
   }
 }

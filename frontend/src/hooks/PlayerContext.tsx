@@ -1,5 +1,5 @@
-import type { components } from '@/api';
 import { createContext, useContext, useState } from 'react';
+import type { components } from '@/api';
 
 type Player = components['schemas']['Player'];
 

@@ -1,8 +1,8 @@
+import { Users } from 'lucide-react';
 import type { components } from '@/api';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Users } from 'lucide-react';
 
 type Game = components['schemas']['Game'];
 

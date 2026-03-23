@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import { apiClient } from '@/api';
 import {
   DropdownMenu,
@@ -7,8 +9,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { usePolling } from '@/hooks/usePolling';
-import { useCallback, useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
 
 const activeClass = 'text-yellow-400';
 const inactiveClass = 'text-gray-400 hover:text-white transition-colors';

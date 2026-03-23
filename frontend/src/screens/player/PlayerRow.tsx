@@ -1,8 +1,8 @@
+import { Check, Pencil, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
 import type { components } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, Pencil, Trash2, X } from 'lucide-react';
-import { useState } from 'react';
 
 type Player = components['schemas']['Player'];
 

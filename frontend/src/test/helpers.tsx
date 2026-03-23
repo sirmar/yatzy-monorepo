@@ -1,12 +1,12 @@
-import { Toaster } from '@/components/ui/toaster';
-import { PlayerProvider } from '@/hooks/PlayerContext';
 import { type RenderOptions, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from '@/components/ui/toaster';
+import { PlayerProvider } from '@/hooks/PlayerContext';
 
 function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <BrowserRouter>
       <PlayerProvider>{children}</PlayerProvider>
       <Toaster />
     </BrowserRouter>

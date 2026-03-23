@@ -1,9 +1,9 @@
-import { apiClient } from '@/api';
-import type { components } from '@/api';
-import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import type { components } from '@/api';
+import { apiClient } from '@/api';
+import { Button } from '@/components/ui/button';
+import { toast } from '@/hooks/use-toast';
 
 type PlayerScore = components['schemas']['PlayerScore'];
 

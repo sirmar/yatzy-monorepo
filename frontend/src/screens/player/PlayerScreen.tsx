@@ -1,10 +1,10 @@
-import { apiClient } from '@/api';
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { components } from '@/api';
+import { apiClient } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { CreatePlayerForm } from './CreatePlayerForm';
 import { PlayerList } from './PlayerList';
 
