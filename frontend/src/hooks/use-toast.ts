@@ -177,7 +177,7 @@ function useToast() {
         listeners.splice(index, 1);
       }
     };
-  }, [state]);
+  }, []);
 
   return {
     ...state,
@@ -187,9 +187,10 @@ function useToast() {
 }
 
 function useErrorToast() {
-  const { toast } = useToast();
-  return (title: string) =>
-    toast({ variant: 'destructive', title, description: 'Please try again.' });
+  return React.useCallback(
+    (title: string) => toast({ variant: 'destructive', title, description: 'Please try again.' }),
+    []
+  );
 }
 
 export { useToast, toast, useErrorToast };

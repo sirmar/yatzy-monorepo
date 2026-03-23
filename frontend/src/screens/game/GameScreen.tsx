@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { usePolling } from '@/hooks/usePolling';
@@ -21,6 +22,7 @@ export function GameScreen() {
   const errorToast = useErrorToast();
 
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [creatorId, setCreatorId] = useState<number | null>(null);
   const [dice, setDice] = useState<Die[]>([]);
   const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
@@ -41,11 +43,15 @@ export function GameScreen() {
 
     Promise.all([
       apiClient.GET('/players'),
+      apiClient.GET('/games/{game_id}', { params: { path: { game_id: gid } } }),
       apiClient.GET('/games/{game_id}/state', { params: { path: { game_id: gid } } }),
       apiClient.GET('/games/{game_id}/scoreboard', { params: { path: { game_id: gid } } }),
-    ]).then(([{ data: players }, { data: state }, { data: board }]) => {
+    ]).then(([{ data: players }, { data: game }, { data: state }, { data: board }]) => {
       if (players) {
         setPlayerNames(Object.fromEntries(players.map((p) => [p.id, p.name])));
+      }
+      if (game) {
+        setCreatorId(game.creator_id);
       }
       if (state) {
         setGameState(state);
@@ -53,6 +59,9 @@ export function GameScreen() {
         prevPlayerIdRef.current = state.current_player_id;
         if (state.status === 'finished') {
           navigate(`/games/${gameId}/end`);
+        }
+        if (state.status === 'abandoned') {
+          navigate('/lobby');
         }
         const alreadyRolled = state.dice?.some((d) => d.value !== null) ?? false;
         const currentPlayerId = state.current_player_id;
@@ -96,9 +105,24 @@ export function GameScreen() {
       if (data.status === 'finished') {
         navigate(`/games/${gameId}/end`);
       }
+      if (data.status === 'abandoned') {
+        navigate('/lobby');
+      }
     },
     { interval: 2000, enabled: gameState?.status === 'active' }
   );
+
+  async function handleAbort() {
+    if (!gameId) return;
+    const { error } = await apiClient.POST('/games/{game_id}/abort', {
+      params: { path: { game_id: Number(gameId) } },
+    });
+    if (error) {
+      errorToast('Failed to abort game');
+      return;
+    }
+    navigate('/lobby');
+  }
 
   async function handleRoll() {
     if (!player || !gameId) return;
@@ -159,6 +183,9 @@ export function GameScreen() {
       if (newState.status === 'finished') {
         navigate(`/games/${gameId}/end`);
       }
+      if (newState.status === 'abandoned') {
+        navigate('/lobby');
+      }
     }
     if (board) setScoreboard(board);
   }
@@ -169,7 +196,18 @@ export function GameScreen() {
   return (
     <div className="min-h-screen bg-gray-950 p-4">
       <div className="max-w-4xl mx-auto flex flex-col gap-6">
-        <h1 className="text-2xl font-bold text-white">Game #{gameId}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-white">Game #{gameId}</h1>
+          {player?.id === creatorId && gameState?.status === 'active' && (
+            <Button
+              variant="ghost"
+              className="text-gray-500 hover:text-red-400 hover:bg-red-400/10"
+              onClick={handleAbort}
+            >
+              Abort Game
+            </Button>
+          )}
+        </div>
         {currentPlayerName && (
           <p className="text-white text-lg font-semibold">{currentPlayerName}'s turn</p>
         )}

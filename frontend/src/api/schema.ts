@@ -164,7 +164,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/games/{game_id}/end": {
+    "/games/{game_id}/abort": {
         parameters: {
             query?: never;
             header?: never;
@@ -174,10 +174,10 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * End Game
-         * @description Force-end an active game before all categories are filled.
+         * Abort Game
+         * @description Abort an active game. The game is marked as abandoned.
          */
-        post: operations["end_game_games__game_id__end_post"];
+        post: operations["abort_game_games__game_id__abort_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -277,7 +277,7 @@ export interface paths {
         };
         /**
          * Get Scoring Options
-         * @description List scoring categories that would yield points with the current dice. Only available on the current player's turn after at least one roll.
+         * @description List scoring categories that would yield points with the current dice. Returns an empty list if no roll has been taken yet this turn.
          */
         get: operations["get_scoring_options_games__game_id__players__player_id__scoring_options_get"];
         put?: never;
@@ -417,7 +417,7 @@ export interface components {
          * GameStatus
          * @enum {string}
          */
-        GameStatus: "lobby" | "active" | "finished";
+        GameStatus: "lobby" | "active" | "finished" | "abandoned";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -1042,7 +1042,7 @@ export interface operations {
             };
         };
     };
-    end_game_games__game_id__end_post: {
+    abort_game_games__game_id__abort_post: {
         parameters: {
             query?: never;
             header?: never;

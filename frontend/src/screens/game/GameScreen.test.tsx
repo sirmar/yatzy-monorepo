@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
@@ -19,15 +19,18 @@ vi.mock('react-router-dom', async () => {
 const server = setupServer();
 beforeAll(() => server.listen());
 afterEach(() => {
+  vi.useRealTimers();
   server.resetHandlers();
   mockNavigate.mockReset();
   sessionStorage.clear();
 });
 afterAll(() => server.close());
 
+const GAME_URL = 'http://localhost/api/games/42';
 const STATE_URL = 'http://localhost/api/games/42/state';
 const BOARD_URL = 'http://localhost/api/games/42/scoreboard';
 const ROLL_URL = 'http://localhost/api/games/42/roll';
+const ABORT_URL = 'http://localhost/api/games/42/abort';
 const OPTIONS_URL = (pid: number) => `http://localhost/api/games/42/players/${pid}/scoring-options`;
 const SCORE_URL = (pid: number) => `http://localhost/api/games/42/players/${pid}/scorecard`;
 const PLAYERS_URL = 'http://localhost/api/players';
@@ -98,8 +101,10 @@ function makeScorecard(playerId: number, scores: Partial<Record<ScoreCategory, n
 
 describe('GameScreen', () => {
   beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     sessionStorage.setItem('yatzy_player', JSON.stringify(ALICE));
     givenPlayers([ALICE, BOB]);
+    givenGame({ id: 42, creator_id: ALICE.id });
     givenGameState({
       status: 'active',
       current_player_id: ALICE.id,
@@ -140,7 +145,7 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await vi.waitFor(() =>
+      await waitFor(() =>
         expect(screen.getByRole('button', { name: 'Die 0' })).toHaveAttribute('data-value', '3')
       );
     });
@@ -177,9 +182,7 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await vi.waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Die 0' })).not.toBeDisabled()
-      );
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Die 0' })).not.toBeDisabled());
       await whenDieClicked(0);
       thenDieIsKept(0);
     });
@@ -223,7 +226,7 @@ describe('GameScreen', () => {
       await whenRollClicked();
       await thenScoringOptionVisible('Ones', 3);
       await whenCategoryClicked('Ones');
-      await vi.waitFor(() => expect(scoreCalled).toBe(true));
+      await waitFor(() => expect(scoreCalled).toBe(true));
     });
   });
 
@@ -248,6 +251,36 @@ describe('GameScreen', () => {
       await thenScoringOptionVisible('Ones', 3);
       await whenCategoryClicked('Ones');
       await thenNavigatedTo('/games/42/end');
+    });
+  });
+
+  describe('aborting a game', () => {
+    it('shows abort button for the creator', async () => {
+      whenRendered();
+      await screen.findByRole('button', { name: /abort game/i });
+    });
+
+    it('does not show abort button for non-creator', async () => {
+      givenGame({ id: 42, creator_id: BOB.id });
+      whenRendered();
+      await screen.findByText("Alice's turn");
+      expect(screen.queryByRole('button', { name: /abort game/i })).toBeNull();
+    });
+
+    it('clicking abort navigates to /lobby', async () => {
+      server.use(http.post(ABORT_URL, () => HttpResponse.json({})));
+      whenRendered();
+      await userEvent.click(await screen.findByRole('button', { name: /abort game/i }));
+      await thenNavigatedTo('/lobby');
+    });
+
+    it('shows error toast when abort fails', async () => {
+      server.use(
+        http.post(ABORT_URL, () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
+      );
+      whenRendered();
+      await userEvent.click(await screen.findByRole('button', { name: /abort game/i }));
+      await screen.findByText('Failed to abort game');
     });
   });
 
@@ -277,6 +310,10 @@ describe('GameScreen', () => {
 
   function givenPlayers(players: { id: number; name: string; created_at: string }[]) {
     server.use(http.get(PLAYERS_URL, () => HttpResponse.json(players)));
+  }
+
+  function givenGame(game: { id: number; creator_id: number }) {
+    server.use(http.get(GAME_URL, () => HttpResponse.json(game)));
   }
 
   function givenGameState(state: {
@@ -318,7 +355,7 @@ describe('GameScreen', () => {
   }
 
   async function thenScoringOptionVisible(category: string, score: number) {
-    await vi.waitFor(() => {
+    await waitFor(() => {
       const header = screen.getByRole('rowheader', { name: category });
       expect(header.closest('tr')).toHaveTextContent(String(score));
     });
@@ -350,6 +387,6 @@ describe('GameScreen', () => {
   }
 
   async function thenNavigatedTo(path: string) {
-    await vi.waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
   }
 });
