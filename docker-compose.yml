@@ -92,6 +92,8 @@ services:
       target: production
     ports:
       - '80:80'
+    environment:
+      - BACKEND_HOST=backend
     healthcheck:
       test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80']
       interval: 5s
@@ -109,6 +111,46 @@ services:
       - ./frontend:/app
       - /app/node_modules
 
+  migrate-test:
+    image: ghcr.io/amacneil/dbmate
+    command: ['--migrations-dir', '/db/migrations', '--no-dump-schema', 'up']
+    volumes:
+      - ./backend/migrations:/db/migrations
+    environment:
+      DATABASE_URL: mysql://root:test@db-test:3306/yatzy_test
+    depends_on:
+      db-test:
+        condition: service_healthy
+
+  backend-e2e:
+    image: backend-dev
+    build:
+      context: ./backend
+      target: dev
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - ./backend:/app
+      - /app/.venv
+    environment:
+      DATABASE_URL: mysql://root:test@db-test:3306/yatzy_test
+    depends_on:
+      db-test:
+        condition: service_healthy
+      migrate-test:
+        condition: service_completed_successfully
+
+  frontend-app-e2e:
+    image: frontend-app
+    environment:
+      - BACKEND_HOST=backend-e2e
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - backend-e2e
+
   e2e:
     image: frontend-e2e
     build:
@@ -116,9 +158,9 @@ services:
       target: e2e
     command: pnpm test:e2e
     environment:
-      - BASE_URL=http://frontend-app:80
+      - BASE_URL=http://frontend-app-e2e:80
     depends_on:
-      frontend-app:
+      frontend-app-e2e:
         condition: service_healthy
 
 volumes:
