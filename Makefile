@@ -119,22 +119,26 @@ check: backend/check frontend/check
 release-major:
 	@git diff --exit-code && git diff --cached --exit-code
 	@latest=$$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0'); \
-	 major=$$(echo $$latest | sed 's/v\([0-9]*\)\..*/\1/'); \
+	 major=$$(echo $$latest | cut -d. -f1 | tr -d v); \
+	 minor=$$(echo $$latest | cut -d. -f2); \
+	 patch=$$(echo $$latest | cut -d. -f3); \
 	 new="v$$(( major + 1 )).0.0"; \
 	 echo "Tagging $$new"; git tag $$new && git push origin $$new
 
 release-minor:
 	@git diff --exit-code && git diff --cached --exit-code
 	@latest=$$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0'); \
-	 minor=$$(echo $$latest | sed 's/v[0-9]*\.\([0-9]*\)\..*/\1/'); \
-	 prefix=$$(echo $$latest | sed 's/\(v[0-9]*\)\..*/\1/'); \
-	 new="$$prefix.$$(( minor + 1 )).0"; \
+	 major=$$(echo $$latest | cut -d. -f1 | tr -d v); \
+	 minor=$$(echo $$latest | cut -d. -f2); \
+	 patch=$$(echo $$latest | cut -d. -f3); \
+	 new="v$$major.$$(( minor + 1 )).0"; \
 	 echo "Tagging $$new"; git tag $$new && git push origin $$new
 
 release-patch:
 	@git diff --exit-code && git diff --cached --exit-code
 	@latest=$$(git describe --tags --abbrev=0 2>/dev/null || echo 'v0.0.0'); \
-	 patch=$$(echo $$latest | sed 's/v[0-9]*\.[0-9]*\.\([0-9]*\)/\1/'); \
-	 prefix=$$(echo $$latest | sed 's/\(v[0-9]*\.[0-9]*\)\.[0-9]*/\1/'); \
-	 new="$$prefix.$$(( patch + 1 ))"; \
+	 major=$$(echo $$latest | cut -d. -f1 | tr -d v); \
+	 minor=$$(echo $$latest | cut -d. -f2); \
+	 patch=$$(echo $$latest | cut -d. -f3); \
+	 new="v$$major.$$minor.$$(( patch + 1 ))"; \
 	 echo "Tagging $$new"; git tag $$new && git push origin $$new
