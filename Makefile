@@ -29,7 +29,7 @@ ps:
 	docker compose ps
 
 clean:
-	docker compose down
+	docker compose down --volumes
 
 build:
 	docker compose build
