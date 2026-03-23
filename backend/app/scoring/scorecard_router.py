@@ -129,7 +129,7 @@ def create_scorecard_router(database: Database) -> APIRouter:
     player_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[ScoringOption]:
-    """List scoring categories that would yield points with the current dice. Only available on the current player's turn after at least one roll."""
+    """List scoring categories that would yield points with the current dice. Returns an empty list if no roll has been taken yet this turn."""
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_player_in_game(game, player_id)
     assert_game_active(game)

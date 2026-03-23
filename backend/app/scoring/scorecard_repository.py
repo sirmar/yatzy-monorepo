@@ -1,7 +1,7 @@
 import aiomysql
 from app.scoring.score_category import ScoreCategory
 from app.scoring.scorecard import PlayerScorecard, ScoreEntry, Scorecard
-from app.scoring.scoring_rules import BONUS_SCORE, BONUS_THRESHOLD, UPPER_CATEGORIES
+from app.scoring.scoring_rules import calculate_bonus
 
 
 class ScorecardRepository:
@@ -11,11 +11,9 @@ class ScorecardRepository:
   def _build_scorecard(self, rows: list[tuple]) -> Scorecard:
     scores = {row[0]: row[1] for row in rows}
     entries = [ScoreEntry(category=cat, score=scores.get(cat)) for cat in ScoreCategory]
-    upper_total = sum(scores[cat] for cat in UPPER_CATEGORIES if cat in scores)
-    bonus = BONUS_SCORE if upper_total >= BONUS_THRESHOLD else None
-    total = sum(e.score for e in entries if e.score is not None)
-    if bonus is not None:
-      total += bonus
+    bonus_value = calculate_bonus(scores)
+    bonus = bonus_value if bonus_value > 0 else None
+    total = sum(e.score for e in entries if e.score is not None) + bonus_value
     return Scorecard(entries=entries, bonus=bonus, total=total)
 
   async def is_category_scored(

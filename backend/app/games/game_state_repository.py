@@ -2,7 +2,7 @@ import aiomysql
 from app.games.dice import Die
 from app.games.game_state import GameState, PlayerScore
 from app.games.game_status import GameStatus
-from app.scoring.scoring_rules import BONUS_SCORE, BONUS_THRESHOLD, UPPER_CATEGORIES
+from app.scoring.scoring_rules import calculate_bonus
 
 
 class GameStateRepository:
@@ -39,8 +39,7 @@ class GameStateRepository:
         final_scores = []
         for pid in player_ids:
           scores = {r[0]: r[1] for r in entries_by_player[pid]}
-          upper_total = sum(scores.get(cat, 0) for cat in UPPER_CATEGORIES)
-          bonus = BONUS_SCORE if upper_total >= BONUS_THRESHOLD else 0
+          bonus = calculate_bonus(scores)
           total = sum(scores.values()) + bonus
           final_scores.append(PlayerScore(player_id=pid, total=total))
         max_total = max((ps.total for ps in final_scores), default=0)
