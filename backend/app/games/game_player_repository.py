@@ -24,7 +24,7 @@ class GamePlayerRepository:
   async def add(self, game_id: int, player_id: int, join_order: int) -> None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'INSERT INTO game_players (game_id, player_id, join_order) VALUES (%s, %s, %s) '
-        'ON DUPLICATE KEY UPDATE deleted_at = NULL, join_order = VALUES(join_order)',
+        'INSERT INTO game_players (game_id, player_id, join_order) VALUES (%s, %s, %s) AS new '
+        'ON DUPLICATE KEY UPDATE deleted_at = NULL, join_order = new.join_order',
         (game_id, player_id, join_order),
       )
