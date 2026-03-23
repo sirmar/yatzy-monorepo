@@ -39,64 +39,29 @@ jobs:
           cache-from: type=gha,scope=backend-dev
           cache-to: type=gha,mode=max,scope=backend-dev
 
-  lint:
+  check:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target: [lint, types, security]
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: ./.github/actions/pull-image
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
-      - run: make backend/lint
-
-  types:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
-      - run: make backend/types
-
-  security:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
-      - run: make backend/security
+          token: ${{ secrets.GITHUB_TOKEN }}
+          images: backend-dev
+      - run: make backend/${{ matrix.target }}
 
   unit:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: ./.github/actions/pull-image
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+          token: ${{ secrets.GITHUB_TOKEN }}
+          images: backend-dev
       - run: make backend/unit
       - uses: actions/upload-artifact@v4
         with:
@@ -112,14 +77,10 @@ jobs:
         shard: [0, 1, 2, 3, 4]
     steps:
       - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
+      - uses: ./.github/actions/pull-image
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - run: |
-          docker pull ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
-          docker tag ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }} backend-dev
+          token: ${{ secrets.GITHUB_TOKEN }}
+          images: backend-dev
       - run: make backend/e2e SHARD_ID=${{ matrix.shard }} NUM_SHARDS=5
       - uses: actions/upload-artifact@v4
         with:

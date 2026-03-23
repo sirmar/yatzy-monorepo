@@ -1,0 +1,29 @@
+name: Pull images from GHCR
+description: Login to GHCR and pull/retag one or more images for this commit
+
+inputs:
+  token:
+    description: GitHub token for GHCR login
+    required: true
+  images:
+    description: Space-separated image names (e.g. "backend-dev" or "frontend-dev frontend-app")
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+    - shell: bash
+      env:
+        IMAGES: ${{ inputs.images }}
+        REPO: ${{ github.repository }}
+        SHA: ${{ github.sha }}
+      run: |
+        for image in $IMAGES; do
+          docker pull ghcr.io/$REPO:$image-$SHA
+          docker tag ghcr.io/$REPO:$image-$SHA $image
+        done
