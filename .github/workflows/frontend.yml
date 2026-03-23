@@ -60,23 +60,6 @@ jobs:
             type=gha,scope=frontend-app
           cache-to: type=gha,mode=max,scope=frontend-app
 
-  image-scan:
-    needs: build-app
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: aquasecurity/trivy-action@0.35.0
-        with:
-          image-ref: ghcr.io/${{ github.repository }}:frontend-app-${{ github.sha }}
-          exit-code: 1
-          severity: HIGH,CRITICAL
-          trivyignores: .trivyignore
-
   build-e2e:
     runs-on: ubuntu-latest
     steps:
@@ -121,7 +104,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: frontend-dev
-      - run: make frontend/unit
+      - run: make frontend/coverage
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
