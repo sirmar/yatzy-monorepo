@@ -48,6 +48,17 @@ class GameRepository:
       )
       return await self._fetch_game(cursor, game_id)
 
+  async def abort(self, game_id: int) -> Game | None:
+    async with await self._conn.cursor() as cursor:
+      await cursor.execute(
+        'UPDATE games SET status = %s, ended_at = NOW() '
+        'WHERE id = %s AND status = %s AND deleted_at IS NULL',
+        (GameStatus.ABANDONED, game_id, GameStatus.ACTIVE),
+      )
+      if cursor.rowcount == 0:
+        return None
+      return await self._fetch_game(cursor, game_id)
+
   async def end(self, game_id: int) -> Game | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
@@ -84,8 +95,8 @@ class GameRepository:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'UPDATE games SET deleted_at = NOW() '
-        'WHERE id = %s AND status IN (%s, %s) AND deleted_at IS NULL',
-        (game_id, GameStatus.LOBBY, GameStatus.FINISHED),
+        'WHERE id = %s AND status IN (%s, %s, %s) AND deleted_at IS NULL',
+        (game_id, GameStatus.LOBBY, GameStatus.FINISHED, GameStatus.ABANDONED),
       )
       return cursor.rowcount > 0
 

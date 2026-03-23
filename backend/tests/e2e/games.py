@@ -30,8 +30,8 @@ class Game:
   async def delete(self, game_id: int) -> 'Game':
     return self._set_response(await self._client.delete(f'/games/{game_id}'))
 
-  async def end(self, game_id: int) -> 'Game':
-    return self._set_response(await self._client.post(f'/games/{game_id}/end'))
+  async def abort(self, game_id: int) -> 'Game':
+    return self._set_response(await self._client.post(f'/games/{game_id}/abort'))
 
   async def start(self, game_id: int, player_id: int) -> 'Game':
     return self._set_response(await self._client.post(f'/games/{game_id}/start', json={'player_id': player_id}))

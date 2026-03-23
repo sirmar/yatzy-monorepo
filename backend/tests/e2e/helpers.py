@@ -15,9 +15,9 @@ async def active_game(client: AsyncClient) -> tuple[Player, Game]:
   return player, game
 
 
-async def finished_game(client: AsyncClient) -> tuple[Player, Game]:
+async def abandoned_game(client: AsyncClient) -> tuple[Player, Game]:
   player, game = await active_game(client)
-  await game.end(game.id)
+  await game.abort(game.id)
   return player, game
 
 

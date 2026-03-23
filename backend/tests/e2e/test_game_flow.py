@@ -39,11 +39,11 @@ async def test_full_game_flow(client: AsyncClient):
   await game.roll(game.id, p1.id)
   game.assert_status(409)
 
-  await game.end(game.id)
-  game.assert_status(200).assert_game_status('finished')
+  await game.abort(game.id)
+  game.assert_status(200).assert_game_status('abandoned')
 
   state = await Game(client).state(game.id)
-  state.assert_status(200).assert_state_status('finished')
+  state.assert_status(200).assert_state_status('abandoned')
 
 
 async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: int) -> None:

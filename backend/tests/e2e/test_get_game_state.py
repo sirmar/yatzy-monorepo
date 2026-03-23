@@ -1,6 +1,6 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
-from tests.e2e.helpers import lobby_game, active_game, finished_game
+from tests.e2e.helpers import lobby_game, active_game, abandoned_game
 from tests.e2e.scorecards import Scorecard
 
 
@@ -33,16 +33,10 @@ async def test_get_state_not_found(client: AsyncClient):
   game.assert_status(404).assert_has_detail()
 
 
-async def test_get_state_finished_game_has_winner_ids(client: AsyncClient):
-  _, game = await finished_game(client)
+async def test_get_state_abandoned_game(client: AsyncClient):
+  _, game = await abandoned_game(client)
   state = await Game(client).state(game.id)
-  state.assert_status(200).assert_state_status('finished').assert_has_winner_ids()
-
-
-async def test_get_state_finished_game_has_final_scores(client: AsyncClient):
-  _, game = await finished_game(client)
-  state = await Game(client).state(game.id)
-  state.assert_status(200).assert_has_final_scores()
+  state.assert_status(200).assert_state_status('abandoned')
 
 
 async def test_get_state_active_game_has_rolls_remaining(client: AsyncClient):

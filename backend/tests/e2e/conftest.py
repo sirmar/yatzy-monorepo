@@ -70,9 +70,10 @@ async def truncate_tables():
   conn = await _connect()
   cursor = await conn.cursor()
   tables = await _list_tables(cursor)
-  if tables:
+  data_tables = [t for t in tables if t != 'schema_migrations']
+  if data_tables:
     await cursor.execute('SET FOREIGN_KEY_CHECKS = 0')
-    for table in tables:
+    for table in data_tables:
       await cursor.execute(f'TRUNCATE TABLE `{table}`')
     await cursor.execute('SET FOREIGN_KEY_CHECKS = 1')
   await cursor.close()

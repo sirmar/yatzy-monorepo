@@ -1,6 +1,6 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
-from tests.e2e.helpers import lobby_game, active_game
+from tests.e2e.helpers import lobby_game, active_game, abandoned_game
 
 
 async def test_delete_lobby_game_returns_204(client: AsyncClient):
@@ -9,9 +9,8 @@ async def test_delete_lobby_game_returns_204(client: AsyncClient):
   game.assert_status(204)
 
 
-async def test_delete_finished_game_returns_204(client: AsyncClient):
-  _, game = await active_game(client)
-  await game.end(game.id)
+async def test_delete_abandoned_game_returns_204(client: AsyncClient):
+  _, game = await abandoned_game(client)
   await game.delete(game.id)
   game.assert_status(204)
 

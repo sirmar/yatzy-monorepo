@@ -163,25 +163,25 @@ def create_game_router(database: Database) -> APIRouter:
     return started
 
   @router.post(
-    '/games/{game_id}/end',
+    '/games/{game_id}/abort',
     response_model=Game,
     responses={
       404: {'description': 'Game not found'},
       409: {'description': 'Game is not active'},
     },
   )
-  async def end_game(
+  async def abort_game(
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
-    """Force-end an active game before all categories are filled."""
+    """Abort an active game. The game is marked as abandoned."""
     repo = GameRepository(conn)
     game = assert_game_exists(await repo.get_by_id(game_id))
     assert_game_active(game)
-    ended = await repo.end(game_id)
-    if ended is None:
-      raise HTTPException(status_code=409, detail='Game could not be ended')
-    return ended
+    aborted = await repo.abort(game_id)
+    if aborted is None:
+      raise HTTPException(status_code=409, detail='Game could not be aborted')
+    return aborted
 
   @router.post(
     '/games/{game_id}/roll',
