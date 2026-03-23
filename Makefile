@@ -4,7 +4,8 @@
 	backend/unit backend/e2e backend/test backend/check \
 	release-major release-minor release-patch \
 	frontend/build frontend/rebuild frontend/schema \
-	frontend/format frontend/lint frontend/types frontend/unit frontend/e2e frontend/check
+	frontend/format frontend/lint frontend/types frontend/unit frontend/e2e frontend/check \
+	frontend/security
 
 SHARD_ID ?= 0
 NUM_SHARDS ?= 1
@@ -93,6 +94,9 @@ frontend/schema:
 	docker compose up db migrate backend -d --wait
 	docker compose run --rm frontend-dev pnpm dlx openapi-typescript http://backend:8000/openapi.json -o src/api/schema.ts
 
+frontend/security:
+	docker compose run --rm frontend-dev pnpm audit --audit-level=moderate
+
 frontend/format:
 	docker compose run --rm frontend-dev pnpm biome check --fix .
 
@@ -108,7 +112,7 @@ frontend/unit:
 frontend/e2e:
 	docker compose run --rm e2e
 
-frontend/check: frontend/lint frontend/types frontend/unit frontend/e2e
+frontend/check: frontend/lint frontend/types frontend/security frontend/unit frontend/e2e
 
 # Aggregate
 
