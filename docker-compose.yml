@@ -10,9 +10,9 @@ services:
       - db_data:/var/lib/mysql
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
-      interval: 5s
+      interval: 1s
       timeout: 5s
-      retries: 10
+      retries: 30
 
   db-test:
     image: mysql:8
@@ -23,9 +23,9 @@ services:
       - '3307:3306'
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
-      interval: 5s
+      interval: 1s
       timeout: 5s
-      retries: 10
+      retries: 30
 
   migrate:
     image: ghcr.io/amacneil/dbmate
