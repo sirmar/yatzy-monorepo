@@ -1,15 +1,19 @@
 .PHONY: dev start stop logs ps clean build rebuild check \
 	backend/build backend/rebuild backend/dev backend/shell backend/db backend/migrate \
 	backend/format backend/lint backend/types backend/security \
-	backend/unit backend/e2e backend/test backend/check \
+	backend/unit backend/unit-cov backend/e2e backend/e2e-cov backend/test backend/coverage backend/check \
 	release-major release-minor release-patch \
 	frontend/build frontend/rebuild frontend/schema \
-	frontend/format frontend/lint frontend/types frontend/unit frontend/e2e frontend/check \
-	frontend/security \
-	backend/image-audit frontend/image-audit
+	frontend/format frontend/lint frontend/types frontend/unit frontend/coverage frontend/test frontend/e2e frontend/check \
+	frontend/security
 
 SHARD_ID ?= 0
 NUM_SHARDS ?= 1
+DC_RUN := docker compose --progress quiet run --rm --quiet-pull
+DC_BUILD := docker compose --progress quiet build
+DC_UP_TEST := docker compose --progress quiet up db-test -d --wait --quiet-pull
+DC_UP_BACKEND := docker compose --progress quiet up db migrate backend -d --wait --quiet-pull
+DC_UP_FULL := docker compose --progress quiet up db migrate backend frontend -d --wait --quiet-pull
 
 # Full stack
 
@@ -17,7 +21,7 @@ dev:
 	docker compose up db migrate backend frontend
 
 start:
-	docker compose up db migrate backend frontend -d --wait
+	$(DC_UP_FULL)
 
 stop:
 	docker compose stop
@@ -32,22 +36,22 @@ clean:
 	docker compose down --volumes
 
 build:
-	docker compose build
+	$(DC_BUILD)
 
 rebuild:
-	docker compose up -d --wait --build
+	$(DC_UP_FULL) --build
 
 backend/build:
-	docker compose build backend backend-dev
+	$(DC_BUILD) backend backend-dev
 
 backend/rebuild:
-	docker compose up db migrate backend -d --wait --build
+	$(DC_UP_BACKEND) --build
 
 frontend/build:
-	docker compose build frontend frontend-app frontend-dev e2e
+	$(DC_BUILD) frontend frontend-app frontend-dev e2e
 
 frontend/rebuild:
-	docker compose up db migrate backend frontend -d --wait --build
+	$(DC_UP_FULL) --build
 
 # Backend
 
@@ -55,71 +59,82 @@ backend/dev:
 	docker compose up db migrate backend
 
 backend/shell:
-	docker compose run --rm backend-dev sh
+	$(DC_RUN) backend-dev sh
 
 backend/db:
 	docker compose exec db mysql -uroot -proot yatzy
 
 backend/migrate:
-	docker compose run --rm migrate
+	$(DC_RUN) migrate
 
 backend/format:
-	docker compose run --rm backend-dev sh -c 'uv run ruff format app/ && uv run ruff check --fix app/'
+	$(DC_RUN) backend-dev sh -c 'uv run --quiet ruff format app/ && uv run --quiet ruff check --fix app/'
 
 backend/lint:
-	docker compose run --rm backend-dev sh -c 'uv run ruff check app/ && uv run ruff format --check app/'
+	$(DC_RUN) backend-dev sh -c 'uv run --quiet ruff check app/ && uv run --quiet ruff format --check app/'
 
 backend/types:
-	docker compose run --rm backend-dev uv run ty check app/
+	$(DC_RUN) backend-dev uv run --quiet ty check app/
 
 backend/security:
-	docker compose run --rm backend-dev uv run bandit -r app/ -c pyproject.toml
-
-backend/image-audit:
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD)/.trivyignore:/.trivyignore aquasec/trivy image --severity HIGH,CRITICAL --ignorefile /.trivyignore backend-dev
+	$(DC_RUN) backend-dev uv run --quiet bandit -q -r app/ -c pyproject.toml
 
 backend/unit:
-	docker compose run --rm backend-dev uv run pytest tests/unit/ -v --cov=app
+	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/unit/
+
+backend/unit-cov:
+	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/unit/ --cov=app
 
 backend/e2e:
-	docker compose up db-test -d --wait
-	docker compose run --rm backend-dev uv run pytest tests/e2e/ -v --cov=app \
+	$(DC_UP_TEST)
+	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/e2e/ \
 		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop db-test
 
-backend/test:
-	docker compose up db-test -d --wait
-	docker compose run --rm backend-dev uv run pytest tests/ --cov=app; docker compose stop db-test
+backend/e2e-cov:
+	$(DC_UP_TEST)
+	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/e2e/ --cov=app \
+		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop db-test
+
+backend/test: backend/unit backend/e2e
+
+backend/coverage:
+	$(DC_UP_TEST)
+	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/ --cov=app; docker compose stop db-test
 
 backend/check: backend/lint backend/types backend/security backend/test
 
 # Frontend
 
 frontend/schema:
-	docker compose up db migrate backend -d --wait
-	docker compose run --rm frontend-dev pnpm dlx openapi-typescript http://backend:8000/openapi.json -o src/api/schema.ts
+	$(DC_UP_BACKEND)
+	$(DC_RUN) frontend-dev pnpm dlx openapi-typescript http://backend:8000/openapi.json -o src/api/schema.ts
 
 frontend/security:
-	docker compose run --rm frontend-dev pnpm audit --audit-level=moderate
-
-frontend/image-audit:
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD)/.trivyignore:/.trivyignore aquasec/trivy image --severity HIGH,CRITICAL --ignorefile /.trivyignore frontend-app
+	$(DC_RUN) frontend-dev pnpm audit --audit-level=moderate
 
 frontend/format:
-	docker compose run --rm frontend-dev pnpm biome check --fix .
+	$(DC_RUN) frontend-dev pnpm biome check --fix .
 
 frontend/lint:
-	docker compose run --rm frontend-dev pnpm biome check .
+	$(DC_RUN) frontend-dev pnpm biome check .
 
 frontend/types:
-	docker compose run --rm frontend-dev pnpm tsc --noEmit
+	$(DC_RUN) frontend-dev pnpm tsc --noEmit
 
 frontend/unit:
-	docker compose run --rm frontend-dev pnpm vitest run --coverage --passWithNoTests
+	$(DC_RUN) frontend-dev pnpm vitest run --passWithNoTests --reporter=dot
+
+frontend/coverage:
+	$(DC_RUN) frontend-dev pnpm vitest run --coverage --passWithNoTests
+
+frontend/test: frontend/unit frontend/e2e
 
 frontend/e2e:
-	docker compose run --rm e2e
+	$(DC_BUILD) frontend-app e2e
+	docker compose --progress quiet up db-test --force-recreate -V -d --wait --quiet-pull
+	$(DC_RUN) e2e; docker compose stop db-test
 
-frontend/check: frontend/lint frontend/types frontend/security frontend/unit frontend/e2e
+frontend/check: frontend/lint frontend/types frontend/security frontend/test
 
 # Aggregate
 
