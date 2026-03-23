@@ -39,6 +39,23 @@ jobs:
           cache-from: type=gha,scope=backend-dev
           cache-to: type=gha,mode=max,scope=backend-dev
 
+  image-scan:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: aquasecurity/trivy-action@0.35.0
+        with:
+          image-ref: ghcr.io/${{ github.repository }}:backend-dev-${{ github.sha }}
+          exit-code: 1
+          severity: HIGH,CRITICAL
+          trivyignores: .trivyignore
+
   check:
     needs: build
     runs-on: ubuntu-latest

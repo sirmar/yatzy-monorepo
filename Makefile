@@ -5,7 +5,8 @@
 	release-major release-minor release-patch \
 	frontend/build frontend/rebuild frontend/schema \
 	frontend/format frontend/lint frontend/types frontend/unit frontend/e2e frontend/check \
-	frontend/security
+	frontend/security \
+	backend/image-audit frontend/image-audit
 
 SHARD_ID ?= 0
 NUM_SHARDS ?= 1
@@ -74,6 +75,9 @@ backend/types:
 backend/security:
 	docker compose run --rm backend-dev uv run bandit -r app/ -c pyproject.toml
 
+backend/image-audit:
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD)/.trivyignore:/.trivyignore aquasec/trivy image --severity HIGH,CRITICAL --ignorefile /.trivyignore backend-dev
+
 backend/unit:
 	docker compose run --rm backend-dev uv run pytest tests/unit/ -v --cov=app
 
@@ -96,6 +100,9 @@ frontend/schema:
 
 frontend/security:
 	docker compose run --rm frontend-dev pnpm audit --audit-level=moderate
+
+frontend/image-audit:
+	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(PWD)/.trivyignore:/.trivyignore aquasec/trivy image --severity HIGH,CRITICAL --ignorefile /.trivyignore frontend-app
 
 frontend/format:
 	docker compose run --rm frontend-dev pnpm biome check --fix .
