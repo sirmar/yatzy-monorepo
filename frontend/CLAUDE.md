@@ -17,7 +17,7 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 
 **Docker**
 - Nginx serves the production build and proxies `/api/` requests to `http://backend:8000` to avoid CORS
-- All dev workflow runs via `make` targets from the repo root
+- All dev workflow runs via `make` targets from the repo root. Key targets: `frontend/build`, `frontend/rebuild`, `frontend/schema`, `frontend/format`, `frontend/lint`, `frontend/types`, `frontend/unit`, `frontend/e2e`, `frontend/security`, `frontend/image-audit`, `frontend/check`.
 
 **Folder structure**
 - `src/api/` — generated API client and schema
@@ -60,7 +60,6 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 - Enforced by Biome
 
 **API**
-- Backend repo: ../backend
 - Base URL: http://localhost:8000
 - Regenerate the API client from the OpenAPI schema whenever the backend changes: `make frontend/schema` from the repo root (starts the backend if needed)
 

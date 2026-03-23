@@ -8,7 +8,7 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - Language: Python 3.14
 - Packages: FastAPI (with Pydantic and aiomysql) and MySQL. No ORM.
 - Dev packages: Ruff for lint and code formatting. Ty for static type checking.
-- Always build and run using Docker via `make` targets from the repo root — never raw `docker compose` or `uvicorn` commands. Key targets: `backend/dev`, `backend/shell`, `backend/check`, `backend/test`, `backend/lint`, `backend/types`, `backend/format`, `backend/security`, `backend/migrate`, `backend/db`.
+- Always build and run using Docker via `make` targets from the repo root — never raw `docker compose` or `uvicorn` commands. Key targets: `backend/dev`, `backend/shell`, `backend/db`, `backend/migrate`, `backend/build`, `backend/rebuild`, `backend/format`, `backend/lint`, `backend/types`, `backend/security`, `backend/image-audit`, `backend/unit`, `backend/e2e`, `backend/test`, `backend/check`.
 - Use uv for package management
 - Configure project using pyproject.toml
 - Organise `app/` into domain subdirectories: `players/`, `games/`, `scoring/`. Infrastructure files (`config.py`, `database.py`, `main.py`) stay at the root. Tests stay flat under `tests/unit/` and `tests/e2e/`.
@@ -25,6 +25,7 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - E2e tests use a separate test database.
 - Use PyTest for both unit tests and end-to-end tests
 - Provision database using a separate Docker container
+- Shared fixtures and API helpers live alongside the test files in `tests/e2e/` — reuse them rather than writing new ones
 - Unit tests follow BDD style: a test class per subject, `setup_method` for mock setup, then test methods, then shared `GivenX`, `WhenX`, `ThenX` methods in that order. Results are stored as `self` fields, not passed as parameters. The specific values being tested must appear in the test method body as arguments to Given/When/Then — not hardcoded inside the helpers. Example:
   ```python
   class TestFoo:

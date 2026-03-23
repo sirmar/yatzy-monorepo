@@ -5,7 +5,7 @@
 **Docker and make**
 - Single `docker-compose.yml` at the repo root with all services.
 - Single `Makefile` at the repo root with all targets, namespaced by package: `make backend/dev`, `make frontend/check`, `make backend/e2e`, etc.
-- Top-level targets: `dev` (full stack), `start`, `stop`, `build`, `rebuild`, `check` (all quality checks), `release-patch/minor/major`.
+- Top-level targets: `dev` (full stack foreground), `start` (detached), `stop`, `logs`, `ps`, `clean` (down), `build`, `rebuild`, `check` (all quality checks), `release-patch/minor/major`.
 - Always run `make` from the repo root.
 
 **Git**
