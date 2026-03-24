@@ -79,11 +79,13 @@ services:
       - '5173:5173'
     environment:
       - API_PROXY_TARGET=http://backend:8000
+      - AUTH_PROXY_TARGET=http://auth:8001
     volumes:
       - ./frontend:/app
       - /app/node_modules
     depends_on:
       - backend
+      - auth
 
   auth-db:
     image: mysql:8
@@ -237,6 +239,7 @@ services:
       retries: 10
     depends_on:
       - backend-e2e
+      - auth
 
   e2e:
     image: frontend-e2e

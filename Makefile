@@ -135,8 +135,10 @@ frontend/test: frontend/unit frontend/e2e
 
 frontend/e2e:
 	$(DC_BUILD) frontend-app e2e
-	docker compose --progress quiet up db-test --force-recreate -V -d --wait --quiet-pull
-	$(DC_RUN) e2e; docker compose stop db-test
+	docker compose --progress quiet up db-test auth-db --force-recreate -V -d --wait --quiet-pull
+	$(DC_RUN) auth-migrate
+	docker compose --progress quiet up auth --no-deps -d --wait --quiet-pull
+	$(DC_RUN) e2e; docker compose stop db-test auth auth-db
 
 frontend/check: frontend/lint frontend/types frontend/security frontend/test
 

@@ -17,6 +17,10 @@ export default defineConfig({
         target: process.env.API_PROXY_TARGET ?? 'http://localhost:8000',
         rewrite: (path) => path.replace(/^\/api/, ''),
       },
+      '/auth': {
+        target: process.env.AUTH_PROXY_TARGET ?? 'http://127.0.0.1:8001',
+        rewrite: (path) => path.replace(/^\/auth/, ''),
+      },
     },
   },
   test: {
