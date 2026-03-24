@@ -1,0 +1,37 @@
+[project]
+name = 'yatzy-auth'
+version = '0.1.0'
+requires-python = '>=3.14'
+dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings', 'PyJWT', 'bcrypt']
+
+[project.optional-dependencies]
+dev = [
+    'pytest',
+    'pytest-asyncio',
+    'httpx',
+    'ruff',
+    'ty',
+    'pytest-cov',
+    'bandit',
+    'pytest-shard>=0.1.2',
+]
+
+[tool.ruff]
+indent-width = 2
+
+[tool.ruff.format]
+quote-style = 'single'
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = 'single'
+
+[tool.bandit]
+skips = ['B101', 'B311']
+
+[tool.coverage.paths]
+source = ['app/', '/app/app/']
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+testpaths = ['tests']
+addopts = ''

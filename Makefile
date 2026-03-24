@@ -5,20 +5,24 @@
 	release-major release-minor release-patch \
 	frontend/build frontend/rebuild frontend/schema \
 	frontend/format frontend/lint frontend/types frontend/unit frontend/coverage frontend/test frontend/e2e frontend/check \
-	frontend/security
+	frontend/security \
+	auth/build auth/rebuild auth/dev auth/shell \
+	auth/format auth/lint auth/types auth/security \
+	auth/unit auth/unit-cov auth/e2e auth/e2e-cov auth/test auth/coverage auth/check
 
 SHARD_ID ?= 0
 NUM_SHARDS ?= 1
 DC_RUN := docker compose --progress quiet run --rm --quiet-pull
 DC_BUILD := docker compose --progress quiet build
 DC_UP_TEST := docker compose --progress quiet up db-test -d --wait --quiet-pull
+DC_UP_AUTH_TEST := docker compose --progress quiet up auth-db-test -d --wait --quiet-pull
 DC_UP_BACKEND := docker compose --progress quiet up db migrate backend -d --wait --quiet-pull
-DC_UP_FULL := docker compose --progress quiet up db migrate backend frontend -d --wait --quiet-pull
+DC_UP_FULL := docker compose --progress quiet up db migrate backend auth-db auth-migrate auth frontend -d --wait --quiet-pull
 
 # Full stack
 
 dev:
-	docker compose up db migrate backend frontend
+	docker compose --progress quiet up db migrate backend auth-db auth-migrate auth frontend --quiet-pull
 
 start:
 	$(DC_UP_FULL)
@@ -56,7 +60,7 @@ frontend/rebuild:
 # Backend
 
 backend/dev:
-	docker compose up db migrate backend
+	docker compose --progress quiet up db migrate backend --quiet-pull
 
 backend/shell:
 	$(DC_RUN) backend-dev sh
@@ -136,9 +140,59 @@ frontend/e2e:
 
 frontend/check: frontend/lint frontend/types frontend/security frontend/test
 
+# Auth
+
+auth/build:
+	$(DC_BUILD) auth auth-dev
+
+auth/rebuild:
+	$(DC_BUILD) auth auth-dev --no-cache
+
+auth/dev:
+	docker compose --progress quiet up auth-db auth-migrate auth --quiet-pull
+
+auth/shell:
+	$(DC_RUN) auth-dev sh
+
+auth/format:
+	$(DC_RUN) auth-dev sh -c 'uv run --quiet ruff format app/ && uv run --quiet ruff check --fix app/'
+
+auth/lint:
+	$(DC_RUN) auth-dev sh -c 'uv run --quiet ruff check app/ && uv run --quiet ruff format --check app/'
+
+auth/types:
+	$(DC_RUN) auth-dev uv run --quiet ty check app/
+
+auth/security:
+	$(DC_RUN) auth-dev uv run --quiet bandit -q -r app/ -c pyproject.toml
+
+auth/unit:
+	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/unit/
+
+auth/unit-cov:
+	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/unit/ --cov=app
+
+auth/e2e:
+	$(DC_UP_AUTH_TEST)
+	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/e2e/ \
+		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop auth-db-test
+
+auth/e2e-cov:
+	$(DC_UP_AUTH_TEST)
+	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/e2e/ --cov=app \
+		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop auth-db-test
+
+auth/test: auth/unit auth/e2e
+
+auth/coverage:
+	$(DC_UP_AUTH_TEST)
+	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/ --cov=app; docker compose stop auth-db-test
+
+auth/check: auth/lint auth/types auth/security auth/test
+
 # Aggregate
 
-check: backend/check frontend/check
+check: backend/check frontend/check auth/check
 
 # Release
 
