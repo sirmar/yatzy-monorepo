@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { apiClient } from '@/api';
 import {
   DropdownMenu,
@@ -7,6 +7,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { usePolling } from '@/hooks/usePolling';
 
@@ -36,9 +37,17 @@ function useActiveGameIds(): number[] {
 }
 
 export function NavBar() {
-  const { player } = usePlayer();
+  const { player, setPlayer } = usePlayer();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
   const location = useLocation();
   const activeGameIds = useActiveGameIds();
+
+  async function handleLogout() {
+    await logout();
+    setPlayer(null);
+    navigate('/login');
+  }
 
   const isActive = (path: string) => location.pathname.startsWith(path);
   const anyGameActive = activeGameIds.some((id) => isActive(`/games/${id}`));
@@ -69,9 +78,15 @@ export function NavBar() {
               )}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Link to="/" className={inactiveClass}>
-            {player?.name}
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger className={inactiveClass}>{player?.name} ▾</DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <Link to="/">Change player</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={handleLogout}>Sign out</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>

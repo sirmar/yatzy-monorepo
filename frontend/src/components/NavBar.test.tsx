@@ -48,9 +48,9 @@ describe('NavBar', () => {
       expect(screen.getByRole('link', { name: 'Lobby' })).toBeInTheDocument();
     });
 
-    it('shows player name as a link', () => {
+    it('shows player name in the dropdown trigger', () => {
       whenRendered();
-      expect(screen.getByRole('link', { name: 'Alice' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /alice/i })).toBeInTheDocument();
     });
   });
 
@@ -114,6 +114,24 @@ describe('NavBar', () => {
       whenRendered();
       await userEvent.click(screen.getByText('Games ▾'));
       expect(screen.queryByRole('menuitem', { name: 'Game #9' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('sign out', () => {
+    it('shows Sign out option in player dropdown', async () => {
+      whenRendered();
+      await userEvent.click(screen.getByRole('button', { name: /alice/i }));
+      expect(screen.getByRole('menuitem', { name: 'Sign out' })).toBeInTheDocument();
+    });
+
+    it('navigates to /login after sign out', async () => {
+      server.use(
+        http.post('http://localhost/auth/logout', () => new HttpResponse(null, { status: 204 }))
+      );
+      whenRendered();
+      await userEvent.click(screen.getByRole('button', { name: /alice/i }));
+      await userEvent.click(screen.getByRole('menuitem', { name: 'Sign out' }));
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
   });
 
