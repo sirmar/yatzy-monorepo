@@ -4,7 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/helpers';
-import { EditPlayerScreen } from './EditPlayerScreen';
+import { ProfileScreen } from './ProfileScreen';
 
 const mockUseAuth = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/AuthContext', async () => {
@@ -67,13 +67,6 @@ describe('ProfileScreen', () => {
     await whenNameChangedTo('Alicia');
     await whenSaveClicked();
     await thenErrorToastIsVisible('Failed to update player');
-  });
-
-  it('navigates to lobby on cancel', async () => {
-    givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
-    whenRendered();
-    await whenCancelClicked();
-    await thenNavigatedTo('/lobby');
   });
 
   describe('stats table', () => {
@@ -161,7 +154,7 @@ describe('ProfileScreen', () => {
       register: vi.fn(),
       logout: vi.fn(),
     });
-    renderWithProviders(<EditPlayerScreen />);
+    renderWithProviders(<ProfileScreen />);
   }
 
   async function whenNameChangedTo(name: string) {
@@ -172,10 +165,6 @@ describe('ProfileScreen', () => {
 
   async function whenSaveClicked() {
     await userEvent.click(screen.getByRole('button', { name: /save/i }));
-  }
-
-  async function whenCancelClicked() {
-    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }));
   }
 
   async function thenInputHasValue(value: string) {
