@@ -128,17 +128,6 @@ services:
       auth-db:
         condition: service_healthy
 
-  auth-migrate-test:
-    image: ghcr.io/amacneil/dbmate
-    command: ['--migrations-dir', '/db/migrations', '--no-dump-schema', 'up']
-    volumes:
-      - ./auth/migrations:/db/migrations
-    environment:
-      DATABASE_URL: mysql://root:test@auth-db-test:3306/yatzy_auth_test
-    depends_on:
-      auth-db-test:
-        condition: service_healthy
-
   auth:
     image: auth-dev
     build:

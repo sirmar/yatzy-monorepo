@@ -7,6 +7,7 @@
 	frontend/format frontend/lint frontend/types frontend/unit frontend/coverage frontend/test frontend/e2e frontend/check \
 	frontend/security \
 	auth/build auth/rebuild auth/dev auth/shell \
+	auth/migrate \
 	auth/format auth/lint auth/types auth/security \
 	auth/unit auth/unit-cov auth/e2e auth/e2e-cov auth/test auth/coverage auth/check
 
@@ -54,8 +55,7 @@ backend/rebuild:
 frontend/build:
 	$(DC_BUILD) frontend frontend-app frontend-dev e2e
 
-frontend/rebuild:
-	$(DC_UP_FULL) --build
+frontend/rebuild: rebuild
 
 # Backend
 
@@ -149,6 +149,9 @@ auth/build:
 
 auth/rebuild:
 	$(DC_BUILD) auth auth-dev --no-cache
+
+auth/migrate:
+	$(DC_RUN) auth-migrate
 
 auth/dev:
 	docker compose --progress quiet up auth-db auth-migrate auth --quiet-pull
