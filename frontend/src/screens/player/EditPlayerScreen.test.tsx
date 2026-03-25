@@ -2,7 +2,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/helpers';
 import { EditPlayerScreen } from './EditPlayerScreen';
 
@@ -30,10 +30,21 @@ afterEach(() => {
 afterAll(() => server.close());
 
 const PLAYER_URL = (id: number) => `http://localhost/api/players/${id}`;
+const PLAYER_STATS_URL = (id: number) => `http://localhost/api/players/${id}/stats`;
 
 const ACCOUNT_ID = '550e8400-e29b-41d4-a716-446655440000';
 
-describe('EditPlayerScreen', () => {
+describe('ProfileScreen', () => {
+  beforeEach(() => {
+    givenPlayerStats({
+      games_played: 5,
+      high_score: 310,
+      average_score: 270.5,
+      bonus_count: 3,
+      maxi_yatzy_count: 1,
+    });
+  });
+
   it('shows edit form pre-filled with current name', async () => {
     givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
     whenRendered();
@@ -65,6 +76,39 @@ describe('EditPlayerScreen', () => {
     await thenNavigatedTo('/lobby');
   });
 
+  describe('stats table', () => {
+    it('shows games played, high score, average score, bonuses and maxi yatzy', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      givenPlayerStats({
+        games_played: 12,
+        high_score: 350,
+        average_score: 290.4,
+        bonus_count: 7,
+        maxi_yatzy_count: 2,
+      });
+      whenRendered();
+      await thenStatVisible('Games played', '12');
+      await thenStatVisible('High score', '350');
+      await thenStatVisible('Average score', '290');
+      await thenStatVisible('Bonuses', '7');
+      await thenStatVisible('Maxi Yatzy', '2');
+    });
+
+    it('shows — for high score and average score when null', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      givenPlayerStats({
+        games_played: 0,
+        high_score: null,
+        average_score: null,
+        bonus_count: 0,
+        maxi_yatzy_count: 0,
+      });
+      whenRendered();
+      const highScoreValues = await screen.findAllByText('—');
+      expect(highScoreValues.length).toBeGreaterThanOrEqual(2);
+    });
+  });
+
   function givenMyPlayer(player: {
     id: number;
     account_id: string;
@@ -81,6 +125,25 @@ describe('EditPlayerScreen', () => {
     created_at: string;
   }) {
     server.use(http.put(PLAYER_URL(player.id), () => HttpResponse.json(player)));
+  }
+
+  function givenPlayerStats(overrides: {
+    games_played: number;
+    high_score: number | null;
+    average_score: number | null;
+    bonus_count: number;
+    maxi_yatzy_count: number;
+  }) {
+    server.use(
+      http.get(PLAYER_STATS_URL(1), () =>
+        HttpResponse.json({
+          player_id: 1,
+          player_name: 'Alice',
+          member_since: '2024-01-01T00:00:00Z',
+          ...overrides,
+        })
+      )
+    );
   }
 
   function givenUpdatePlayerFails(id: number) {
@@ -126,5 +189,10 @@ describe('EditPlayerScreen', () => {
 
   async function thenErrorToastIsVisible(title: string) {
     await screen.findByText(title);
+  }
+
+  async function thenStatVisible(label: string, value: string) {
+    await screen.findByText(label);
+    await screen.findByText(value);
   }
 });

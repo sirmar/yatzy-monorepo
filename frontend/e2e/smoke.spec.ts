@@ -89,7 +89,7 @@ test('editing player name via nav updates the displayed name', async ({ page, re
   await loginAs(page, player);
   await gotoAuthenticated(page, '/lobby');
   await page.getByRole('button', { name: /alice/i }).click();
-  await page.getByRole('menuitem', { name: 'Edit player' }).click();
+  await page.getByRole('menuitem', { name: 'Profile' }).click();
   await page.waitForURL('/profile');
   await page.getByRole('textbox').fill('Alicia');
   await page.getByRole('button', { name: 'Save' }).click();
@@ -142,6 +142,17 @@ test('scoring a category completes the turn', async ({ page, request }) => {
   await expect(page.getByRole('button', { name: 'Die 0' })).toHaveAttribute('data-value', /[1-6]/);
   await page.getByRole('rowheader', { name: 'Chance' }).click();
   await expect(page.getByRole('button', { name: 'Roll' })).toBeVisible();
+});
+
+test('profile page shows player stats', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('button', { name: /alice/i }).click();
+  await page.getByRole('menuitem', { name: 'Profile' }).click();
+  await page.waitForURL('/profile');
+  await expect(page.getByText('Games played')).toBeVisible();
 });
 
 test('high scores page loads via Statistics nav', async ({ page, request }) => {

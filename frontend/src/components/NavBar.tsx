@@ -92,7 +92,7 @@ export function NavBar() {
             <DropdownMenuTrigger className={inactiveClass}>{player?.name} ▾</DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
-                <Link to="/profile">Edit player</Link>
+                <Link to="/profile">Profile</Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={handleLogout}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>

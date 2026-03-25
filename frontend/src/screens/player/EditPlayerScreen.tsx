@@ -1,12 +1,15 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api';
+import type { components } from '@/api/schema';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+
+type PlayerStats = components['schemas']['PlayerStats'];
 
 export function EditPlayerScreen() {
   const { player, setPlayer } = usePlayer();
@@ -15,6 +18,16 @@ export function EditPlayerScreen() {
   const errorToast = useErrorToast();
   const [name, setName] = useState(player?.name ?? '');
   const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState<PlayerStats | null>(null);
+
+  useEffect(() => {
+    if (!player) return;
+    apiClient
+      .GET('/players/{player_id}/stats', { params: { path: { player_id: player.id } } })
+      .then(({ data }) => {
+        if (data) setStats(data);
+      });
+  }, [player]);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -46,7 +59,7 @@ export function EditPlayerScreen() {
         <CardContent className="flex flex-col gap-6">
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
-              Edit player
+              Profile
             </h2>
             <form onSubmit={handleSave} className="flex flex-col gap-3">
               <div className="flex gap-2">
@@ -71,6 +84,28 @@ export function EditPlayerScreen() {
               </Button>
             </form>
           </div>
+          {stats && (
+            <table className="w-full text-sm text-white">
+              <tbody>
+                {[
+                  ['Member since', new Date(stats.member_since).toLocaleDateString()],
+                  ['Games played', stats.games_played],
+                  ['High score', stats.high_score ?? '—'],
+                  [
+                    'Average score',
+                    stats.average_score != null ? Math.round(stats.average_score) : '—',
+                  ],
+                  ['Bonuses', stats.bonus_count],
+                  ['Maxi Yatzy', stats.maxi_yatzy_count],
+                ].map(([label, value]) => (
+                  <tr key={label as string} className="border-b border-gray-800/50">
+                    <td className="py-2 text-gray-400">{label}</td>
+                    <td className="py-2 text-right">{value}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </CardContent>
       </Card>
     </div>
