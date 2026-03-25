@@ -1,9 +1,8 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ALICE, BOB, createMockServer, renderWithProviders } from '@/test/helpers';
 import { EndScreen } from './EndScreen';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
@@ -12,20 +11,14 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate, useParams: () => ({ gameId: '42' }) };
 });
 
-const server = setupServer();
-beforeAll(() => server.listen());
+const server = createMockServer();
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   sessionStorage.clear();
 });
-afterAll(() => server.close());
 
 const STATE_URL = 'http://localhost/api/games/42/state';
 const PLAYERS_URL = 'http://localhost/api/players';
-
-const ALICE = { id: 1, name: 'Alice', created_at: '' };
-const BOB = { id: 2, name: 'Bob', created_at: '' };
 
 describe('EndScreen', () => {
   beforeEach(() => {
@@ -103,7 +96,7 @@ describe('EndScreen', () => {
       givenPlayers([ALICE]);
       givenActiveGame();
       whenRendered();
-      await vi.waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/games/42'));
+      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/games/42'));
     });
   });
 

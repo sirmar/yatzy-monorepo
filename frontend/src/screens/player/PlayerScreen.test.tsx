@@ -1,9 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { PlayerScreen } from './PlayerScreen';
 
 const mockUseAuth = vi.hoisted(() => vi.fn());
@@ -18,16 +17,12 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-const server = setupServer();
-beforeAll(() => server.listen());
-
+const server = createMockServer();
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   mockUseAuth.mockReset();
   sessionStorage.clear();
 });
-afterAll(() => server.close());
 
 const PLAYERS_URL = 'http://localhost/api/players';
 const PLAYERS_ME_URL = 'http://localhost/api/players/me';

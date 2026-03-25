@@ -1,21 +1,15 @@
 import { screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { ALICE, createMockServer, renderWithProviders } from '@/test/helpers';
 import { HighScoresScreen } from './HighScoresScreen';
 
-const server = setupServer();
-beforeAll(() => server.listen());
+const server = createMockServer();
 afterEach(() => {
-  server.resetHandlers();
   sessionStorage.clear();
 });
-afterAll(() => server.close());
 
 const HIGH_SCORES_URL = 'http://localhost/api/high-scores';
-
-const ALICE = { id: 1, name: 'Alice', created_at: '' };
 
 function makeHighScore(
   overrides: Partial<{

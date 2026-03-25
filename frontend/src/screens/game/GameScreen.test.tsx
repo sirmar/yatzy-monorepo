@@ -1,9 +1,8 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ALICE, BOB, createMockServer, renderWithProviders } from '@/test/helpers';
 import { GameScreen } from './GameScreen';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
@@ -16,15 +15,12 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-const server = setupServer();
-beforeAll(() => server.listen());
+const server = createMockServer();
 afterEach(() => {
   vi.useRealTimers();
-  server.resetHandlers();
   mockNavigate.mockReset();
   sessionStorage.clear();
 });
-afterAll(() => server.close());
 
 const GAME_URL = 'http://localhost/api/games/42';
 const STATE_URL = 'http://localhost/api/games/42/state';
@@ -34,9 +30,6 @@ const ABORT_URL = 'http://localhost/api/games/42/abort';
 const OPTIONS_URL = (pid: number) => `http://localhost/api/games/42/players/${pid}/scoring-options`;
 const SCORE_URL = (pid: number) => `http://localhost/api/games/42/players/${pid}/scorecard`;
 const PLAYERS_URL = 'http://localhost/api/players';
-
-const ALICE = { id: 1, name: 'Alice', created_at: '' };
-const BOB = { id: 2, name: 'Bob', created_at: '' };
 
 type ScoreCategory =
   | 'ones'
