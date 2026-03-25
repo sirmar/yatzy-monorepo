@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
@@ -28,6 +29,7 @@ export function GameScreen() {
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
   const [scoringOptions, setScoringOptions] = useState<ScoringOption[] | null>(null);
   const [playerNames, setPlayerNames] = useState<Record<number, string>>({});
+  const [confirmAbort, setConfirmAbort] = useState(false);
 
   const prevPlayerIdRef = useRef<number | null | undefined>(undefined);
 
@@ -111,6 +113,11 @@ export function GameScreen() {
     },
     { interval: 2000, enabled: gameState?.status === 'active' }
   );
+
+  function handleConfirmAbort() {
+    setConfirmAbort(false);
+    handleAbort();
+  }
 
   async function handleAbort() {
     if (!gameId) return;
@@ -199,13 +206,23 @@ export function GameScreen() {
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Game #{gameId}</h1>
           {player?.id === creatorId && gameState?.status === 'active' && (
-            <Button
-              variant="ghost"
-              className="text-gray-500 hover:text-red-400 hover:bg-red-400/10"
-              onClick={handleAbort}
-            >
-              Abort Game
-            </Button>
+            <>
+              <ConfirmDialog
+                open={confirmAbort}
+                title="Abort game"
+                description="Are you sure you want to abort this game? This cannot be undone."
+                confirmLabel="Abort"
+                onConfirm={handleConfirmAbort}
+                onCancel={() => setConfirmAbort(false)}
+              />
+              <Button
+                variant="ghost"
+                className="text-gray-500 hover:text-red-400 hover:bg-red-400/10"
+                onClick={() => setConfirmAbort(true)}
+              >
+                Abort Game
+              </Button>
+            </>
           )}
         </div>
         {currentPlayerName && (

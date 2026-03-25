@@ -161,6 +161,21 @@ describe('LobbyScreen', () => {
   });
 
   describe('deleting a game (creator)', () => {
+    it('clicking delete opens confirmation dialog', async () => {
+      givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
+      whenRendered();
+      await whenDeleteButtonClicked(42);
+      await thenConfirmDialogIsVisible();
+    });
+
+    it('cancelling delete dialog keeps game in list', async () => {
+      givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
+      whenRendered();
+      await whenDeleteButtonClicked(42);
+      await whenConfirmDialogCancelled();
+      await thenButtonIsVisible('Delete game 42');
+    });
+
     it('shows error toast when delete fails', async () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       givenDeleteGameFails(42);
@@ -340,8 +355,21 @@ describe('LobbyScreen', () => {
     await userEvent.click(await screen.findByRole('button', { name: `Start game ${gameId}` }));
   }
 
-  async function whenDeleteClicked(gameId: number) {
+  async function whenDeleteButtonClicked(gameId: number) {
     await userEvent.click(await screen.findByRole('button', { name: `Delete game ${gameId}` }));
+  }
+
+  async function whenDeleteClicked(gameId: number) {
+    await whenDeleteButtonClicked(gameId);
+    await userEvent.click(await screen.findByRole('button', { name: /^delete$/i }));
+  }
+
+  async function whenConfirmDialogCancelled() {
+    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }));
+  }
+
+  async function thenConfirmDialogIsVisible() {
+    await screen.findByRole('heading', { name: /delete game/i });
   }
 
   async function whenLeaveClicked(gameId: number) {

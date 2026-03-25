@@ -267,11 +267,25 @@ describe('GameScreen', () => {
       expect(screen.queryByRole('button', { name: /abort game/i })).toBeNull();
     });
 
-    it('clicking abort navigates to /lobby', async () => {
+    it('clicking abort opens confirmation dialog', async () => {
+      whenRendered();
+      await whenAbortClicked();
+      await thenConfirmDialogIsVisible();
+    });
+
+    it('confirming abort navigates to /lobby', async () => {
       server.use(http.post(ABORT_URL, () => HttpResponse.json({})));
       whenRendered();
-      await userEvent.click(await screen.findByRole('button', { name: /abort game/i }));
+      await whenAbortClicked();
+      await whenAbortConfirmed();
       await thenNavigatedTo('/lobby');
+    });
+
+    it('cancelling abort dialog does not navigate', async () => {
+      whenRendered();
+      await whenAbortClicked();
+      await whenAbortCancelled();
+      expect(mockNavigate).not.toHaveBeenCalled();
     });
 
     it('shows error toast when abort fails', async () => {
@@ -279,7 +293,8 @@ describe('GameScreen', () => {
         http.post(ABORT_URL, () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
       );
       whenRendered();
-      await userEvent.click(await screen.findByRole('button', { name: /abort game/i }));
+      await whenAbortClicked();
+      await whenAbortConfirmed();
       await screen.findByText('Failed to abort game');
     });
   });
@@ -384,6 +399,22 @@ describe('GameScreen', () => {
   async function thenRollButtonIsDisabled() {
     const rollBtn = await screen.findByRole('button', { name: /roll/i });
     expect(rollBtn).toBeDisabled();
+  }
+
+  async function whenAbortClicked() {
+    await userEvent.click(await screen.findByRole('button', { name: /abort game/i }));
+  }
+
+  async function whenAbortConfirmed() {
+    await userEvent.click(await screen.findByRole('button', { name: /^abort$/i }));
+  }
+
+  async function whenAbortCancelled() {
+    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }));
+  }
+
+  async function thenConfirmDialogIsVisible() {
+    await screen.findByRole('heading', { name: /abort game/i });
   }
 
   async function thenNavigatedTo(path: string) {
