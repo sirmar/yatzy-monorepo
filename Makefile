@@ -126,10 +126,10 @@ frontend/types:
 	$(DC_RUN) frontend-dev pnpm tsc --noEmit
 
 frontend/unit:
-	$(DC_RUN) frontend-dev pnpm vitest run --passWithNoTests --reporter=dot
+	$(DC_RUN) -e CI=true frontend-dev pnpm vitest run --reporter=dot
 
 frontend/coverage:
-	$(DC_RUN) frontend-dev pnpm vitest run --coverage --passWithNoTests
+	$(DC_RUN) -e CI=true frontend-dev pnpm vitest run --coverage --reporter=dot
 
 frontend/test: frontend/unit frontend/e2e
 
