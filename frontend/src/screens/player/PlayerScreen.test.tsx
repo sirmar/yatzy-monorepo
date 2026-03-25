@@ -1,10 +1,16 @@
-import { screen } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderWithProviders } from '@/test/helpers';
 import { PlayerScreen } from './PlayerScreen';
+
+const mockUseAuth = vi.hoisted(() => vi.fn());
+vi.mock('@/hooks/AuthContext', async () => {
+  const actual = await vi.importActual('@/hooks/AuthContext');
+  return { ...actual, useAuth: mockUseAuth };
+});
 
 const mockNavigate = vi.hoisted(() => vi.fn());
 vi.mock('react-router-dom', async () => {
@@ -14,22 +20,45 @@ vi.mock('react-router-dom', async () => {
 
 const server = setupServer();
 beforeAll(() => server.listen());
+
 afterEach(() => {
   server.resetHandlers();
   mockNavigate.mockReset();
+  mockUseAuth.mockReset();
   sessionStorage.clear();
 });
 afterAll(() => server.close());
 
 const PLAYERS_URL = 'http://localhost/api/players';
+const PLAYERS_ME_URL = 'http://localhost/api/players/me';
 const PLAYER_URL = (id: number) => `http://localhost/api/players/${id}`;
 
+const ACCOUNT_ID = '550e8400-e29b-41d4-a716-446655440000';
+const OTHER_ACCOUNT_ID = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee';
+
 describe('PlayerScreen', () => {
+  describe('existing player check', () => {
+    it('auto-navigates to lobby when account already has a player', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      givenPlayers([]);
+      whenRendered({ accountId: ACCOUNT_ID });
+      await thenNavigatedTo('/lobby');
+    });
+
+    it('shows create form when account has no player', async () => {
+      givenNoMyPlayer();
+      givenPlayers([]);
+      whenRendered({ accountId: ACCOUNT_ID });
+      await thenCreateFormIsVisible();
+    });
+  });
+
   describe('player list', () => {
     it('shows list of existing players', async () => {
+      givenNoMyPlayer();
       givenPlayers([
-        { id: 1, name: 'Alice', created_at: '' },
-        { id: 2, name: 'Bob', created_at: '' },
+        { id: 1, account_id: OTHER_ACCOUNT_ID, name: 'Alice', created_at: '' },
+        { id: 2, account_id: OTHER_ACCOUNT_ID, name: 'Bob', created_at: '' },
       ]);
       whenRendered();
       await thenPlayerIsVisible('Alice');
@@ -37,114 +66,147 @@ describe('PlayerScreen', () => {
     });
 
     it('shows empty state when no players exist', async () => {
+      givenNoMyPlayer();
       givenPlayers([]);
       whenRendered();
       await thenEmptyStateIsVisible();
     });
   });
 
-  describe('selecting a player', () => {
-    it('allows selecting an existing player and navigates to lobby', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
-      whenRendered();
-      await whenPlayerSelected('Alice');
-      thenNavigatedTo('/lobby');
-    });
-  });
-
   describe('creating a player', () => {
     it('creates a new player and navigates to lobby', async () => {
+      givenNoMyPlayer();
       givenPlayers([]);
-      givenCreatePlayerSucceeds({ id: 3, name: 'Carol', created_at: '' });
-      whenRendered();
+      givenCreatePlayerSucceeds({ id: 3, account_id: ACCOUNT_ID, name: 'Carol', created_at: '' });
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenPlayerCreated('Carol');
       thenNavigatedTo('/lobby');
     });
 
     it('shows error when player creation fails', async () => {
+      givenNoMyPlayer();
       givenPlayers([]);
       givenCreatePlayerFails();
-      whenRendered();
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenPlayerCreated('Carol');
       await thenErrorIsVisible();
     });
   });
 
-  describe('editing a player', () => {
+  describe('editing own player', () => {
     it('shows error toast when update fails', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
       givenUpdatePlayerFails(1);
-      whenRendered();
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenEditClicked('Alice');
       await whenNameUpdatedTo('Alicia');
       await thenErrorToastIsVisible('Failed to update player');
     });
 
     it('keeps editor open when update fails', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
       givenUpdatePlayerFails(1);
-      whenRendered();
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenEditClicked('Alice');
       await whenNameUpdatedTo('Alicia');
       thenEditInputIsVisible();
     });
 
     it('shows edit input pre-filled with current name', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
-      whenRendered();
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenEditClicked('Alice');
       thenEditInputHasValue('Alice');
     });
 
     it('saves updated name and shows it in the list', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
-      givenUpdatePlayerSucceeds({ id: 1, name: 'Alicia', created_at: '' });
-      whenRendered();
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
+      givenUpdatePlayerSucceeds({ id: 1, account_id: ACCOUNT_ID, name: 'Alicia', created_at: '' });
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenEditClicked('Alice');
       await whenNameUpdatedTo('Alicia');
       await thenPlayerIsVisible('Alicia');
     });
 
     it('cancels edit without saving', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
-      whenRendered();
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenEditClicked('Alice');
       await whenEditCancelled();
       await thenPlayerIsVisible('Alice');
     });
   });
 
-  describe('deleting a player', () => {
+  describe('deleting own player', () => {
     it('shows error toast when delete fails', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
       givenDeletePlayerFails(1);
-      whenRendered();
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenDeleteClicked('Alice');
       await thenErrorToastIsVisible('Failed to delete player');
     });
 
     it('keeps player in list when delete fails', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
       givenDeletePlayerFails(1);
-      whenRendered();
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenDeleteClicked('Alice');
       await thenPlayerIsVisible('Alice');
     });
 
     it('removes player from the list', async () => {
-      givenPlayers([{ id: 1, name: 'Alice', created_at: '' }]);
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' }]);
       givenDeletePlayerSucceeds(1);
-      whenRendered();
+      whenRendered({ accountId: ACCOUNT_ID });
       await whenDeleteClicked('Alice');
       await thenPlayerIsNotVisible('Alice');
     });
   });
 
-  function givenPlayers(players: { id: number; name: string; created_at: string }[]) {
+  describe('other players', () => {
+    it('does not show edit/delete for players owned by other accounts', async () => {
+      givenNoMyPlayer();
+      givenPlayers([{ id: 1, account_id: OTHER_ACCOUNT_ID, name: 'Alice', created_at: '' }]);
+      whenRendered({ accountId: ACCOUNT_ID });
+      await thenPlayerIsVisible('Alice');
+      thenEditButtonNotPresent('Alice');
+      thenDeleteButtonNotPresent('Alice');
+    });
+  });
+
+  function givenMyPlayer(player: {
+    id: number;
+    account_id: string;
+    name: string;
+    created_at: string;
+  }) {
+    server.use(http.get(PLAYERS_ME_URL, () => HttpResponse.json(player)));
+  }
+
+  function givenNoMyPlayer() {
+    server.use(http.get(PLAYERS_ME_URL, () => new HttpResponse(null, { status: 404 })));
+  }
+
+  function givenPlayers(
+    players: { id: number; account_id: string; name: string; created_at: string }[]
+  ) {
     server.use(http.get(PLAYERS_URL, () => HttpResponse.json(players)));
   }
 
-  function givenCreatePlayerSucceeds(player: { id: number; name: string; created_at: string }) {
+  function givenCreatePlayerSucceeds(player: {
+    id: number;
+    account_id: string;
+    name: string;
+    created_at: string;
+  }) {
     server.use(http.post(PLAYERS_URL, () => HttpResponse.json(player, { status: 201 })));
   }
 
@@ -154,7 +216,12 @@ describe('PlayerScreen', () => {
     );
   }
 
-  function givenUpdatePlayerSucceeds(player: { id: number; name: string; created_at: string }) {
+  function givenUpdatePlayerSucceeds(player: {
+    id: number;
+    account_id: string;
+    name: string;
+    created_at: string;
+  }) {
     server.use(http.put(PLAYER_URL(player.id), () => HttpResponse.json(player)));
   }
 
@@ -174,12 +241,16 @@ describe('PlayerScreen', () => {
     );
   }
 
-  function whenRendered() {
+  function whenRendered({ accountId }: { accountId?: string } = {}) {
+    mockUseAuth.mockReturnValue({
+      user: accountId ? { id: accountId, email: 'test@example.com', created_at: '' } : null,
+      accessToken: accountId ? 'test-token' : null,
+      isLoading: false,
+      login: vi.fn(),
+      register: vi.fn(),
+      logout: vi.fn(),
+    });
     renderWithProviders(<PlayerScreen />);
-  }
-
-  async function whenPlayerSelected(name: string) {
-    await userEvent.click(await screen.findByRole('button', { name }));
   }
 
   async function whenPlayerCreated(name: string) {
@@ -207,7 +278,7 @@ describe('PlayerScreen', () => {
   }
 
   async function thenPlayerIsVisible(name: string) {
-    await screen.findByRole('button', { name });
+    await screen.findByText(name);
   }
 
   async function thenPlayerIsNotVisible(_name: string) {
@@ -218,6 +289,10 @@ describe('PlayerScreen', () => {
     await screen.findByText(/no players yet/i);
   }
 
+  async function thenCreateFormIsVisible() {
+    await screen.findByPlaceholderText(/enter your name/i);
+  }
+
   async function thenErrorIsVisible() {
     await screen.findByText(/failed to create/i);
   }
@@ -226,8 +301,8 @@ describe('PlayerScreen', () => {
     expect(screen.getByRole('textbox', { name: /edit name/i })).toHaveValue(value);
   }
 
-  function thenNavigatedTo(path: string) {
-    expect(mockNavigate).toHaveBeenCalledWith(path);
+  async function thenNavigatedTo(path: string) {
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
   }
 
   async function thenErrorToastIsVisible(title: string) {
@@ -236,5 +311,13 @@ describe('PlayerScreen', () => {
 
   function thenEditInputIsVisible() {
     expect(screen.getByRole('textbox', { name: /edit name/i })).toBeInTheDocument();
+  }
+
+  function thenEditButtonNotPresent(playerName: string) {
+    expect(screen.queryByRole('button', { name: `Edit ${playerName}` })).not.toBeInTheDocument();
+  }
+
+  function thenDeleteButtonNotPresent(playerName: string) {
+    expect(screen.queryByRole('button', { name: `Delete ${playerName}` })).not.toBeInTheDocument();
   }
 });

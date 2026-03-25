@@ -8,12 +8,12 @@ type Player = components['schemas']['Player'];
 
 interface Props {
   player: Player;
-  onSelect: (player: Player) => void;
+  isOwner?: boolean;
   onUpdate: (player: Player, newName: string) => Promise<void>;
   onDelete: (player: Player) => Promise<void>;
 }
 
-export function PlayerRow({ player, onSelect, onUpdate, onDelete }: Props) {
+export function PlayerRow({ player, isOwner, onUpdate, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(player.name);
 
@@ -74,31 +74,31 @@ export function PlayerRow({ player, onSelect, onUpdate, onDelete }: Props) {
 
   return (
     <div className="group flex gap-2">
-      <Button
-        variant="outline"
-        className="flex-1 justify-start bg-gray-800 text-white border-gray-600 transition-colors hover:!bg-yellow-400/10 hover:!text-yellow-300 hover:border-yellow-400/50"
-        onClick={() => onSelect(player)}
-      >
+      <div className="flex-1 flex items-center px-4 py-2 rounded-md bg-gray-800 text-white border border-gray-600 text-sm font-medium">
         {player.name}
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
-        aria-label={`Edit ${player.name}`}
-        onClick={() => setEditing(true)}
-        className="bg-gray-800 border-gray-600 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:!bg-yellow-400/10 hover:!text-yellow-300 hover:border-yellow-400/50 shrink-0"
-      >
-        <Pencil />
-      </Button>
-      <Button
-        size="icon"
-        variant="outline"
-        aria-label={`Delete ${player.name}`}
-        onClick={() => onDelete(player)}
-        className="bg-gray-800 border-gray-600 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:!bg-red-400/10 hover:!text-red-300 hover:border-red-400/50 shrink-0"
-      >
-        <Trash2 />
-      </Button>
+      </div>
+      {isOwner && (
+        <>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label={`Edit ${player.name}`}
+            onClick={() => setEditing(true)}
+            className="bg-gray-800 border-gray-600 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:!bg-yellow-400/10 hover:!text-yellow-300 hover:border-yellow-400/50 shrink-0"
+          >
+            <Pencil />
+          </Button>
+          <Button
+            size="icon"
+            variant="outline"
+            aria-label={`Delete ${player.name}`}
+            onClick={() => onDelete(player)}
+            className="bg-gray-800 border-gray-600 text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity hover:!bg-red-400/10 hover:!text-red-300 hover:border-red-400/50 shrink-0"
+          >
+            <Trash2 />
+          </Button>
+        </>
+      )}
     </div>
   );
 }

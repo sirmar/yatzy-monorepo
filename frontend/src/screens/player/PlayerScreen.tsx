@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { CreatePlayerForm } from './CreatePlayerForm';
@@ -13,8 +14,21 @@ type Player = components['schemas']['Player'];
 export function PlayerScreen() {
   const [players, setPlayers] = useState<Player[]>([]);
   const { setPlayer } = usePlayer();
+  const { user, accessToken } = useAuth();
   const navigate = useNavigate();
   const errorToast = useErrorToast();
+
+  useEffect(() => {
+    if (!accessToken) return;
+    apiClient
+      .GET('/players/me', { headers: { Authorization: `Bearer ${accessToken}` } })
+      .then(({ data }) => {
+        if (data) {
+          setPlayer(data);
+          navigate('/lobby');
+        }
+      });
+  }, [accessToken, setPlayer, navigate]);
 
   useEffect(() => {
     apiClient.GET('/players').then(({ data }) => {
@@ -23,7 +37,10 @@ export function PlayerScreen() {
   }, []);
 
   async function handleCreate(name: string) {
-    const { data, error } = await apiClient.POST('/players', { body: { name } });
+    const { data, error } = await apiClient.POST('/players', {
+      body: { name },
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
     if (error || !data) throw error ?? new Error('Failed to create player');
     setPlayer(data);
     navigate('/lobby');
@@ -33,6 +50,7 @@ export function PlayerScreen() {
     const { data, error } = await apiClient.PUT('/players/{player_id}', {
       params: { path: { player_id: player.id } },
       body: { name: newName },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (error || !data) {
       errorToast('Failed to update player');
@@ -44,17 +62,14 @@ export function PlayerScreen() {
   async function handleDelete(player: Player) {
     const { error } = await apiClient.DELETE('/players/{player_id}', {
       params: { path: { player_id: player.id } },
+      headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (error) {
       errorToast('Failed to delete player');
       return;
     }
     setPlayers((prev) => prev.filter((p) => p.id !== player.id));
-  }
-
-  function handleSelect(player: Player) {
-    setPlayer(player);
-    navigate('/lobby');
+    setPlayer(null);
   }
 
   return (
@@ -66,17 +81,17 @@ export function PlayerScreen() {
         <CardContent className="flex flex-col gap-6">
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
-              New player
+              Create player
             </h2>
             <CreatePlayerForm onCreated={handleCreate} />
           </div>
           <div>
             <h2 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
-              Existing players
+              Players
             </h2>
             <PlayerList
               players={players}
-              onSelect={handleSelect}
+              currentAccountId={user?.id}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
             />

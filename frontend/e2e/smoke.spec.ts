@@ -1,8 +1,37 @@
 import type { APIRequestContext, Page } from '@playwright/test';
 import { expect, test } from '@playwright/test';
 
-async function createPlayer(request: APIRequestContext, name: string) {
-  const res = await request.post('/api/players', { data: { name } });
+async function registerUser(
+  request: APIRequestContext,
+  page: Page
+): Promise<{ accessToken: string }> {
+  const email = `test-${Date.now()}-${Math.random().toString(36).slice(2)}@e2e.com`;
+  const res = await request.post('/auth/register', {
+    data: { email, password: 'password123' },
+  });
+  if (!res.ok()) {
+    throw new Error(`Auth registration failed: ${res.status()} ${await res.text()}`);
+  }
+  const body = await res.json();
+  if (!body.refresh_token) {
+    throw new Error(`Auth registration returned no refresh_token: ${JSON.stringify(body)}`);
+  }
+  await page.addInitScript((token) => {
+    localStorage.setItem('yatzy_refresh_token', token);
+  }, body.refresh_token);
+  return { accessToken: body.access_token };
+}
+
+async function gotoAuthenticated(page: Page, url: string) {
+  await page.goto(url);
+  await page.waitForLoadState('networkidle');
+}
+
+async function createPlayer(request: APIRequestContext, name: string, accessToken: string) {
+  const res = await request.post('/api/players', {
+    data: { name },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   return await res.json();
 }
 
@@ -21,18 +50,25 @@ async function loginAs(page: Page, player: { id: number; name: string; created_a
   }, player);
 }
 
-test('app loads and shows player screen', async ({ page }) => {
+test('app loads and shows login screen', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByText('Yatzy')).toBeVisible();
 });
 
-test('protected routes redirect to player screen when no player selected', async ({ page }) => {
+test('unauthenticated access redirects to login', async ({ page }) => {
   await page.goto('/lobby');
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/login');
 });
 
-test('creating a player navigates to lobby', async ({ page }) => {
-  await page.goto('/');
+test('authenticated user sees player screen', async ({ page, request }) => {
+  await registerUser(request, page);
+  await gotoAuthenticated(page, '/');
+  await expect(page.getByPlaceholder('Enter your name')).toBeVisible();
+});
+
+test('creating a player navigates to lobby', async ({ page, request }) => {
+  await registerUser(request, page);
+  await gotoAuthenticated(page, '/');
   await page.getByPlaceholder('Enter your name').fill('Alice');
   await page.getByRole('button', { name: 'Create' }).click();
   await page.waitForURL('/lobby');
@@ -40,17 +76,19 @@ test('creating a player navigates to lobby', async ({ page }) => {
 });
 
 test('creating a game shows it in the lobby', async ({ page, request }) => {
-  const player = await createPlayer(request, 'Alice');
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
-  await page.goto('/lobby');
+  await gotoAuthenticated(page, '/lobby');
   await page.getByRole('button', { name: 'New Game' }).click();
   await expect(page.getByRole('button', { name: /Start game/ })).toBeVisible();
 });
 
 test('starting a game navigates to the game screen', async ({ page, request }) => {
-  const player = await createPlayer(request, 'Alice');
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
-  await page.goto('/lobby');
+  await gotoAuthenticated(page, '/lobby');
   await page.getByRole('button', { name: 'New Game' }).click();
   await page.getByRole('button', { name: /Start game/ }).click();
   await page.waitForURL(/\/games\/\d+$/);
@@ -58,10 +96,11 @@ test('starting a game navigates to the game screen', async ({ page, request }) =
 });
 
 test('rolling dice shows dice values', async ({ page, request }) => {
-  const player = await createPlayer(request, 'Alice');
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
   const game = await createAndStartGame(request, player.id);
   await loginAs(page, player);
-  await page.goto(`/games/${game.id}`);
+  await gotoAuthenticated(page, `/games/${game.id}`);
   await page.getByRole('button', { name: 'Roll' }).click();
   for (let i = 0; i < 6; i++) {
     await expect(page.getByRole('button', { name: `Die ${i}` })).toHaveAttribute(
@@ -72,10 +111,11 @@ test('rolling dice shows dice values', async ({ page, request }) => {
 });
 
 test('scoring a category completes the turn', async ({ page, request }) => {
-  const player = await createPlayer(request, 'Alice');
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
   const game = await createAndStartGame(request, player.id);
   await loginAs(page, player);
-  await page.goto(`/games/${game.id}`);
+  await gotoAuthenticated(page, `/games/${game.id}`);
   await page.getByRole('button', { name: 'Roll' }).click();
   await expect(page.getByRole('button', { name: 'Die 0' })).toHaveAttribute('data-value', /[1-6]/);
   await page.getByRole('rowheader', { name: 'Chance' }).click();
@@ -83,10 +123,11 @@ test('scoring a category completes the turn', async ({ page, request }) => {
 });
 
 test('aborting a game redirects to lobby', async ({ page, request }) => {
-  const player = await createPlayer(request, 'Alice');
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
   const game = await createAndStartGame(request, player.id);
   await loginAs(page, player);
-  await page.goto(`/games/${game.id}`);
+  await gotoAuthenticated(page, `/games/${game.id}`);
   await page.getByRole('button', { name: /abort game/i }).click();
   await page.waitForURL('/lobby');
   await expect(page.getByRole('heading', { name: 'Lobby' })).toBeVisible();
