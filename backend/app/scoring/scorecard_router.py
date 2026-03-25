@@ -156,6 +156,6 @@ def create_scorecard_router(database: Database) -> APIRouter:
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[HighScore]:
     """List all finished games sorted by total score descending."""
-    return await HighScoresRepository(conn).list()
+    return await HighScoresRepository(conn).list_all()
 
   return router

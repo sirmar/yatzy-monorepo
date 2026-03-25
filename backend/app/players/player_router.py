@@ -6,6 +6,8 @@ from app.config import Settings
 from app.database import Database
 from app.players.player import Player, PlayerCreate, PlayerUpdate
 from app.players.player_repository import PlayerRepository
+from app.players.player_stats import PlayerStats
+from app.players.player_stats_repository import PlayerStatsRepository
 
 
 def create_player_router(database: Database, settings: Settings) -> APIRouter:
@@ -59,6 +61,23 @@ def create_player_router(database: Database, settings: Settings) -> APIRouter:
   ) -> list[Player]:
     """List all players."""
     return await PlayerRepository(conn).list_all()
+
+  @router.get(
+    '/players/{player_id}/stats',
+    response_model=PlayerStats,
+    responses={
+      404: {'description': 'Player not found'},
+    },
+  )
+  async def get_player_stats(
+    player_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+  ) -> PlayerStats:
+    """Get stats for a player."""
+    stats = await PlayerStatsRepository(conn).get(player_id)
+    if stats is None:
+      raise HTTPException(status_code=404, detail='Player not found')
+    return stats
 
   @router.get(
     '/players/{player_id}',

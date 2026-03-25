@@ -8,7 +8,7 @@ class HighScoresRepository:
   def __init__(self, conn: aiomysql.Connection) -> None:
     self._conn = conn
 
-  async def list(self) -> list[HighScore]:
+  async def list_all(self) -> list[HighScore]:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT p.id, p.name, g.id, g.ended_at, se.category, se.score '
