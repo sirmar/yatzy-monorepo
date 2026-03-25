@@ -221,6 +221,7 @@ services:
       - /app/.venv
     environment:
       DATABASE_URL: mysql://root:test@db-test:3306/yatzy_test
+      JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
     depends_on:
       db-test:
         condition: service_healthy
