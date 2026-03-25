@@ -60,7 +60,7 @@ describe('NavBar', () => {
       mockUseLocation.mockReturnValue({ pathname: '/games/42' });
       givenActiveGames([{ id: 42, player_ids: [ALICE.id] }]);
       whenRendered();
-      await userEvent.click(screen.getByText('Games ▾'));
+      await userEvent.click(screen.getByText('Active Games ▾'));
       expect(screen.getByRole('menuitem', { name: 'Game #42' })).toBeInTheDocument();
     });
 
@@ -72,29 +72,29 @@ describe('NavBar', () => {
         { id: 7, player_ids: [ALICE.id] },
       ]);
       whenRendered();
-      await userEvent.click(screen.getByText('Games ▾'));
+      await userEvent.click(screen.getByText('Active Games ▾'));
       expect(await screen.findByRole('menuitem', { name: 'Game #42' })).toBeInTheDocument();
       expect(await screen.findByRole('menuitem', { name: 'Game #7' })).toBeInTheDocument();
     });
   });
 
-  describe('Games dropdown', () => {
-    it('always shows "Games ▾" trigger', () => {
+  describe('Active Games dropdown', () => {
+    it('always shows "Active Games ▾" trigger', () => {
       whenRendered();
-      expect(screen.getByText('Games ▾')).toBeInTheDocument();
+      expect(screen.getByText('Active Games ▾')).toBeInTheDocument();
     });
 
     it('shows "No games" when player has no active games', async () => {
       givenActiveGames([]);
       whenRendered();
-      await userEvent.click(screen.getByText('Games ▾'));
+      await userEvent.click(screen.getByText('Active Games ▾'));
       expect(screen.getByRole('menuitem', { name: 'No games' })).toBeInTheDocument();
     });
 
     it('shows "Game #7" in dropdown when player has one active game', async () => {
       givenActiveGames([{ id: 7, player_ids: [ALICE.id] }]);
       whenRendered();
-      await userEvent.click(screen.getByText('Games ▾'));
+      await userEvent.click(screen.getByText('Active Games ▾'));
       expect(await screen.findByRole('menuitem', { name: 'Game #7' })).toBeInTheDocument();
     });
 
@@ -104,7 +104,7 @@ describe('NavBar', () => {
         { id: 8, player_ids: [ALICE.id] },
       ]);
       whenRendered();
-      await userEvent.click(screen.getByText('Games ▾'));
+      await userEvent.click(screen.getByText('Active Games ▾'));
       expect(await screen.findByRole('menuitem', { name: 'Game #7' })).toBeInTheDocument();
       expect(await screen.findByRole('menuitem', { name: 'Game #8' })).toBeInTheDocument();
     });
@@ -112,7 +112,7 @@ describe('NavBar', () => {
     it('does not list games the player is not in', async () => {
       givenActiveGames([{ id: 9, player_ids: [99] }]);
       whenRendered();
-      await userEvent.click(screen.getByText('Games ▾'));
+      await userEvent.click(screen.getByText('Active Games ▾'));
       expect(screen.queryByRole('menuitem', { name: 'Game #9' })).not.toBeInTheDocument();
     });
   });
@@ -149,18 +149,18 @@ describe('NavBar', () => {
       expect(screen.getByRole('link', { name: 'Lobby' })).not.toHaveClass('text-yellow-400');
     });
 
-    it('highlights Games trigger on /games/42', () => {
+    it('highlights Active Games trigger on /games/42', () => {
       mockUseParams.mockReturnValue({ gameId: '42' });
       mockUseLocation.mockReturnValue({ pathname: '/games/42' });
       whenRendered();
-      expect(screen.getByText('Games ▾')).toHaveClass('text-yellow-400');
+      expect(screen.getByText('Active Games ▾')).toHaveClass('text-yellow-400');
     });
 
-    it('highlights Games trigger on /games/42/end', () => {
+    it('highlights Active Games trigger on /games/42/end', () => {
       mockUseParams.mockReturnValue({ gameId: '42' });
       mockUseLocation.mockReturnValue({ pathname: '/games/42/end' });
       whenRendered();
-      expect(screen.getByText('Games ▾')).toHaveClass('text-yellow-400');
+      expect(screen.getByText('Active Games ▾')).toHaveClass('text-yellow-400');
     });
   });
 

@@ -7,6 +7,7 @@ import { EndScreen } from '@/screens/end/EndScreen';
 import { GameScreen } from '@/screens/game/GameScreen';
 import { LobbyScreen } from '@/screens/lobby/LobbyScreen';
 import { LoginScreen } from '@/screens/login/LoginScreen';
+import { EditPlayerScreen } from '@/screens/player/EditPlayerScreen';
 import { PlayerScreen } from '@/screens/player/PlayerScreen';
 
 function AuthGuard() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/" element={<PlayerScreen />} />
           <Route element={<ProtectedLayout />}>
             <Route path="/lobby" element={<LobbyScreen />} />
+            <Route path="/profile" element={<EditPlayerScreen />} />
             <Route path="/games/:gameId" element={<GameScreen />} />
             <Route path="/games/:gameId/end" element={<EndScreen />} />
           </Route>

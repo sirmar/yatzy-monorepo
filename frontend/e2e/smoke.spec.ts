@@ -75,6 +75,28 @@ test('creating a player navigates to lobby', async ({ page, request }) => {
   await expect(page.getByRole('heading', { name: 'Lobby' })).toBeVisible();
 });
 
+test('existing player auto-navigates to lobby on login', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  await createPlayer(request, 'Alice', accessToken);
+  await gotoAuthenticated(page, '/');
+  await page.waitForURL('/lobby');
+  await expect(page.getByRole('heading', { name: 'Lobby' })).toBeVisible();
+});
+
+test('editing player name via nav updates the displayed name', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('button', { name: /alice/i }).click();
+  await page.getByRole('menuitem', { name: 'Edit player' }).click();
+  await page.waitForURL('/profile');
+  await page.getByRole('textbox').fill('Alicia');
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.waitForURL('/lobby');
+  await expect(page.getByRole('button', { name: /alicia/i })).toBeVisible();
+});
+
 test('creating a game shows it in the lobby', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
@@ -129,6 +151,7 @@ test('aborting a game redirects to lobby', async ({ page, request }) => {
   await loginAs(page, player);
   await gotoAuthenticated(page, `/games/${game.id}`);
   await page.getByRole('button', { name: /abort game/i }).click();
+  await page.getByRole('button', { name: /^abort$/i }).click();
   await page.waitForURL('/lobby');
   await expect(page.getByRole('heading', { name: 'Lobby' })).toBeVisible();
 });

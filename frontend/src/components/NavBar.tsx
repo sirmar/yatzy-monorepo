@@ -62,7 +62,7 @@ export function NavBar() {
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger className={anyGameActive ? activeClass : inactiveClass}>
-              Games ▾
+              Active Games ▾
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               {activeGameIds.length === 0 ? (
@@ -82,7 +82,7 @@ export function NavBar() {
             <DropdownMenuTrigger className={inactiveClass}>{player?.name} ▾</DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>
-                <Link to="/">Change player</Link>
+                <Link to="/profile">Edit player</Link>
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={handleLogout}>Sign out</DropdownMenuItem>
             </DropdownMenuContent>
