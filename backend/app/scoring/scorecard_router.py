@@ -22,6 +22,8 @@ from app.scoring.scorecard import (
   ScoreRequest,
   ScoringOption,
 )
+from app.scoring.high_score import HighScore
+from app.scoring.high_scores_repository import HighScoresRepository
 from app.scoring.scorecard_repository import ScorecardRepository
 
 
@@ -148,5 +150,12 @@ def create_scorecard_router(database: Database) -> APIRouter:
       if cat not in scored
       if (score := calculate(cat, dice)) > 0
     ]
+
+  @router.get('/high-scores', response_model=list[HighScore])
+  async def list_high_scores(
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+  ) -> list[HighScore]:
+    """List all finished games sorted by total score descending."""
+    return await HighScoresRepository(conn).list()
 
   return router
