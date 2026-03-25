@@ -5,6 +5,7 @@ import { apiClient } from '@/api';
 import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { useErrorToast } from '@/hooks/use-toast';
+import { usePlayerNames } from '@/hooks/usePlayerNames';
 
 type PlayerScore = components['schemas']['PlayerScore'];
 
@@ -15,14 +16,12 @@ export function EndScreen() {
 
   const [finalScores, setFinalScores] = useState<PlayerScore[]>([]);
   const [winnerIds, setWinnerIds] = useState<number[]>([]);
-  const [playerNames, setPlayerNames] = useState<Record<number, string>>({});
+  const playerNames = usePlayerNames();
 
   useEffect(() => {
-    Promise.all([
-      apiClient.GET('/players'),
-      apiClient.GET('/games/{game_id}/state', { params: { path: { game_id: Number(gameId) } } }),
-    ])
-      .then(([{ data: players }, { data: state, error }]) => {
+    apiClient
+      .GET('/games/{game_id}/state', { params: { path: { game_id: Number(gameId) } } })
+      .then(({ data: state, error }) => {
         if (error || !state) {
           errorToast('Failed to load results');
           return;
@@ -30,9 +29,6 @@ export function EndScreen() {
         if (state.status !== 'finished') {
           navigate(`/games/${gameId}`);
           return;
-        }
-        if (players) {
-          setPlayerNames(Object.fromEntries(players.map((p) => [p.id, p.name])));
         }
         setFinalScores(state.final_scores ?? []);
         setWinnerIds(state.winner_ids ?? []);

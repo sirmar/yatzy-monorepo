@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
 import { PageLayout } from '@/components/PageLayout';
+import { formatDate } from '@/lib/format';
 
 type HighScore = components['schemas']['HighScore'];
 
@@ -50,9 +51,7 @@ export function HighScoresScreen() {
                   <td className="py-2">{score.player_name}</td>
                   <td className="py-2 text-right font-semibold">{score.total_score}</td>
                   <td className="py-2 text-right text-gray-400">#{score.game_id}</td>
-                  <td className="py-2 text-right text-gray-400">
-                    {new Date(score.finished_at).toLocaleDateString()}
-                  </td>
+                  <td className="py-2 text-right text-gray-400">{formatDate(score.finished_at)}</td>
                 </tr>
               ))}
               {scores.length === 0 && (

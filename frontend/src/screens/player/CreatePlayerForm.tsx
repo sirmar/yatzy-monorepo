@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { INPUT_CLASS } from '@/lib/styles';
 
 interface Props {
   onCreated: (name: string) => Promise<void>;
@@ -34,7 +35,7 @@ export function CreatePlayerForm({ onCreated }: Props) {
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your name"
           disabled={loading}
-          className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-500 hover:border-yellow-400/50 focus-visible:ring-yellow-400/50"
+          className={INPUT_CLASS}
         />
         <Button type="submit" disabled={loading || !name.trim()}>
           Create

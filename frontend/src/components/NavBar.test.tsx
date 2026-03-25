@@ -1,9 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ALICE, createMockServer, renderWithProviders } from '@/test/helpers';
 import { NavBar } from './NavBar';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
@@ -16,18 +15,13 @@ vi.mock('react-router-dom', async () => ({
   useLocation: mockUseLocation,
 }));
 
-const server = setupServer();
-beforeAll(() => server.listen());
+const server = createMockServer();
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   sessionStorage.clear();
 });
-afterAll(() => server.close());
 
 const GAMES_URL = 'http://localhost/api/games';
-
-const ALICE = { id: 1, name: 'Alice', created_at: '' };
 
 describe('NavBar', () => {
   beforeEach(() => {

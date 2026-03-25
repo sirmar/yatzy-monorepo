@@ -2,10 +2,13 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { PageHeader } from '@/components/PageHeader';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { usePlayerNames } from '@/hooks/usePlayerNames';
 import { usePolling } from '@/hooks/usePolling';
+import { POLLING_INTERVAL_MS } from '@/lib/constants';
 import { CreateGameButton } from './CreateGameButton';
 import { GameList } from './GameList';
 
@@ -14,18 +17,10 @@ type Game = components['schemas']['Game'];
 export function LobbyScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [creating, setCreating] = useState(false);
-  const [playerNames, setPlayerNames] = useState<Record<number, string>>({});
+  const playerNames = usePlayerNames();
   const { player } = usePlayer();
   const navigate = useNavigate();
   const errorToast = useErrorToast();
-
-  useEffect(() => {
-    apiClient.GET('/players').then(({ data }) => {
-      if (data) {
-        setPlayerNames(Object.fromEntries(data.map((p) => [p.id, p.name])));
-      }
-    });
-  }, []);
 
   const fetchGames = useCallback(async () => {
     if (!player) return;
@@ -37,7 +32,7 @@ export function LobbyScreen() {
     fetchGames();
   }, [fetchGames]);
 
-  usePolling(fetchGames, { interval: 2000 });
+  usePolling(fetchGames, { interval: POLLING_INTERVAL_MS });
 
   async function withMutation(title: string, fn: () => Promise<{ error?: unknown }>) {
     const { error } = await fn();
@@ -107,10 +102,10 @@ export function LobbyScreen() {
   return (
     <PageLayout>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Lobby</h1>
-          <CreateGameButton onCreate={handleCreate} loading={creating} />
-        </div>
+        <PageHeader
+          title="Lobby"
+          action={<CreateGameButton onCreate={handleCreate} loading={creating} />}
+        />
         <GameList
           games={games}
           currentPlayerId={player?.id ?? 0}

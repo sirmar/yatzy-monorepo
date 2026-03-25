@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { formatDate } from '@/lib/format';
+import { INPUT_CLASS } from '@/lib/styles';
 
 type PlayerStats = components['schemas']['PlayerStats'];
 
@@ -66,7 +68,7 @@ export function ProfileScreen() {
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Enter your name"
                 disabled={loading}
-                className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-500 hover:border-yellow-400/50 focus-visible:ring-yellow-400/50"
+                className={INPUT_CLASS}
               />
             </div>
             <Button type="submit" disabled={loading || !name.trim()}>
@@ -81,7 +83,7 @@ export function ProfileScreen() {
               <table className="w-full text-sm text-white">
                 <tbody>
                   {[
-                    ['Member since', new Date(stats.member_since).toLocaleDateString()],
+                    ['Member since', formatDate(stats.member_since)],
                     ['Games played', stats.games_played],
                     ['High score', stats.high_score ?? '—'],
                     [

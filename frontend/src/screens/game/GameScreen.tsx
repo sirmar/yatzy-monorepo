@@ -3,11 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { PageHeader } from '@/components/PageHeader';
 import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { usePlayerNames } from '@/hooks/usePlayerNames';
 import { usePolling } from '@/hooks/usePolling';
+import { POLLING_INTERVAL_MS } from '@/lib/constants';
 import { DiceRoller } from './DiceRoller';
 import { ScoreCard } from './ScoreCard';
 
@@ -29,7 +32,7 @@ export function GameScreen() {
   const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
   const [scoringOptions, setScoringOptions] = useState<ScoringOption[] | null>(null);
-  const [playerNames, setPlayerNames] = useState<Record<number, string>>({});
+  const playerNames = usePlayerNames();
   const [confirmAbort, setConfirmAbort] = useState(false);
 
   const prevPlayerIdRef = useRef<number | null | undefined>(undefined);
@@ -45,14 +48,10 @@ export function GameScreen() {
     const gid = Number(gameId);
 
     Promise.all([
-      apiClient.GET('/players'),
       apiClient.GET('/games/{game_id}', { params: { path: { game_id: gid } } }),
       apiClient.GET('/games/{game_id}/state', { params: { path: { game_id: gid } } }),
       apiClient.GET('/games/{game_id}/scoreboard', { params: { path: { game_id: gid } } }),
-    ]).then(([{ data: players }, { data: game }, { data: state }, { data: board }]) => {
-      if (players) {
-        setPlayerNames(Object.fromEntries(players.map((p) => [p.id, p.name])));
-      }
+    ]).then(([{ data: game }, { data: state }, { data: board }]) => {
       if (game) {
         setCreatorId(game.creator_id);
       }
@@ -112,7 +111,7 @@ export function GameScreen() {
         navigate('/lobby');
       }
     },
-    { interval: 2000, enabled: gameState?.status === 'active' }
+    { interval: POLLING_INTERVAL_MS, enabled: gameState?.status === 'active' }
   );
 
   function handleConfirmAbort() {
@@ -204,28 +203,30 @@ export function GameScreen() {
   return (
     <PageLayout>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-white">Game #{gameId}</h1>
-          {player?.id === creatorId && gameState?.status === 'active' && (
-            <>
-              <ConfirmDialog
-                open={confirmAbort}
-                title="Abort game"
-                description="Are you sure you want to abort this game? This cannot be undone."
-                confirmLabel="Abort"
-                onConfirm={handleConfirmAbort}
-                onCancel={() => setConfirmAbort(false)}
-              />
-              <Button
-                variant="ghost"
-                className="text-gray-500 hover:text-red-400 hover:bg-red-400/10"
-                onClick={() => setConfirmAbort(true)}
-              >
-                Abort Game
-              </Button>
-            </>
-          )}
-        </div>
+        <PageHeader
+          title={`Game #${gameId}`}
+          action={
+            player?.id === creatorId && gameState?.status === 'active' ? (
+              <>
+                <ConfirmDialog
+                  open={confirmAbort}
+                  title="Abort game"
+                  description="Are you sure you want to abort this game? This cannot be undone."
+                  confirmLabel="Abort"
+                  onConfirm={handleConfirmAbort}
+                  onCancel={() => setConfirmAbort(false)}
+                />
+                <Button
+                  variant="ghost"
+                  className="text-gray-500 hover:text-red-400 hover:bg-red-400/10"
+                  onClick={() => setConfirmAbort(true)}
+                >
+                  Abort Game
+                </Button>
+              </>
+            ) : undefined
+          }
+        />
         {currentPlayerName && (
           <p className="text-white text-lg font-semibold">{currentPlayerName}'s turn</p>
         )}
