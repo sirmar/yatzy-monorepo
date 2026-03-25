@@ -48,6 +48,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/{player_id}/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Player Stats
+         * @description Get stats for a player.
+         */
+        get: operations["get_player_stats_players__player_id__stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/{player_id}": {
         parameters: {
             query?: never;
@@ -308,6 +328,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/high-scores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List High Scores
+         * @description List all finished games sorted by total score descending.
+         */
+        get: operations["list_high_scores_high_scores_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -443,6 +483,22 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HighScore */
+        HighScore: {
+            /** Player Id */
+            player_id: number;
+            /** Player Name */
+            player_name: string;
+            /** Game Id */
+            game_id: number;
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Total Score */
+            total_score: number;
+        };
         /** Player */
         Player: {
             /**
@@ -510,6 +566,28 @@ export interface components {
              * @description Total score including bonus
              */
             total: number;
+        };
+        /** PlayerStats */
+        PlayerStats: {
+            /** Player Id */
+            player_id: number;
+            /** Player Name */
+            player_name: string;
+            /**
+             * Member Since
+             * Format: date-time
+             */
+            member_since: string;
+            /** Games Played */
+            games_played: number;
+            /** High Score */
+            high_score: number | null;
+            /** Average Score */
+            average_score: number | null;
+            /** Bonus Count */
+            bonus_count: number;
+            /** Maxi Yatzy Count */
+            maxi_yatzy_count: number;
         };
         /** PlayerUpdate */
         PlayerUpdate: {
@@ -700,6 +778,44 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    get_player_stats_players__player_id__stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlayerStats"];
+                };
+            };
+            /** @description Player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };
@@ -1444,6 +1560,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_high_scores_high_scores_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HighScore"][];
                 };
             };
         };

@@ -144,6 +144,17 @@ test('scoring a category completes the turn', async ({ page, request }) => {
   await expect(page.getByRole('button', { name: 'Roll' })).toBeVisible();
 });
 
+test('high scores page loads via Statistics nav', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByText('Statistics ▾').click();
+  await page.getByRole('menuitem', { name: 'High Scores' }).click();
+  await page.waitForURL('/statistics/high-scores');
+  await expect(page.getByRole('heading', { name: 'High Scores' })).toBeVisible();
+});
+
 test('aborting a game redirects to lobby', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);

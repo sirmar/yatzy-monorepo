@@ -135,6 +135,55 @@ describe('NavBar', () => {
     });
   });
 
+  describe('Statistics dropdown', () => {
+    it('always shows "Statistics ▾" trigger', () => {
+      whenRendered();
+      thenStatisticsTriggerIsVisible();
+    });
+
+    it('shows "High Scores" menu item when Statistics dropdown is opened', async () => {
+      whenRendered();
+      await whenStatisticsDropdownOpened();
+      thenMenuItemIsVisible('High Scores');
+    });
+
+    it('highlights Statistics trigger on /statistics/high-scores', () => {
+      givenOnPath('/statistics/high-scores');
+      whenRendered();
+      thenStatisticsTriggerIsActive();
+    });
+
+    it('does not highlight Statistics trigger on /lobby', () => {
+      givenOnPath('/lobby');
+      whenRendered();
+      thenStatisticsTriggerIsInactive();
+    });
+
+    function givenOnPath(pathname: string) {
+      mockUseLocation.mockReturnValue({ pathname });
+    }
+
+    async function whenStatisticsDropdownOpened() {
+      await userEvent.click(screen.getByText('Statistics ▾'));
+    }
+
+    function thenStatisticsTriggerIsVisible() {
+      expect(screen.getByText('Statistics ▾')).toBeInTheDocument();
+    }
+
+    function thenMenuItemIsVisible(name: string) {
+      expect(screen.getByRole('menuitem', { name })).toBeInTheDocument();
+    }
+
+    function thenStatisticsTriggerIsActive() {
+      expect(screen.getByText('Statistics ▾')).toHaveClass('text-yellow-400');
+    }
+
+    function thenStatisticsTriggerIsInactive() {
+      expect(screen.getByText('Statistics ▾')).not.toHaveClass('text-yellow-400');
+    }
+  });
+
   describe('active link highlighting', () => {
     it('highlights Lobby link on /lobby', () => {
       mockUseLocation.mockReturnValue({ pathname: '/lobby' });

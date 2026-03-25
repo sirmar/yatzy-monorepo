@@ -79,6 +79,16 @@ export function NavBar() {
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>
+            <DropdownMenuTrigger className={isActive('/statistics') ? activeClass : inactiveClass}>
+              Statistics ▾
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem asChild>
+                <Link to="/statistics/high-scores">High Scores</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
             <DropdownMenuTrigger className={inactiveClass}>{player?.name} ▾</DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem asChild>

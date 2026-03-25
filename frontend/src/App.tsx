@@ -9,6 +9,7 @@ import { LobbyScreen } from '@/screens/lobby/LobbyScreen';
 import { LoginScreen } from '@/screens/login/LoginScreen';
 import { EditPlayerScreen } from '@/screens/player/EditPlayerScreen';
 import { PlayerScreen } from '@/screens/player/PlayerScreen';
+import { HighScoresScreen } from '@/screens/statistics/HighScoresScreen';
 
 function AuthGuard() {
   const { user, isLoading } = useAuth();
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/profile" element={<EditPlayerScreen />} />
             <Route path="/games/:gameId" element={<GameScreen />} />
             <Route path="/games/:gameId/end" element={<EndScreen />} />
+            <Route path="/statistics/high-scores" element={<HighScoresScreen />} />
           </Route>
         </Route>
       </Routes>
