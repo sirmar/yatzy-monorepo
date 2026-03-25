@@ -106,7 +106,7 @@ export function LobbyScreen() {
 
   return (
     <PageLayout>
-      <div className="max-w-lg flex flex-col gap-6">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Lobby</h1>
           <CreateGameButton onCreate={handleCreate} loading={creating} />
