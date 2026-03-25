@@ -26,15 +26,15 @@ async def test_score_records_score_for_category(client: AsyncClient):
   sc.assert_score_not_null('chance')
 
 
-async def test_score_game_not_found_returns_404(client: AsyncClient):
-  player = await Player(client).create('Alice')
+async def test_score_game_not_found_returns_404(client: AsyncClient, make_token):
+  player = await Player(client).create('Alice', token=make_token())
   sc = await Scorecard(client).score(999, player.id, 'chance')
   sc.assert_status(404).assert_has_detail()
 
 
-async def test_score_player_not_in_game_returns_404(client: AsyncClient):
+async def test_score_player_not_in_game_returns_404(client: AsyncClient, make_token):
   _, game = await active_game(client)
-  other = await Player(client).create('Bob')
+  other = await Player(client).create('Bob', token=make_token())
   sc = await Scorecard(client).score(game.id, other.id, 'chance')
   sc.assert_status(404).assert_has_detail()
 

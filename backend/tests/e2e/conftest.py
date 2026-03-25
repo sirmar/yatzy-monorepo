@@ -1,12 +1,14 @@
 import asyncio
 import os
 import subprocess
+import uuid
 from urllib.parse import urlparse
 
 TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL', 'mysql://root:test@127.0.0.1:3307/yatzy_test')
 os.environ['DATABASE_URL'] = TEST_DATABASE_URL
 
-from app.main import app, database  # noqa: E402
+from app.main import app, database, settings  # noqa: E402
+import jwt as pyjwt  # noqa: E402
 import pytest  # noqa: E402
 import aiomysql  # noqa: E402
 from httpx import AsyncClient, ASGITransport  # noqa: E402
@@ -84,3 +86,12 @@ async def truncate_tables():
 async def client():
   async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as c:
     yield c
+
+
+@pytest.fixture
+def make_token():
+  def _make(account_id: str | None = None) -> str:
+    uid = account_id or str(uuid.uuid4())
+    payload = {'sub': uid, 'email': f'{uid}@test.example'}
+    return pyjwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
+  return _make

@@ -1,8 +1,8 @@
 from tests.e2e.players import Player
 
 
-async def test_get_player_returns_player(client):
-  player = await Player(client).create('Alice')
+async def test_get_player_returns_player(client, make_token):
+  player = await Player(client).create('Alice', token=make_token())
   await player.get(player.id)
   (player
     .assert_status(200)

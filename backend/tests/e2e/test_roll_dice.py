@@ -35,9 +35,9 @@ async def test_roll_game_not_active(client: AsyncClient):
   game.assert_status(409).assert_has_detail()
 
 
-async def test_roll_not_your_turn(client: AsyncClient):
+async def test_roll_not_your_turn(client: AsyncClient, make_token):
   _, game = await active_game(client)
-  p2 = await Player(client).create('Bob')
+  p2 = await Player(client).create('Bob', token=make_token())
   await game.roll(game.id, p2.id)
   game.assert_status(403).assert_has_detail()
 

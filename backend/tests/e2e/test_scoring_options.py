@@ -28,15 +28,15 @@ async def test_scoring_options_excludes_already_scored(client: AsyncClient):
   so.assert_excludes_category('chance')
 
 
-async def test_scoring_options_game_not_found_returns_404(client: AsyncClient):
-  player = await Player(client).create('Alice')
+async def test_scoring_options_game_not_found_returns_404(client: AsyncClient, make_token):
+  player = await Player(client).create('Alice', token=make_token())
   so = await ScoringOptions(client).get(999, player.id)
   so.assert_status(404).assert_has_detail()
 
 
-async def test_scoring_options_player_not_in_game_returns_404(client: AsyncClient):
+async def test_scoring_options_player_not_in_game_returns_404(client: AsyncClient, make_token):
   _, game = await active_game(client)
-  other = await Player(client).create('Bob')
+  other = await Player(client).create('Bob', token=make_token())
   so = await ScoringOptions(client).get(game.id, other.id)
   so.assert_status(404).assert_has_detail()
 

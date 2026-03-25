@@ -4,17 +4,17 @@ from tests.e2e.players import Player
 from tests.e2e.helpers import lobby_game, active_game
 
 
-async def test_leave_game_returns_200(client: AsyncClient):
+async def test_leave_game_returns_200(client: AsyncClient, make_token):
   p1, game = await lobby_game(client)
-  p2 = await Player(client).create('Bob')
+  p2 = await Player(client).create('Bob', token=make_token())
   await game.join(game.id, p2.id)
   await game.leave(game.id, p2.id)
   game.assert_status(200)
 
 
-async def test_leave_game_removes_player(client: AsyncClient):
+async def test_leave_game_removes_player(client: AsyncClient, make_token):
   p1, game = await lobby_game(client)
-  p2 = await Player(client).create('Bob')
+  p2 = await Player(client).create('Bob', token=make_token())
   await game.join(game.id, p2.id)
   await game.leave(game.id, p2.id)
   await game.get(game.id)
@@ -28,9 +28,9 @@ async def test_leave_game_not_found(client: AsyncClient):
   game.assert_status(404).assert_has_detail()
 
 
-async def test_leave_game_player_not_in_game(client: AsyncClient):
+async def test_leave_game_player_not_in_game(client: AsyncClient, make_token):
   _, game = await lobby_game(client)
-  p2 = await Player(client).create('Bob')
+  p2 = await Player(client).create('Bob', token=make_token())
   await game.leave(game.id, p2.id)
   game.assert_status(404).assert_has_detail()
 

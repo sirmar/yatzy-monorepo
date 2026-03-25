@@ -7,7 +7,8 @@ from app.players.player_router import create_player_router
 from app.games.game_router import create_game_router
 from app.scoring.scorecard_router import create_scorecard_router
 
-database = Database(get_settings())
+settings = get_settings()
+database = Database(settings)
 
 
 @asynccontextmanager
@@ -18,6 +19,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 app = FastAPI(title='Yatzy API', lifespan=lifespan)
-app.include_router(create_player_router(database))
+app.include_router(create_player_router(database, settings))
 app.include_router(create_game_router(database))
 app.include_router(create_scorecard_router(database))

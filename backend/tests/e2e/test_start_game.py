@@ -21,9 +21,9 @@ async def test_start_game_not_found(client: AsyncClient):
   game.assert_status(404).assert_has_detail()
 
 
-async def test_start_game_not_creator(client: AsyncClient):
+async def test_start_game_not_creator(client: AsyncClient, make_token):
   _, game = await lobby_game(client)
-  p2 = await Player(client).create('Bob')
+  p2 = await Player(client).create('Bob', token=make_token())
   await game.join(game.id, p2.id)
   await game.start(game.id, p2.id)
   game.assert_status(403).assert_has_detail()

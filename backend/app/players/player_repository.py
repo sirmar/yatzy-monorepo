@@ -7,17 +7,17 @@ class PlayerRepository:
     self._conn = conn
 
   def _to_player(self, row: tuple) -> Player:
-    return Player(id=row[0], name=row[1], created_at=row[2])
+    return Player(id=row[0], account_id=row[1], name=row[2], created_at=row[3])
 
-  async def create(self, name: str) -> Player:
+  async def create(self, account_id: str, name: str) -> Player:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'INSERT INTO players (name) VALUES (%s)',
-        (name,),
+        'INSERT INTO players (account_id, name) VALUES (%s, %s)',
+        (account_id, name),
       )
       player_id = cursor.lastrowid
       await cursor.execute(
-        'SELECT id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()
@@ -26,7 +26,7 @@ class PlayerRepository:
   async def list_all(self) -> list[Player]:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT id, name, created_at FROM players WHERE deleted_at IS NULL ORDER BY id',
+        'SELECT id, account_id, name, created_at FROM players WHERE deleted_at IS NULL ORDER BY id',
       )
       rows = await cursor.fetchall()
       return [self._to_player(row) for row in rows]
@@ -34,8 +34,19 @@ class PlayerRepository:
   async def get_by_id(self, player_id: int) -> Player | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
+      )
+      row = await cursor.fetchone()
+      if row is None:
+        return None
+      return self._to_player(row)
+
+  async def get_by_account_id(self, account_id: str) -> Player | None:
+    async with await self._conn.cursor() as cursor:
+      await cursor.execute(
+        'SELECT id, account_id, name, created_at FROM players WHERE account_id = %s AND deleted_at IS NULL',
+        (account_id,),
       )
       row = await cursor.fetchone()
       if row is None:
@@ -51,7 +62,7 @@ class PlayerRepository:
       if cursor.rowcount == 0:
         return None
       await cursor.execute(
-        'SELECT id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()

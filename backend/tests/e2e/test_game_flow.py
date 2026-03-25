@@ -6,9 +6,10 @@ from tests.e2e.scoring_options import ScoringOptions
 from tests.e2e.helpers import active_game_two_players
 
 
-async def test_full_game_flow(client: AsyncClient):
-  p1 = await Player(client).create('Alice')
-  p2 = await Player(client).create('Bob')
+async def test_full_game_flow(client: AsyncClient, make_token):
+  t1, t2 = make_token(), make_token()
+  p1 = await Player(client).create('Alice', token=t1)
+  p2 = await Player(client).create('Bob', token=t2)
 
   game = await Game(client).create(p1.id)
   game.assert_status(201).assert_game_status('lobby').assert_player_ids_include(p1.id)
