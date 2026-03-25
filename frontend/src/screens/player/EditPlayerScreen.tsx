@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
+import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
@@ -51,63 +51,54 @@ export function EditPlayerScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-900 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center text-white">Yatzy</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <div>
-            <h2 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
-              Profile
-            </h2>
-            <form onSubmit={handleSave} className="flex flex-col gap-3">
-              <div className="flex gap-2">
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Enter your name"
-                  disabled={loading}
-                  className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-500 hover:border-yellow-400/50 focus-visible:ring-yellow-400/50"
-                />
-                <Button type="submit" disabled={loading || !name.trim()}>
-                  Save
-                </Button>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => navigate('/lobby')}
-                className="text-gray-400 hover:text-white"
-              >
-                Cancel
-              </Button>
-            </form>
+    <PageLayout>
+      <div className="max-w-md flex flex-col gap-6">
+        <h1 className="text-2xl font-bold text-white">Profile</h1>
+        <form onSubmit={handleSave} className="flex flex-col gap-3">
+          <div className="flex gap-2">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Enter your name"
+              disabled={loading}
+              className="border-gray-600 bg-gray-800 text-white placeholder:text-gray-500 hover:border-yellow-400/50 focus-visible:ring-yellow-400/50"
+            />
+            <Button type="submit" disabled={loading || !name.trim()}>
+              Save
+            </Button>
           </div>
-          {stats && (
-            <table className="w-full text-sm text-white">
-              <tbody>
-                {[
-                  ['Member since', new Date(stats.member_since).toLocaleDateString()],
-                  ['Games played', stats.games_played],
-                  ['High score', stats.high_score ?? '—'],
-                  [
-                    'Average score',
-                    stats.average_score != null ? Math.round(stats.average_score) : '—',
-                  ],
-                  ['Bonuses', stats.bonus_count],
-                  ['Maxi Yatzy', stats.maxi_yatzy_count],
-                ].map(([label, value]) => (
-                  <tr key={label as string} className="border-b border-gray-800/50">
-                    <td className="py-2 text-gray-400">{label}</td>
-                    <td className="py-2 text-right">{value}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => navigate('/lobby')}
+            className="text-gray-400 hover:text-white"
+          >
+            Cancel
+          </Button>
+        </form>
+        {stats && (
+          <table className="w-full text-sm text-white">
+            <tbody>
+              {[
+                ['Member since', new Date(stats.member_since).toLocaleDateString()],
+                ['Games played', stats.games_played],
+                ['High score', stats.high_score ?? '—'],
+                [
+                  'Average score',
+                  stats.average_score != null ? Math.round(stats.average_score) : '—',
+                ],
+                ['Bonuses', stats.bonus_count],
+                ['Maxi Yatzy', stats.maxi_yatzy_count],
+              ].map(([label, value]) => (
+                <tr key={label as string} className="border-b border-gray-800/50">
+                  <td className="py-2 text-gray-400">{label}</td>
+                  <td className="py-2 text-right">{value}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </PageLayout>
   );
 }

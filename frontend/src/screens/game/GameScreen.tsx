@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
@@ -201,8 +202,8 @@ export function GameScreen() {
     gameState?.current_player_id != null ? playerNames[gameState.current_player_id] : null;
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4">
-      <div className="max-w-4xl mx-auto flex flex-col gap-6">
+    <PageLayout>
+      <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Game #{gameId}</h1>
           {player?.id === creatorId && gameState?.status === 'active' && (
@@ -250,6 +251,6 @@ export function GameScreen() {
           onScore={handleScore}
         />
       </div>
-    </div>
+    </PageLayout>
   );
 }

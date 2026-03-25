@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
+import { PageLayout } from '@/components/PageLayout';
 
 type HighScore = components['schemas']['HighScore'];
 
@@ -21,7 +22,7 @@ export function HighScoresScreen() {
   }, []);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
+    <PageLayout>
       <h1 className="text-white text-xl font-semibold mb-6">High Scores</h1>
 
       {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
@@ -65,6 +66,6 @@ export function HighScoresScreen() {
           </table>
         </div>
       )}
-    </div>
+    </PageLayout>
   );
 }

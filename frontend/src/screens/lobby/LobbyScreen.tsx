@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { usePolling } from '@/hooks/usePolling';
@@ -104,8 +105,8 @@ export function LobbyScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
-      <div className="max-w-lg mx-auto flex flex-col gap-6">
+    <PageLayout>
+      <div className="max-w-lg flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-white">Lobby</h1>
           <CreateGameButton onCreate={handleCreate} loading={creating} />
@@ -120,6 +121,6 @@ export function LobbyScreen() {
           onLeave={handleLeave}
         />
       </div>
-    </div>
+    </PageLayout>
   );
 }

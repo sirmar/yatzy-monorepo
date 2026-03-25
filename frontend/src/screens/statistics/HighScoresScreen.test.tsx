@@ -17,13 +17,15 @@ const HIGH_SCORES_URL = 'http://localhost/api/high-scores';
 
 const ALICE = { id: 1, name: 'Alice', created_at: '' };
 
-function makeHighScore(overrides: Partial<{
-  player_id: number;
-  player_name: string;
-  game_id: number;
-  finished_at: string;
-  total_score: number;
-}> = {}) {
+function makeHighScore(
+  overrides: Partial<{
+    player_id: number;
+    player_name: string;
+    game_id: number;
+    finished_at: string;
+    total_score: number;
+  }> = {}
+) {
   return {
     player_id: 1,
     player_name: 'Alice',

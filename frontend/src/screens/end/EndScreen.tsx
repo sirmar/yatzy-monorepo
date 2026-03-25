@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { useErrorToast } from '@/hooks/use-toast';
 
@@ -62,8 +63,8 @@ export function EndScreen() {
           : "It's a tie!";
 
   return (
-    <div className="min-h-screen bg-gray-950 p-6">
-      <div className="max-w-lg mx-auto flex flex-col gap-6">
+    <PageLayout>
+      <div className="max-w-lg flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Yatzy</h1>
           <p className="text-gray-400 text-sm">Game #{gameId}</p>
@@ -103,6 +104,6 @@ export function EndScreen() {
 
         <Button onClick={() => navigate('/lobby')}>Back to Lobby</Button>
       </div>
-    </div>
+    </PageLayout>
   );
 }
