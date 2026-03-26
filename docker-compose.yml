@@ -2,6 +2,7 @@ name: yatzy
 
 services:
   yatzy-db:
+    container_name: yatzy-db
     image: mysql:8
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -15,6 +16,7 @@ services:
       retries: 30
 
   backend:
+    container_name: yatzy-backend
     image: backend-dev
     build:
       context: backend
@@ -31,6 +33,7 @@ services:
         condition: service_healthy
 
   auth-db:
+    container_name: yatzy-auth-db
     image: mysql:8
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -45,6 +48,7 @@ services:
       retries: 30
 
   auth:
+    container_name: yatzy-auth
     image: auth-dev
     build:
       context: auth
@@ -61,6 +65,7 @@ services:
         condition: service_healthy
 
   frontend:
+    container_name: yatzy-frontend
     image: frontend-dev
     build:
       context: frontend
