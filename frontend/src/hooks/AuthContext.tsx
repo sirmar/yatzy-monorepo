@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { setAuthToken } from '@/api/client';
 import { type AuthUser, authClient } from '@/auth/authClient';
 
@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const refreshAttempted = useRef(false);
 
   async function applyTokens(tokens: { access_token: string; refresh_token: string }) {
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
@@ -30,6 +31,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: applyTokens uses only stable state setters
   useEffect(() => {
+    if (refreshAttempted.current) return;
+    refreshAttempted.current = true;
     const storedToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (!storedToken) {
       setIsLoading(false);
