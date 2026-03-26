@@ -10,7 +10,7 @@ async def test_list_games_empty(client: AsyncClient):
 
 async def test_list_games_returns_created_games(client: AsyncClient):
   player, game1 = await lobby_game(client)
-  game2 = await Game(client).create(player.id)
+  game2 = await Game(client).create(player.id, token=player.token)
   result = await Game(client).list_all()
   result.assert_status(200).assert_ids_include(game1.id, game2.id)
 

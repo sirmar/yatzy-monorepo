@@ -33,6 +33,6 @@ async def test_create_game_has_created_at(client: AsyncClient):
   game.assert_has_created_at()
 
 
-async def test_create_game_missing_creator_returns_422(client: AsyncClient):
-  game = await Game(client).create()
+async def test_create_game_missing_creator_returns_422(client: AsyncClient, make_token):
+  game = await Game(client).create(token=make_token())
   game.assert_status(422).assert_has_detail()

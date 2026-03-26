@@ -1,6 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query
 import aiomysql
+from app.auth import make_get_current_user
+from app.config import Settings
 from app.database import Database
 from app.games.game import Game, GameCreate
 from app.games.game_status import GameStatus
@@ -9,11 +11,13 @@ from app.games.guards import (
   assert_game_active,
   assert_game_in_lobby,
   assert_game_deletable,
+  assert_player_exists,
   assert_player_in_game,
   assert_player_not_in_game,
   assert_game_not_full,
   assert_is_creator,
   assert_not_creator,
+  assert_player_owns,
   assert_turn_active,
   assert_current_player,
   assert_rolls_remaining,
@@ -26,10 +30,12 @@ from app.games.game_state import GameState
 from app.games.game_state_repository import GameStateRepository
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
+from app.players.player_repository import PlayerRepository
 
 
-def create_game_router(database: Database) -> APIRouter:
+def create_game_router(database: Database, settings: Settings) -> APIRouter:
   router = APIRouter(tags=['Games'])
+  get_current_user = make_get_current_user(settings)
 
   @router.post(
     '/games',
@@ -42,8 +48,13 @@ def create_game_router(database: Database) -> APIRouter:
   async def create_game(
     body: GameCreate,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Create a new game. The requesting player becomes the creator."""
+    player = assert_player_exists(
+      await PlayerRepository(conn).get_by_id(body.creator_id)
+    )
+    assert_player_owns(player, current_user['sub'])
     return await GameRepository(conn).create(body.creator_id, body.mode)
 
   @router.get('/games', response_model=list[Game])
@@ -79,10 +90,15 @@ def create_game_router(database: Database) -> APIRouter:
   async def delete_game(
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> None:
     """Delete a game. Only lobby games can be deleted."""
     repo = GameRepository(conn)
     game = assert_game_exists(await repo.get_by_id(game_id))
+    player = assert_player_exists(
+      await PlayerRepository(conn).get_by_id(game.creator_id)
+    )
+    assert_player_owns(player, current_user['sub'])
     assert_game_deletable(game)
     await repo.soft_delete(game_id)
 
@@ -99,8 +115,11 @@ def create_game_router(database: Database) -> APIRouter:
     game_id: int,
     player_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Leave a lobby game. The creator cannot leave — delete the game instead."""
+    player = assert_player_exists(await PlayerRepository(conn).get_by_id(player_id))
+    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_player_in_game(game, player_id)
@@ -125,8 +144,13 @@ def create_game_router(database: Database) -> APIRouter:
     game_id: int,
     body: GameJoin,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Join a game that is in the lobby. Up to 6 players can join."""
+    player = assert_player_exists(
+      await PlayerRepository(conn).get_by_id(body.player_id)
+    )
+    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_player_not_in_game(game, body.player_id)
@@ -151,8 +175,13 @@ def create_game_router(database: Database) -> APIRouter:
     game_id: int,
     body: GameStart,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Start a game. Only the creator can start it."""
+    player = assert_player_exists(
+      await PlayerRepository(conn).get_by_id(body.player_id)
+    )
+    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_is_creator(game, body.player_id)
@@ -173,11 +202,16 @@ def create_game_router(database: Database) -> APIRouter:
   async def abort_game(
     game_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
-    """Abort an active game. The game is marked as abandoned."""
+    """Abort an active game. The game is marked as abandoned. Only the creator can abort."""
     repo = GameRepository(conn)
     game = assert_game_exists(await repo.get_by_id(game_id))
     assert_game_active(game)
+    player = assert_player_exists(
+      await PlayerRepository(conn).get_by_id(game.creator_id)
+    )
+    assert_player_owns(player, current_user['sub'])
     aborted = await repo.abort(game_id)
     if aborted is None:
       raise HTTPException(status_code=409, detail='Game could not be aborted')
@@ -197,8 +231,13 @@ def create_game_router(database: Database) -> APIRouter:
     game_id: int,
     body: RollRequest,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> DiceResponse:
     """Roll dice for the current player's turn. Pass kept_dice to hold specific dice between rolls."""
+    player = assert_player_exists(
+      await PlayerRepository(conn).get_by_id(body.player_id)
+    )
+    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_active(game)
     roll_repo = RollRepository(conn)

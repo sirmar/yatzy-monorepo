@@ -1,6 +1,8 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
 import aiomysql
+from app.auth import make_get_current_user
+from app.config import Settings
 from app.database import Database
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
@@ -8,7 +10,9 @@ from app.games.game_mode import GameMode
 from app.games.guards import (
   assert_game_exists,
   assert_game_active,
+  assert_player_exists,
   assert_player_in_game,
+  assert_player_owns,
   assert_turn_active,
   assert_current_player,
   assert_has_rolled,
@@ -16,6 +20,7 @@ from app.games.guards import (
 )
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
+from app.players.player_repository import PlayerRepository
 from app.scoring.score_calculator import calculate
 from app.scoring.score_category import ScoreCategory
 from app.scoring.scorecard import (
@@ -29,8 +34,9 @@ from app.scoring.high_scores_repository import HighScoresRepository
 from app.scoring.scorecard_repository import ScorecardRepository
 
 
-def create_scorecard_router(database: Database) -> APIRouter:
+def create_scorecard_router(database: Database, settings: Settings) -> APIRouter:
   router = APIRouter(tags=['Scoring'])
+  get_current_user = make_get_current_user(settings)
 
   @router.get(
     '/games/{game_id}/players/{player_id}/scorecard',
@@ -65,8 +71,11 @@ def create_scorecard_router(database: Database) -> APIRouter:
     player_id: int,
     body: ScoreRequest,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Scorecard:
     """Score a category with the current dice. Ends the player's turn and advances to the next player. Ends the game when all categories are filled."""
+    player = assert_player_exists(await PlayerRepository(conn).get_by_id(player_id))
+    assert_player_owns(player, current_user['sub'])
     game_repo = GameRepository(conn)
     game = assert_game_exists(await game_repo.get_by_id(game_id))
     assert_player_in_game(game, player_id)

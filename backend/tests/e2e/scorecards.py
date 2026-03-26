@@ -1,4 +1,5 @@
 from httpx import AsyncClient, Response
+from tests.e2e.utils import auth_headers
 
 
 class Scorecard:
@@ -18,11 +19,12 @@ class Scorecard:
       await self._client.get(f'/games/{game_id}/players/{player_id}/scorecard')
     )
 
-  async def score(self, game_id: int, player_id: int, category: str) -> 'Scorecard':
+  async def score(self, game_id: int, player_id: int, category: str, token: str) -> 'Scorecard':
     return self._set_response(
       await self._client.put(
         f'/games/{game_id}/players/{player_id}/scorecard',
         json={'category': category},
+        headers=auth_headers(token),
       )
     )
 

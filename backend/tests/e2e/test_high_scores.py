@@ -1,29 +1,17 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
-from tests.e2e.helpers import active_game, active_game_two_players, lobby_game, make_token
+from tests.e2e.helpers import active_game, active_game_two_players, lobby_game, make_token, play_turn
 from tests.e2e.players import Player
 from tests.e2e.scorecards import Scorecard
 from tests.e2e.scoring_options import ScoringOptions
 
 
-async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: int) -> None:
-  await game.roll(game_id, player_id)
-  options = await ScoringOptions(client).get(game_id, player_id)
-  if options.json:
-    category = options.json[0]['category']
-  else:
-    sc = await Scorecard(client).get(game_id, player_id)
-    category = next(e['category'] for e in sc.json['entries'] if e['score'] is None)
-  await Scorecard(client).score(game_id, player_id, category)
-
-
 async def _finish_one_player_game(client: AsyncClient, mode: str = 'standard') -> tuple[Player, Game]:
-  token = make_token()
-  player = await Player(client).create('Alice', token=token)
-  game = await Game(client).create(player.id, mode=mode)
+  player = await Player(client).create('Alice', token=make_token())
+  game = await Game(client).create(player.id, mode=mode, token=player.token)
   await game.start(game.id, player.id)
   for _ in range(20):
-    await _play_turn(client, game, game.id, player.id)
+    await play_turn(client, game, game.id, player.id, player.token)
   return player, game
 
 
@@ -54,8 +42,8 @@ async def test_unfinished_games_not_in_high_scores(client: AsyncClient):
 async def test_two_players_each_appear_separately(client: AsyncClient):
   p1, p2, game = await active_game_two_players(client)
   for _ in range(20):
-    await _play_turn(client, game, game.id, p1.id)
-    await _play_turn(client, game, game.id, p2.id)
+    await play_turn(client, game, game.id, p1.id, p1.token)
+    await play_turn(client, game, game.id, p2.id, p2.token)
 
   response = await client.get('/high-scores')
   assert response.status_code == 200

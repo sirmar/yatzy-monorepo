@@ -1,4 +1,5 @@
 from httpx import AsyncClient, Response
+from tests.e2e.utils import auth_headers
 
 
 class Player:
@@ -6,6 +7,7 @@ class Player:
     self._client = client
     self.response = None
     self.json = None
+    self.token: str | None = None
 
   @property
   def id(self) -> int:
@@ -17,27 +19,25 @@ class Player:
       self.json = response.json()
     return self
 
-  def _auth_headers(self, token: str | None) -> dict:
-    return {'Authorization': f'Bearer {token}'} if token else {}
-
   async def create(self, name=None, token: str | None = None) -> 'Player':
+    self.token = token
     body = {'name': name} if name is not None else {}
-    return self._set_response(await self._client.post('/players', json=body, headers=self._auth_headers(token)))
+    return self._set_response(await self._client.post('/players', json=body, headers=auth_headers(token)))
 
   async def get(self, player_id: int) -> 'Player':
     return self._set_response(await self._client.get(f'/players/{player_id}'))
 
   async def get_me(self, token: str) -> 'Player':
-    return self._set_response(await self._client.get('/players/me', headers=self._auth_headers(token)))
+    return self._set_response(await self._client.get('/players/me', headers=auth_headers(token)))
 
   async def list_all(self) -> 'Player':
     return self._set_response(await self._client.get('/players'))
 
   async def update(self, player_id: int, name: str, token: str | None = None) -> 'Player':
-    return self._set_response(await self._client.put(f'/players/{player_id}', json={'name': name}, headers=self._auth_headers(token)))
+    return self._set_response(await self._client.put(f'/players/{player_id}', json={'name': name}, headers=auth_headers(token)))
 
   async def delete(self, player_id: int, token: str | None = None) -> 'Player':
-    return self._set_response(await self._client.delete(f'/players/{player_id}', headers=self._auth_headers(token)))
+    return self._set_response(await self._client.delete(f'/players/{player_id}', headers=auth_headers(token)))
 
   def assert_status(self, status_code: int) -> 'Player':
     assert self.response.status_code == status_code

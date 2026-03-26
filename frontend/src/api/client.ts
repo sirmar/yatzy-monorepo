@@ -3,6 +3,12 @@ import type { paths } from './schema';
 
 const baseUrl = import.meta.env.VITE_API_BASE_URL ?? '/api';
 
+let authToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  authToken = token;
+}
+
 async function fetchWithErrorNormalization(input: Request): Promise<Response> {
   const response = await fetch(input);
   if (!response.ok) {
@@ -24,4 +30,13 @@ async function fetchWithErrorNormalization(input: Request): Promise<Response> {
 export const apiClient = createClient<paths>({
   baseUrl,
   fetch: fetchWithErrorNormalization,
+});
+
+apiClient.use({
+  onRequest({ request }) {
+    if (authToken) {
+      request.headers.set('Authorization', `Bearer ${authToken}`);
+    }
+    return request;
+  },
 });

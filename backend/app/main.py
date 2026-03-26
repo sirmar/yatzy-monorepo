@@ -20,5 +20,5 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
 
 app = FastAPI(title='Yatzy API', lifespan=lifespan)
 app.include_router(create_player_router(database, settings))
-app.include_router(create_game_router(database))
-app.include_router(create_scorecard_router(database))
+app.include_router(create_game_router(database, settings))
+app.include_router(create_scorecard_router(database, settings))

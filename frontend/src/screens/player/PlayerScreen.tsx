@@ -13,20 +13,17 @@ export function PlayerScreen() {
 
   useEffect(() => {
     if (!accessToken) return;
-    apiClient
-      .GET('/players/me', { headers: { Authorization: `Bearer ${accessToken}` } })
-      .then(({ data }) => {
-        if (data) {
-          setPlayer(data);
-          navigate('/lobby');
-        }
-      });
+    apiClient.GET('/players/me', {}).then(({ data }) => {
+      if (data) {
+        setPlayer(data);
+        navigate('/lobby');
+      }
+    });
   }, [accessToken, setPlayer, navigate]);
 
   async function handleCreate(name: string) {
     const { data, error } = await apiClient.POST('/players', {
       body: { name },
-      headers: { Authorization: `Bearer ${accessToken}` },
     });
     if (error || !data) throw error ?? new Error('Failed to create player');
     setPlayer(data);

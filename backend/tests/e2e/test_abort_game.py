@@ -15,8 +15,8 @@ async def test_abort_game_status_is_abandoned(client: AsyncClient):
   game.assert_game_status('abandoned')
 
 
-async def test_abort_game_not_found(client: AsyncClient):
-  game = await Game(client).abort(999)
+async def test_abort_game_not_found(client: AsyncClient, make_token):
+  game = await Game(client).abort(999, token=make_token())
   game.assert_status(404).assert_has_detail()
 
 

@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from app.games.game import Game
 from app.games.game_mode import GameMode
 from app.games.game_status import GameStatus
+from app.players.player import Player
 from app.scoring.score_category import ScoreCategory
 
 BASE_ROLLS_PER_TURN = 3
@@ -76,6 +77,17 @@ def assert_rolls_remaining(rolls_remaining: int, saved_rolls: int) -> None:
 def assert_has_rolled(rolls_remaining: int) -> None:
   if rolls_remaining == BASE_ROLLS_PER_TURN:
     raise HTTPException(status_code=409, detail='Must roll before scoring')
+
+
+def assert_player_exists(player: Player | None) -> Player:
+  if player is None:
+    raise HTTPException(status_code=404, detail='Player not found')
+  return player
+
+
+def assert_player_owns(player: Player, account_id: str) -> None:
+  if player.account_id != account_id:
+    raise HTTPException(status_code=403, detail='Forbidden')
 
 
 def assert_sequential_category(

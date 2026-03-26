@@ -1,10 +1,12 @@
 from httpx import AsyncClient, Response
+from tests.e2e.utils import auth_headers
 
 
 class Game:
   def __init__(self, client: AsyncClient) -> None:
     self._client = client
     self._id: int | None = None
+    self._token: str | None = None
     self.response = None
     self.json = None
 
@@ -20,36 +22,38 @@ class Game:
         self._id = self.json['id']
     return self
 
-  async def roll(self, game_id: int, player_id: int, kept_dice: list[int] | None = None) -> 'Game':
+  async def roll(self, game_id: int, player_id: int, kept_dice: list[int] | None = None, token: str | None = None) -> 'Game':
     body = {'player_id': player_id, 'kept_dice': kept_dice or []}
-    return self._set_response(await self._client.post(f'/games/{game_id}/roll', json=body))
+    return self._set_response(await self._client.post(f'/games/{game_id}/roll', json=body, headers=auth_headers(token or self._token)))
 
   async def state(self, game_id: int) -> 'Game':
     return self._set_response(await self._client.get(f'/games/{game_id}/state'))
 
-  async def delete(self, game_id: int) -> 'Game':
-    return self._set_response(await self._client.delete(f'/games/{game_id}'))
+  async def delete(self, game_id: int, token: str | None = None) -> 'Game':
+    return self._set_response(await self._client.delete(f'/games/{game_id}', headers=auth_headers(token or self._token)))
 
-  async def abort(self, game_id: int) -> 'Game':
-    return self._set_response(await self._client.post(f'/games/{game_id}/abort'))
+  async def abort(self, game_id: int, token: str | None = None) -> 'Game':
+    return self._set_response(await self._client.post(f'/games/{game_id}/abort', headers=auth_headers(token or self._token)))
 
-  async def start(self, game_id: int, player_id: int) -> 'Game':
-    return self._set_response(await self._client.post(f'/games/{game_id}/start', json={'player_id': player_id}))
+  async def start(self, game_id: int, player_id: int, token: str | None = None) -> 'Game':
+    return self._set_response(await self._client.post(f'/games/{game_id}/start', json={'player_id': player_id}, headers=auth_headers(token or self._token)))
 
-  async def leave(self, game_id: int, player_id: int) -> 'Game':
-    return self._set_response(await self._client.delete(f'/games/{game_id}/players/{player_id}'))
+  async def leave(self, game_id: int, player_id: int, token: str | None = None) -> 'Game':
+    return self._set_response(await self._client.delete(f'/games/{game_id}/players/{player_id}', headers=auth_headers(token or self._token)))
 
-  async def join(self, game_id: int, player_id: int) -> 'Game':
-    return self._set_response(await self._client.post(f'/games/{game_id}/join', json={'player_id': player_id}))
+  async def join(self, game_id: int, player_id: int, token: str | None = None) -> 'Game':
+    return self._set_response(await self._client.post(f'/games/{game_id}/join', json={'player_id': player_id}, headers=auth_headers(token or self._token)))
 
   async def get(self, game_id: int) -> 'Game':
     return self._set_response(await self._client.get(f'/games/{game_id}'))
 
-  async def create(self, creator_id=None, mode: str | None = None) -> 'Game':
+  async def create(self, creator_id=None, mode: str | None = None, token: str | None = None) -> 'Game':
+    effective_token = token or self._token
+    self._token = effective_token
     body: dict = {'creator_id': creator_id} if creator_id is not None else {}
     if mode is not None:
       body['mode'] = mode
-    return self._set_response(await self._client.post('/games', json=body))
+    return self._set_response(await self._client.post('/games', json=body, headers=auth_headers(effective_token)))
 
   def assert_mode(self, mode: str) -> 'Game':
     assert self.json['mode'] == mode

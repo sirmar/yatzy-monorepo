@@ -22,7 +22,7 @@ async def test_scoring_options_returns_only_nonzero_scores(client: AsyncClient):
 async def test_scoring_options_excludes_already_scored(client: AsyncClient):
   player, game = await active_game(client)
   await game.roll(game.id, player.id)
-  await Scorecard(client).score(game.id, player.id, 'chance')
+  await Scorecard(client).score(game.id, player.id, 'chance', token=player.token)
   await game.roll(game.id, player.id)
   so = await ScoringOptions(client).get(game.id, player.id)
   so.assert_excludes_category('chance')

@@ -61,6 +61,6 @@ async def test_get_state_rolls_remaining_decrements_after_roll(client: AsyncClie
 async def test_get_state_saved_rolls_after_scoring(client: AsyncClient):
   player, game = await active_game(client)
   await game.roll(game.id, player.id)
-  await Scorecard(client).score(game.id, player.id, 'chance')
+  await Scorecard(client).score(game.id, player.id, 'chance', token=player.token)
   await game.state(game.id)
   game.assert_saved_rolls(2)

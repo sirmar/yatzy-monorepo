@@ -5,7 +5,6 @@ import type { components } from '@/api/schema';
 import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/format';
@@ -15,7 +14,6 @@ type PlayerStats = components['schemas']['PlayerStats'];
 
 export function ProfileScreen() {
   const { player, setPlayer } = usePlayer();
-  const { accessToken } = useAuth();
   const navigate = useNavigate();
   const errorToast = useErrorToast();
   const [name, setName] = useState(player?.name ?? '');
@@ -41,7 +39,6 @@ export function ProfileScreen() {
     const { data, error } = await apiClient.PUT('/players/{player_id}', {
       params: { path: { player_id: player.id } },
       body: { name: name.trim() },
-      headers: { Authorization: `Bearer ${accessToken}` },
     });
     setLoading(false);
     if (error || !data) {

@@ -1,5 +1,6 @@
 **Monorepo structure**
 - `backend/` — REST API (Python / FastAPI / MySQL). See `backend/CLAUDE.md`.
+- `auth/` — Authentication service (Python / FastAPI / MySQL). Issues JWTs for email/password login. See `auth/CLAUDE.md`.
 - `frontend/` — Web client (TypeScript / React / Vite). See `frontend/CLAUDE.md`.
 
 **Docker and make**

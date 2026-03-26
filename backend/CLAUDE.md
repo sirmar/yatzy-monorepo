@@ -67,4 +67,4 @@ A REST API for a Yatzy game. It should keep track of players, games, dice, score
 - See valid possible score categories given the current dice and score board. pure information for player.
 - Roll dice including which to keep and which to reroll. Dice rolling is per game and player.
 - Game state endpoint for polling.
-- No auth management at this point. Players should be separate from user management.
+- Auth is handled by the dedicated `../auth/` service. The backend validates JWTs issued by that service. Players are separate from auth users.

@@ -1,8 +1,8 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
-from tests.e2e.helpers import active_game, lobby_game, make_token
+from tests.e2e.helpers import active_game, lobby_game, make_token, play_turn
 from tests.e2e.players import Player
-from tests.e2e.test_high_scores import _finish_one_player_game, _play_turn
+from tests.e2e.test_high_scores import _finish_one_player_game
 
 
 async def test_stats_404_for_unknown_player(client: AsyncClient):
@@ -47,14 +47,13 @@ async def test_stats_active_game_not_counted(client: AsyncClient):
 
 
 async def test_stats_multiple_finished_games(client: AsyncClient):
-  token = make_token()
-  player = await Player(client).create('StatsPlayer', token=token)
+  player = await Player(client).create('StatsPlayer', token=make_token())
 
   for _ in range(2):
-    game = await Game(client).create(player.id)
+    game = await Game(client).create(player.id, token=player.token)
     await game.start(game.id, player.id)
     for _ in range(20):
-      await _play_turn(client, game, game.id, player.id)
+      await play_turn(client, game, game.id, player.id, player.token)
 
   response = await client.get(f'/players/{player.id}/stats')
   assert response.status_code == 200

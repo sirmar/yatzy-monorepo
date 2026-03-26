@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
+import { setAuthToken } from '@/api/client';
 import { type AuthUser, authClient } from '@/auth/authClient';
 
 interface AuthContextValue {
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function applyTokens(tokens: { access_token: string; refresh_token: string }) {
     localStorage.setItem(REFRESH_TOKEN_KEY, tokens.refresh_token);
     setAccessToken(tokens.access_token);
+    setAuthToken(tokens.access_token);
     const me = await authClient.me(tokens.access_token);
     setUser(me);
   }
@@ -59,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     localStorage.removeItem(REFRESH_TOKEN_KEY);
     setAccessToken(null);
+    setAuthToken(null);
     setUser(null);
   }
 

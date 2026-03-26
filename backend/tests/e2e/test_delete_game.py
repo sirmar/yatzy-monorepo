@@ -15,8 +15,8 @@ async def test_delete_abandoned_game_returns_204(client: AsyncClient):
   game.assert_status(204)
 
 
-async def test_delete_game_not_found(client: AsyncClient):
-  game = await Game(client).delete(999)
+async def test_delete_game_not_found(client: AsyncClient, make_token):
+  game = await Game(client).delete(999, token=make_token())
   game.assert_status(404).assert_has_detail()
 
 
