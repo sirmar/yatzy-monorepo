@@ -12,13 +12,13 @@ class GameStateRepository:
   async def get(self, game_id: int) -> GameState | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT status, current_turn FROM games WHERE id = %s AND deleted_at IS NULL',
+        'SELECT status, mode, current_turn FROM games WHERE id = %s AND deleted_at IS NULL',
         (game_id,),
       )
       row = await cursor.fetchone()
       if row is None:
         return None
-      status, current_turn = row
+      status, mode, current_turn = row
       if status == GameStatus.FINISHED:
         await cursor.execute(
           'SELECT player_id FROM game_players WHERE game_id = %s AND deleted_at IS NULL',
@@ -45,10 +45,10 @@ class GameStateRepository:
         max_total = max((ps.total for ps in final_scores), default=0)
         winner_ids = [ps.player_id for ps in final_scores if ps.total == max_total]
         return GameState(
-          status=status, winner_ids=winner_ids, final_scores=final_scores
+          status=status, mode=mode, winner_ids=winner_ids, final_scores=final_scores
         )
       if status != GameStatus.ACTIVE or current_turn is None:
-        return GameState(status=status)
+        return GameState(status=status, mode=mode)
       await cursor.execute(
         'SELECT t.player_id, t.rolls_remaining, gp.saved_rolls '
         'FROM turns t '
@@ -65,6 +65,7 @@ class GameStateRepository:
       dice = [Die(index=r[0], value=r[1], kept=bool(r[2])) for r in dice_rows]
       return GameState(
         status=status,
+        mode=mode,
         current_player_id=turn_row[0],
         dice=dice,
         rolls_remaining=turn_row[1],

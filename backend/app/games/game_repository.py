@@ -1,5 +1,6 @@
 import aiomysql
 from app.games.game import Game
+from app.games.game_mode import GameMode
 from app.games.game_status import GameStatus
 
 
@@ -11,16 +12,17 @@ class GameRepository:
     return Game(
       id=row[0],
       status=row[1],
-      creator_id=row[2],
-      created_at=row[3],
-      started_at=row[4],
-      ended_at=row[5],
+      mode=row[2],
+      creator_id=row[3],
+      created_at=row[4],
+      started_at=row[5],
+      ended_at=row[6],
       player_ids=player_ids,
     )
 
   async def _fetch_game(self, cursor: aiomysql.Cursor, game_id: int) -> Game:
     await cursor.execute(
-      'SELECT id, status, creator_id, created_at, started_at, ended_at '
+      'SELECT id, status, mode, creator_id, created_at, started_at, ended_at '
       'FROM games WHERE id = %s AND deleted_at IS NULL',
       (game_id,),
     )
@@ -35,11 +37,11 @@ class GameRepository:
     player_rows = await cursor.fetchall()
     return self._to_game(row, [r[0] for r in player_rows])
 
-  async def create(self, creator_id: int) -> Game:
+  async def create(self, creator_id: int, mode: GameMode = GameMode.STANDARD) -> Game:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'INSERT INTO games (creator_id) VALUES (%s)',
-        (creator_id,),
+        'INSERT INTO games (creator_id, mode) VALUES (%s, %s)',
+        (creator_id, mode),
       )
       game_id = cursor.lastrowid
       await cursor.execute(
@@ -110,7 +112,7 @@ class GameRepository:
   async def list_all(self, status: GameStatus | None = None) -> list[Game]:
     async with await self._conn.cursor() as cursor:
       query = (
-        'SELECT id, status, creator_id, created_at, started_at, ended_at '
+        'SELECT id, status, mode, creator_id, created_at, started_at, ended_at '
         'FROM games WHERE deleted_at IS NULL'
       )
       params: tuple = ()

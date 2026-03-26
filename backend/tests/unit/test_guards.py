@@ -16,6 +16,7 @@ from app.games.guards import (
   assert_has_rolled,
 )
 from app.games.game import Game
+from app.games.game_mode import GameMode
 from app.games.game_status import GameStatus
 
 
@@ -23,6 +24,7 @@ def make_game(**kwargs) -> Game:
   defaults = dict(
     id=1,
     status=GameStatus.LOBBY,
+    mode=GameMode.STANDARD,
     creator_id=10,
     player_ids=[10],
     created_at=datetime(2024, 1, 1),

@@ -1,9 +1,18 @@
+import uuid
+import jwt as pyjwt
 from httpx import AsyncClient
+from app.main import settings
 from tests.e2e.games import Game
 from tests.e2e.players import Player
 from tests.e2e.scorecards import Scorecard
 from tests.e2e.scoring_options import ScoringOptions
 from tests.e2e.helpers import active_game, active_game_two_players, lobby_game
+
+
+def _make_token() -> str:
+  uid = str(uuid.uuid4())
+  payload = {'sub': uid, 'email': f'{uid}@test.example'}
+  return pyjwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
 async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: int) -> None:
@@ -17,8 +26,11 @@ async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: i
   await Scorecard(client).score(game_id, player_id, category)
 
 
-async def _finish_one_player_game(client: AsyncClient) -> tuple[Player, Game]:
-  player, game = await active_game(client)
+async def _finish_one_player_game(client: AsyncClient, mode: str = 'standard') -> tuple[Player, Game]:
+  token = _make_token()
+  player = await Player(client).create('Alice', token=token)
+  game = await Game(client).create(player.id, mode=mode)
+  await game.start(game.id, player.id)
   for _ in range(20):
     await _play_turn(client, game, game.id, player.id)
   return player, game
@@ -73,3 +85,35 @@ async def test_results_sorted_by_total_score_descending(client: AsyncClient):
   scores = response.json()
   totals = [s['total_score'] for s in scores]
   assert totals == sorted(totals, reverse=True)
+
+
+async def test_high_score_includes_mode(client: AsyncClient):
+  await _finish_one_player_game(client, mode='standard')
+
+  response = await client.get('/high-scores')
+  assert response.status_code == 200
+  scores = response.json()
+  assert len(scores) == 1
+  assert scores[0]['mode'] == 'standard'
+
+
+async def test_sequential_game_high_score_has_sequential_mode(client: AsyncClient):
+  await _finish_one_player_game(client, mode='sequential')
+
+  response = await client.get('/high-scores')
+  assert response.status_code == 200
+  scores = response.json()
+  assert len(scores) == 1
+  assert scores[0]['mode'] == 'sequential'
+
+
+async def test_high_scores_from_different_modes_returned_together(client: AsyncClient):
+  await _finish_one_player_game(client, mode='standard')
+  await _finish_one_player_game(client, mode='sequential')
+
+  response = await client.get('/high-scores')
+  assert response.status_code == 200
+  scores = response.json()
+  assert len(scores) == 2
+  modes = {s['mode'] for s in scores}
+  assert modes == {'standard', 'sequential'}

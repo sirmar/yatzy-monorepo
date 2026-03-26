@@ -44,7 +44,7 @@ def create_game_router(database: Database) -> APIRouter:
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Game:
     """Create a new game. The requesting player becomes the creator."""
-    return await GameRepository(conn).create(body.creator_id)
+    return await GameRepository(conn).create(body.creator_id, body.mode)
 
   @router.get('/games', response_model=list[Game])
   async def list_games(

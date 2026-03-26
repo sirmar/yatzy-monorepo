@@ -1,6 +1,8 @@
 from fastapi import HTTPException
 from app.games.game import Game
+from app.games.game_mode import GameMode
 from app.games.game_status import GameStatus
+from app.scoring.score_category import ScoreCategory
 
 BASE_ROLLS_PER_TURN = 3
 
@@ -74,3 +76,17 @@ def assert_rolls_remaining(rolls_remaining: int, saved_rolls: int) -> None:
 def assert_has_rolled(rolls_remaining: int) -> None:
   if rolls_remaining == BASE_ROLLS_PER_TURN:
     raise HTTPException(status_code=409, detail='Must roll before scoring')
+
+
+def assert_sequential_category(
+  mode: GameMode,
+  scored: set[ScoreCategory],
+  requested: ScoreCategory,
+) -> None:
+  if mode != GameMode.SEQUENTIAL:
+    return
+  for cat in ScoreCategory:
+    if cat not in scored:
+      if cat != requested:
+        raise HTTPException(status_code=409, detail='Must score categories in order')
+      return

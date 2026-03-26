@@ -4,6 +4,7 @@ import aiomysql
 from app.database import Database
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
+from app.games.game_mode import GameMode
 from app.games.guards import (
   assert_game_exists,
   assert_game_active,
@@ -11,6 +12,7 @@ from app.games.guards import (
   assert_turn_active,
   assert_current_player,
   assert_has_rolled,
+  assert_sequential_category,
 )
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
@@ -81,6 +83,9 @@ def create_scorecard_router(database: Database) -> APIRouter:
     if await scorecard_repo.is_category_scored(game_id, player_id, body.category):
       raise HTTPException(status_code=409, detail='Category already scored')
 
+    scored = await scorecard_repo.get_scored_categories(game_id, player_id)
+    assert_sequential_category(game.mode, scored, body.category)
+
     dice = await roll_repo.get_dice_values(turn_id)
     score = calculate(body.category, dice)
     await scorecard_repo.save(game_id, player_id, body.category, score)
@@ -144,10 +149,15 @@ def create_scorecard_router(database: Database) -> APIRouter:
 
     dice = await roll_repo.get_dice_values(turn_id)
     scored = await ScorecardRepository(conn).get_scored_categories(game_id, player_id)
+    if game.mode == GameMode.SEQUENTIAL:
+      next_cat = next((c for c in ScoreCategory if c not in scored), None)
+      allowed = {next_cat} if next_cat else set()
+    else:
+      allowed = set(ScoreCategory) - scored
     return [
       ScoringOption(category=cat, score=score)
       for cat in ScoreCategory
-      if cat not in scored
+      if cat in allowed
       if (score := calculate(cat, dice)) > 0
     ]
 

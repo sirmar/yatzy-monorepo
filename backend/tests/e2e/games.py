@@ -45,9 +45,15 @@ class Game:
   async def get(self, game_id: int) -> 'Game':
     return self._set_response(await self._client.get(f'/games/{game_id}'))
 
-  async def create(self, creator_id=None) -> 'Game':
-    body = {'creator_id': creator_id} if creator_id is not None else {}
+  async def create(self, creator_id=None, mode: str | None = None) -> 'Game':
+    body: dict = {'creator_id': creator_id} if creator_id is not None else {}
+    if mode is not None:
+      body['mode'] = mode
     return self._set_response(await self._client.post('/games', json=body))
+
+  def assert_mode(self, mode: str) -> 'Game':
+    assert self.json['mode'] == mode
+    return self
 
   async def list_all(self, status: str | None = None) -> 'Game':
     params = {'status': status} if status is not None else {}

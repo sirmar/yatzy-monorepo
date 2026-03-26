@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from app.games.dice import Die
+from app.games.game_mode import GameMode
 from app.games.game_status import GameStatus
 
 
@@ -10,6 +11,7 @@ class PlayerScore(BaseModel):
 
 class GameState(BaseModel):
   status: GameStatus = Field(description='Current game status')
+  mode: GameMode | None = Field(default=None, description='Game mode')
   current_player_id: int | None = Field(
     default=None,
     description='ID of the player whose turn it is; null when game is not active',
