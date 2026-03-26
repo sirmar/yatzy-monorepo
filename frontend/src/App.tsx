@@ -9,6 +9,7 @@ import { LobbyScreen } from '@/screens/lobby/LobbyScreen';
 import { LoginScreen } from '@/screens/login/LoginScreen';
 import { PlayerScreen } from '@/screens/player/PlayerScreen';
 import { ProfileScreen } from '@/screens/player/ProfileScreen';
+import { GamesPlayedScreen } from '@/screens/statistics/GamesPlayedScreen';
 import { HighScoresScreen } from '@/screens/statistics/HighScoresScreen';
 
 function AuthGuard() {
@@ -42,6 +43,7 @@ export default function App() {
             <Route path="/games/:gameId" element={<GameScreen />} />
             <Route path="/games/:gameId/end" element={<EndScreen />} />
             <Route path="/statistics/high-scores" element={<HighScoresScreen />} />
+            <Route path="/statistics/games-played" element={<GamesPlayedScreen />} />
           </Route>
         </Route>
       </Routes>

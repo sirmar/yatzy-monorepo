@@ -86,6 +86,9 @@ export function NavBar() {
               <DropdownMenuItem asChild>
                 <Link to="/statistics/high-scores">High Scores</Link>
               </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link to="/statistics/games-played">Games Played</Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <DropdownMenu>

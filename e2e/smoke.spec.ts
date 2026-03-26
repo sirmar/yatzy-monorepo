@@ -155,13 +155,31 @@ test('profile page shows player stats', async ({ page, request }) => {
   await expect(page.getByText('Games played')).toBeVisible();
 });
 
-test('high scores page shows Standard and Sequential sections', async ({ page, request }) => {
+test('high scores page shows mode selector and table', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, '/statistics/high-scores');
-  await expect(page.getByRole('heading', { name: 'Standard' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Sequential' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Standard' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sequential' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'High Scores' })).toBeVisible();
+});
+
+test('games played page is accessible from statistics nav and shows leaderboard table', async ({
+  page,
+  request,
+}) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('button', { name: 'Statistics ▾' }).click();
+  await page.getByRole('menuitem', { name: 'Games Played' }).click();
+  await page.waitForURL('/statistics/games-played');
+  await expect(page.getByRole('heading', { name: 'Games Played' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Total' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Standard' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Sequential' })).toBeVisible();
 });
 
 test('creating a sequential game shows Sequential badge in lobby', async ({ page, request }) => {

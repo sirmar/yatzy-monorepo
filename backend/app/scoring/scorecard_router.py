@@ -29,6 +29,8 @@ from app.scoring.scorecard import (
   ScoreRequest,
   ScoringOption,
 )
+from app.scoring.games_played import GamesPlayed, GamesPlayedSortBy
+from app.scoring.games_played_repository import GamesPlayedRepository
 from app.scoring.high_score import HighScore
 from app.scoring.high_scores_repository import HighScoresRepository
 from app.scoring.scorecard_repository import ScorecardRepository
@@ -176,5 +178,13 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
   ) -> list[HighScore]:
     """List all finished games sorted by total score descending."""
     return await HighScoresRepository(conn).list_all()
+
+  @router.get('/games-played-leaderboard', response_model=list[GamesPlayed])
+  async def list_games_played(
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+    sort_by: GamesPlayedSortBy = GamesPlayedSortBy.TOTAL,
+  ) -> list[GamesPlayed]:
+    """List top 10 players by number of finished games played, ordered by sort_by."""
+    return await GamesPlayedRepository(conn).list_top(sort_by)
 
   return router
