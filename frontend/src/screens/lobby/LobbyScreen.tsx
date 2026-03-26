@@ -13,10 +13,12 @@ import { CreateGameButton } from './CreateGameButton';
 import { GameList } from './GameList';
 
 type Game = components['schemas']['Game'];
+type GameMode = components['schemas']['GameMode'];
 
 export function LobbyScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [creating, setCreating] = useState(false);
+  const [mode, setMode] = useState<GameMode>('standard');
   const playerNames = usePlayerNames();
   const { player } = usePlayer();
   const navigate = useNavigate();
@@ -47,7 +49,7 @@ export function LobbyScreen() {
     if (!player) return;
     setCreating(true);
     try {
-      const { error } = await apiClient.POST('/games', { body: { creator_id: player.id } });
+      const { error } = await apiClient.POST('/games', { body: { creator_id: player.id, mode } });
       if (error) throw error;
     } catch {
       errorToast('Failed to create game');
@@ -104,7 +106,24 @@ export function LobbyScreen() {
       <div className="flex flex-col gap-6">
         <PageHeader
           title="Lobby"
-          action={<CreateGameButton onCreate={handleCreate} loading={creating} />}
+          action={
+            <div className="flex items-center gap-2">
+              <label htmlFor="game-mode" className="text-sm text-gray-400 sr-only">
+                Mode
+              </label>
+              <select
+                id="game-mode"
+                aria-label="Mode"
+                value={mode}
+                onChange={(e) => setMode(e.target.value as GameMode)}
+                className="bg-gray-800 text-white text-sm rounded px-2 py-1.5 border border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              >
+                <option value="standard">Standard</option>
+                <option value="sequential">Sequential</option>
+              </select>
+              <CreateGameButton onCreate={handleCreate} loading={creating} />
+            </div>
+          }
         />
         <GameList
           games={games}

@@ -100,6 +100,7 @@ describe('GameScreen', () => {
     givenGame({ id: 42, creator_id: ALICE.id });
     givenGameState({
       status: 'active',
+      mode: 'standard',
       current_player_id: ALICE.id,
       dice: makeDice(),
       rolls_remaining: 3,
@@ -109,6 +110,17 @@ describe('GameScreen', () => {
   });
 
   describe('game state display', () => {
+    it('shows Sequential badge in header for sequential games', async () => {
+      givenGame({ id: 42, creator_id: ALICE.id, mode: 'sequential' });
+      whenRendered();
+      await screen.findByText('Sequential');
+    });
+
+    it('shows Standard badge for standard games', async () => {
+      whenRendered();
+      await screen.findByText('Standard');
+    });
+
     it('shows player names in scorecard header', async () => {
       whenRendered();
       await thenColumnHeaderIsVisible('Alice');
@@ -203,6 +215,46 @@ describe('GameScreen', () => {
       await whenRollClicked();
       await thenScoringOptionVisible('Ones', 3);
       thenRowShowsX('Twos');
+    });
+
+    describe('sequential mode', () => {
+      beforeEach(() => {
+        givenGame({ id: 42, creator_id: ALICE.id, mode: 'sequential' });
+      });
+
+      it('only shows scoring option for the next required category', async () => {
+        givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+        givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+        whenRendered();
+        await whenRollClicked();
+        await thenScoringOptionVisible('Ones', 3);
+      });
+
+      it('does not show × for other unfilled categories in sequential mode', async () => {
+        givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+        givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+        whenRendered();
+        await whenRollClicked();
+        await thenScoringOptionVisible('Ones', 3);
+        thenRowDoesNotShowX('Twos');
+      });
+
+      it('does not allow clicking non-option categories in sequential mode', async () => {
+        let scoreCalled = false;
+        server.use(
+          http.put(SCORE_URL(ALICE.id), async () => {
+            scoreCalled = true;
+            return HttpResponse.json(makeScorecard(ALICE.id));
+          })
+        );
+        givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+        givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+        whenRendered();
+        await whenRollClicked();
+        await thenScoringOptionVisible('Ones', 3);
+        await whenCategoryClicked('Twos');
+        expect(scoreCalled).toBe(false);
+      });
     });
 
     it('clicking a category calls the score endpoint and clears scoring options', async () => {
@@ -320,12 +372,13 @@ describe('GameScreen', () => {
     server.use(http.get(PLAYERS_URL, () => HttpResponse.json(players)));
   }
 
-  function givenGame(game: { id: number; creator_id: number }) {
-    server.use(http.get(GAME_URL, () => HttpResponse.json(game)));
+  function givenGame(game: { id: number; creator_id: number; mode?: string }) {
+    server.use(http.get(GAME_URL, () => HttpResponse.json({ mode: 'standard', ...game })));
   }
 
   function givenGameState(state: {
     status: string;
+    mode?: string;
     current_player_id: number | null;
     dice?: ReturnType<typeof makeDice> | null;
     rolls_remaining?: number | null;
@@ -372,6 +425,11 @@ describe('GameScreen', () => {
   function thenRowShowsX(category: string) {
     const header = screen.getByRole('rowheader', { name: category });
     expect(header.closest('tr')).toHaveTextContent('×');
+  }
+
+  function thenRowDoesNotShowX(category: string) {
+    const header = screen.getByRole('rowheader', { name: category });
+    expect(header.closest('tr')).not.toHaveTextContent('×');
   }
 
   async function thenColumnHeaderIsVisible(name: string) {

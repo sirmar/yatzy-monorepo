@@ -387,6 +387,8 @@ export interface components {
             id: number;
             /** @description Current status of the game */
             status: components["schemas"]["GameStatus"];
+            /** @description Game mode */
+            mode: components["schemas"]["GameMode"];
             /**
              * Creator Id
              * @description ID of the player who created the game
@@ -421,6 +423,11 @@ export interface components {
              * @description ID of the player creating the game
              */
             creator_id: number;
+            /**
+             * @description Game mode
+             * @default standard
+             */
+            mode: components["schemas"]["GameMode"];
         };
         /** GameJoin */
         GameJoin: {
@@ -430,6 +437,11 @@ export interface components {
              */
             player_id: number;
         };
+        /**
+         * GameMode
+         * @enum {string}
+         */
+        GameMode: "standard" | "sequential";
         /** GameStart */
         GameStart: {
             /**
@@ -442,6 +454,8 @@ export interface components {
         GameState: {
             /** @description Current game status */
             status: components["schemas"]["GameStatus"];
+            /** @description Game mode */
+            mode?: components["schemas"]["GameMode"] | null;
             /**
              * Current Player Id
              * @description ID of the player whose turn it is; null when game is not active
@@ -498,6 +512,7 @@ export interface components {
             finished_at: string;
             /** Total Score */
             total_score: number;
+            mode: components["schemas"]["GameMode"];
         };
         /** Player */
         Player: {

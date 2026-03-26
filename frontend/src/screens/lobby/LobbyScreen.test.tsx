@@ -97,6 +97,39 @@ describe('LobbyScreen', () => {
       await thenErrorToastIsVisible('Failed to create game');
     });
 
+    it('creates a sequential game when sequential mode is selected', async () => {
+      let capturedBody: unknown;
+      server.use(
+        http.post(GAMES_URL, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json(
+            { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' },
+            { status: 201 }
+          );
+        })
+      );
+      whenRendered();
+      await whenModeSelected('sequential');
+      await whenNewGameClicked();
+      expect(capturedBody).toMatchObject({ mode: 'sequential' });
+    });
+
+    it('creates a standard game by default', async () => {
+      let capturedBody: unknown;
+      server.use(
+        http.post(GAMES_URL, async ({ request }) => {
+          capturedBody = await request.json();
+          return HttpResponse.json(
+            { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' },
+            { status: 201 }
+          );
+        })
+      );
+      whenRendered();
+      await whenNewGameClicked();
+      expect(capturedBody).toMatchObject({ mode: 'standard' });
+    });
+
     it('shows own game with Start and Delete buttons', async () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       whenRendered();
@@ -108,6 +141,36 @@ describe('LobbyScreen', () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       whenRendered();
       await thenYoursBadgeIsVisible();
+    });
+
+    it('shows Sequential badge on sequential games', async () => {
+      givenGames([
+        {
+          id: 42,
+          status: 'lobby',
+          creator_id: 1,
+          player_ids: [1],
+          created_at: '',
+          mode: 'sequential',
+        },
+      ]);
+      whenRendered();
+      await screen.findByText('Sequential');
+    });
+
+    it('shows Standard badge on standard games', async () => {
+      givenGames([
+        {
+          id: 42,
+          status: 'lobby',
+          creator_id: 1,
+          player_ids: [1],
+          created_at: '',
+          mode: 'standard',
+        },
+      ]);
+      whenRendered();
+      await screen.findByText('Standard');
     });
   });
 
@@ -245,6 +308,7 @@ describe('LobbyScreen', () => {
     creator_id: number;
     player_ids: number[];
     created_at: string;
+    mode?: string;
   };
 
   type PlayerData = { id: number; name: string; created_at: string };
@@ -341,6 +405,10 @@ describe('LobbyScreen', () => {
 
   async function whenNewGameClicked() {
     await userEvent.click(await screen.findByRole('button', { name: /new game/i }));
+  }
+
+  async function whenModeSelected(mode: string) {
+    await userEvent.selectOptions(await screen.findByRole('combobox', { name: /mode/i }), mode);
   }
 
   async function whenJoinClicked(gameId: number) {

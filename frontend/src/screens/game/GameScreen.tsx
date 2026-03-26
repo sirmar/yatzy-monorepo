@@ -5,6 +5,7 @@ import { apiClient } from '@/api';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { PageHeader } from '@/components/PageHeader';
 import { PageLayout } from '@/components/PageLayout';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
@@ -15,6 +16,7 @@ import { DiceRoller } from './DiceRoller';
 import { ScoreCard } from './ScoreCard';
 
 type GameState = components['schemas']['GameState'];
+type GameMode = components['schemas']['GameMode'];
 type Die = components['schemas']['Die'];
 type PlayerScorecard = components['schemas']['PlayerScorecard'];
 type ScoringOption = components['schemas']['ScoringOption'];
@@ -28,6 +30,7 @@ export function GameScreen() {
 
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [creatorId, setCreatorId] = useState<number | null>(null);
+  const [gameMode, setGameMode] = useState<GameMode | null>(null);
   const [dice, setDice] = useState<Die[]>([]);
   const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
@@ -54,6 +57,7 @@ export function GameScreen() {
     ]).then(([{ data: game }, { data: state }, { data: board }]) => {
       if (game) {
         setCreatorId(game.creator_id);
+        setGameMode(game.mode);
       }
       if (state) {
         setGameState(state);
@@ -204,7 +208,20 @@ export function GameScreen() {
     <PageLayout>
       <div className="flex flex-col gap-6">
         <PageHeader
-          title={`Game #${gameId}`}
+          title={
+            <div className="flex items-center gap-2">
+              <span>Game #{gameId}</span>
+              {gameMode === 'sequential' ? (
+                <Badge className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30 pointer-events-none">
+                  Sequential
+                </Badge>
+              ) : gameMode === 'standard' ? (
+                <Badge className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30 pointer-events-none">
+                  Standard
+                </Badge>
+              ) : null}
+            </div>
+          }
           action={
             player?.id === creatorId && gameState?.status === 'active' ? (
               <>
@@ -249,6 +266,7 @@ export function GameScreen() {
           scoringOptions={scoringOptions}
           hasRolled={hasRolled}
           isMyTurn={isMyTurn}
+          mode={gameMode ?? undefined}
           onScore={handleScore}
         />
       </div>

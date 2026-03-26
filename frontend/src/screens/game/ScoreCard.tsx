@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils';
 type PlayerScorecard = components['schemas']['PlayerScorecard'];
 type ScoringOption = components['schemas']['ScoringOption'];
 type ScoreCategory = components['schemas']['ScoreCategory'];
+type GameMode = components['schemas']['GameMode'];
 
 const UPPER_CATEGORIES: ScoreCategory[] = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes'];
 const LOWER_CATEGORIES: ScoreCategory[] = [
@@ -54,6 +55,7 @@ interface Props {
   scoringOptions: ScoringOption[] | null;
   hasRolled: boolean;
   isMyTurn: boolean;
+  mode?: GameMode;
   onScore: (category: ScoreCategory) => void;
 }
 
@@ -65,6 +67,7 @@ export function ScoreCard({
   scoringOptions,
   hasRolled,
   isMyTurn,
+  mode,
   onScore,
 }: Props) {
   const playerIds = scoreboard.map((s) => s.player_id);
@@ -77,7 +80,12 @@ export function ScoreCard({
 
   function isClickable(category: ScoreCategory) {
     const entry = getEntry(myPlayerId, category);
-    return isMyTurn && hasRolled && (entry?.score === null || entry?.score === undefined);
+    const isUnscored = entry?.score === null || entry?.score === undefined;
+    if (!isMyTurn || !hasRolled || !isUnscored) return false;
+    if (mode === 'sequential') {
+      return scoringOptions?.some((o) => o.category === category) ?? false;
+    }
+    return true;
   }
 
   function renderCell(playerId: number, category: ScoreCategory) {
@@ -102,6 +110,7 @@ export function ScoreCard({
           </span>
         );
       }
+      if (mode === 'sequential') return null;
       return (
         <span className="relative inline-block text-gray-500">
           ×

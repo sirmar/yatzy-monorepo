@@ -155,15 +155,34 @@ test('profile page shows player stats', async ({ page, request }) => {
   await expect(page.getByText('Games played')).toBeVisible();
 });
 
-test('high scores page loads via Statistics nav', async ({ page, request }) => {
+test('high scores page shows Standard and Sequential sections', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/statistics/high-scores');
+  await expect(page.getByRole('heading', { name: 'Standard' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Sequential' })).toBeVisible();
+});
+
+test('creating a sequential game shows Sequential badge in lobby', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, '/lobby');
-  await page.getByText('Statistics ▾').click();
-  await page.getByRole('menuitem', { name: 'High Scores' }).click();
-  await page.waitForURL('/statistics/high-scores');
-  await expect(page.getByRole('heading', { name: 'High Scores' })).toBeVisible();
+  await page.getByRole('combobox', { name: /mode/i }).selectOption('sequential');
+  await page.getByRole('button', { name: 'New Game' }).click();
+  await expect(page.getByRole('button', { name: /Start game/ })).toBeVisible();
+  await expect(page.locator('ul').getByText('Sequential')).toBeVisible();
+});
+
+test('game screen shows mode badge', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  const game = await createAndStartGame(request, player.id);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, `/games/${game.id}`);
+  await expect(page.getByText(/Alice's turn/)).toBeVisible();
+  await expect(page.locator('h1').getByText(/Standard|Sequential/)).toBeVisible();
 });
 
 test('aborting a game redirects to lobby', async ({ page, request }) => {

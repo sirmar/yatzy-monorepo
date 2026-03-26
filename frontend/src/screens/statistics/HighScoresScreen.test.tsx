@@ -18,6 +18,7 @@ function makeHighScore(
     game_id: number;
     finished_at: string;
     total_score: number;
+    mode: string;
   }> = {}
 ) {
   return {
@@ -26,6 +27,7 @@ function makeHighScore(
     game_id: 10,
     finished_at: '2024-06-01T12:00:00Z',
     total_score: 300,
+    mode: 'standard',
     ...overrides,
   };
 }
@@ -50,27 +52,62 @@ describe('HighScoresScreen', () => {
       await thenTextEventuallyVisible('High Scores');
     });
 
-    it('shows player names and scores', async () => {
-      givenHighScores([
-        makeHighScore({ player_name: 'Alice', total_score: 300 }),
-        makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, total_score: 250 }),
-      ]);
+    it('shows section headings for each mode', async () => {
+      givenHighScores([]);
       whenRendered();
-      await thenTextEventuallyVisible('Alice');
-      await thenTextEventuallyVisible('300');
-      await thenTextEventuallyVisible('Bob');
-      await thenTextEventuallyVisible('250');
+      await thenTextEventuallyVisible('Standard');
+      await thenTextEventuallyVisible('Sequential');
     });
 
-    it('numbers rows by rank', async () => {
+    it('shows standard scores under Standard heading', async () => {
       givenHighScores([
-        makeHighScore({ player_name: 'Alice', total_score: 300 }),
-        makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, total_score: 250 }),
+        makeHighScore({ player_name: 'Alice', total_score: 300, mode: 'standard' }),
       ]);
       whenRendered();
-      const rows = await screen.findAllByRole('row');
-      thenRowContains(rows[1], '1');
-      thenRowContains(rows[2], '2');
+      const heading = await screen.findByRole('heading', { name: 'Standard' });
+      const section = heading.closest('div');
+      expect(section).toHaveTextContent('Alice');
+      expect(section).toHaveTextContent('300');
+    });
+
+    it('shows sequential scores under Sequential heading', async () => {
+      givenHighScores([
+        makeHighScore({ player_name: 'Bob', game_id: 11, total_score: 250, mode: 'sequential' }),
+      ]);
+      whenRendered();
+      const heading = await screen.findByRole('heading', { name: 'Sequential' });
+      const section = heading.closest('div');
+      expect(section).toHaveTextContent('Bob');
+      expect(section).toHaveTextContent('250');
+    });
+
+    it('does not show standard scores under Sequential heading', async () => {
+      givenHighScores([
+        makeHighScore({ player_name: 'Alice', total_score: 300, mode: 'standard' }),
+      ]);
+      whenRendered();
+      const heading = await screen.findByRole('heading', { name: 'Sequential' });
+      const section = heading.closest('div');
+      expect(section).not.toHaveTextContent('Alice');
+    });
+
+    it('numbers rows by rank within each section', async () => {
+      givenHighScores([
+        makeHighScore({ player_name: 'Alice', total_score: 300, mode: 'standard' }),
+        makeHighScore({
+          player_id: 2,
+          player_name: 'Bob',
+          game_id: 11,
+          total_score: 250,
+          mode: 'standard',
+        }),
+      ]);
+      whenRendered();
+      const heading = await screen.findByRole('heading', { name: 'Standard' });
+      const section = heading.closest('div') as HTMLElement;
+      const rows = section.querySelectorAll('tbody tr');
+      expect(rows[0]).toHaveTextContent('1');
+      expect(rows[1]).toHaveTextContent('2');
     });
 
     it('shows game id prefixed with #', async () => {
@@ -79,10 +116,11 @@ describe('HighScoresScreen', () => {
       await thenTextEventuallyVisible('#42');
     });
 
-    it('shows "No high scores yet" when list is empty', async () => {
+    it('shows "No high scores yet" in each empty section', async () => {
       givenHighScores([]);
       whenRendered();
-      await thenTextEventuallyVisible('No high scores yet');
+      const noScores = await screen.findAllByText('No high scores yet');
+      expect(noScores).toHaveLength(2);
     });
   });
 
@@ -118,9 +156,5 @@ describe('HighScoresScreen', () => {
 
   async function thenTextEventuallyVisible(text: string) {
     await screen.findByText(new RegExp(text));
-  }
-
-  function thenRowContains(row: HTMLElement, text: string) {
-    expect(row).toHaveTextContent(text);
   }
 });
