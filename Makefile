@@ -1,35 +1,32 @@
-.PHONY: dev start stop logs ps clean build rebuild check \
-	backend/build backend/rebuild backend/dev backend/shell backend/db backend/migrate \
-	backend/format backend/lint backend/types backend/security \
-	backend/unit backend/unit-cov backend/e2e backend/e2e-cov backend/test backend/coverage backend/check \
-	release-major release-minor release-patch \
-	frontend/build frontend/rebuild frontend/schema \
-	frontend/format frontend/lint frontend/types frontend/unit frontend/coverage frontend/test frontend/e2e frontend/check \
-	frontend/security \
-	auth/build auth/rebuild auth/dev auth/shell \
-	auth/migrate \
-	auth/format auth/lint auth/types auth/security \
-	auth/unit auth/unit-cov auth/e2e auth/e2e-cov auth/test auth/coverage auth/check
+.PHONY: dev start stop logs ps clean migrate build e2e check \
+	prod-up prod-down prod-migrate \
+	release-major release-minor release-patch
 
-SHARD_ID ?= 0
-NUM_SHARDS ?= 1
-DC_RUN := docker compose --progress quiet run --rm --quiet-pull
-DC_BUILD := docker compose --progress quiet build
-DC_UP_TEST := docker compose --progress quiet up db-test -d --wait --quiet-pull
-DC_UP_AUTH_TEST := docker compose --progress quiet up auth-db-test -d --wait --quiet-pull
-DC_UP_BACKEND := docker compose --progress quiet up db migrate backend -d --wait --quiet-pull
-DC_UP_FULL := docker compose --progress quiet up db migrate backend auth-db auth-migrate auth frontend -d --wait --quiet-pull
+DC := docker compose --progress quiet
 
-# Full stack
+DBMATE_BACKEND := docker run --rm \
+	--network yatzy_default \
+	-v $(PWD)/backend/migrations:/db/migrations \
+	--env-file backend/.env \
+	ghcr.io/amacneil/dbmate --no-dump-schema
+
+DBMATE_AUTH := docker run --rm \
+	--network yatzy_default \
+	-v $(PWD)/auth/migrations:/db/migrations \
+	--env-file auth/.env \
+	ghcr.io/amacneil/dbmate --no-dump-schema
+
+DC_E2E  := docker compose --progress quiet -f e2e/docker-compose.yml
+DC_PROD := docker compose --progress quiet --context prod -f docker-compose.prod.yml --env-file .env.prod
 
 dev:
-	docker compose --progress quiet up db migrate backend auth-db auth-migrate auth frontend --quiet-pull
+	$(DC) up --quiet-pull
 
 start:
-	$(DC_UP_FULL)
+	$(DC) up -d --wait --quiet-pull
 
 stop:
-	docker compose stop
+	$(DC) stop
 
 logs:
 	docker compose logs -f
@@ -38,168 +35,45 @@ ps:
 	docker compose ps
 
 clean:
-	docker compose down --volumes
+	$(DC) down --volumes
+
+migrate:
+	$(DBMATE_BACKEND) up
+	$(DBMATE_AUTH) up
 
 build:
-	$(DC_BUILD)
+	$(DC) build
 
-rebuild:
-	$(DC_UP_FULL) --build
+e2e:
+	$(DC_E2E) up -d --wait yatzy-db auth-db --quiet-pull
+	docker run --rm --network yatzy-e2e \
+		-v $(PWD)/backend/migrations:/db/migrations \
+		-e DATABASE_URL=mysql://root:test@yatzy-db:3306/yatzy \
+		ghcr.io/amacneil/dbmate --no-dump-schema up
+	docker run --rm --network yatzy-e2e \
+		-v $(PWD)/auth/migrations:/db/migrations \
+		-e DATABASE_URL=mysql://root:test@auth-db:3306/yatzy_auth \
+		ghcr.io/amacneil/dbmate --no-dump-schema up
+	$(DC_E2E) up -d --wait backend auth frontend --quiet-pull
+	$(DC_E2E) run --rm --no-deps e2e; \
+	$(DC_E2E) down
 
-backend/build:
-	$(DC_BUILD) backend backend-dev
+prod-up:
+	$(DC_PROD) up -d --wait --quiet-pull
 
-backend/rebuild:
-	$(DC_UP_BACKEND) --build
+prod-down:
+	$(DC_PROD) down
 
-frontend/build:
-	$(DC_BUILD) frontend frontend-app frontend-dev e2e
+prod-migrate:
+	$(DC_PROD) up -d --wait yatzy-db auth-db --quiet-pull
+	$(DC_PROD) run --rm --no-deps backend dbmate --migrations-dir migrations --no-dump-schema up
+	$(DC_PROD) run --rm --no-deps auth dbmate --migrations-dir migrations --no-dump-schema up
 
-frontend/rebuild: rebuild
-
-# Backend
-
-backend/dev:
-	docker compose --progress quiet up db migrate backend --quiet-pull
-
-backend/shell:
-	$(DC_RUN) backend-dev sh
-
-backend/db:
-	docker compose exec db mysql -uroot -proot yatzy
-
-backend/migrate:
-	$(DC_RUN) migrate
-
-backend/format:
-	$(DC_RUN) backend-dev sh -c 'uv run --quiet ruff format app/ && uv run --quiet ruff check --fix app/'
-
-backend/lint:
-	$(DC_RUN) backend-dev sh -c 'uv run --quiet ruff check app/ && uv run --quiet ruff format --check app/'
-
-backend/types:
-	$(DC_RUN) backend-dev uv run --quiet ty check app/
-
-backend/security:
-	$(DC_RUN) backend-dev uv run --quiet bandit -q -r app/ -c pyproject.toml
-
-backend/unit:
-	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/unit/
-
-backend/unit-cov:
-	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/unit/ --cov=app
-
-backend/e2e:
-	$(DC_UP_TEST)
-	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/e2e/ \
-		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop db-test
-
-backend/e2e-cov:
-	$(DC_UP_TEST)
-	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/e2e/ --cov=app \
-		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop db-test
-
-backend/test: backend/unit backend/e2e
-
-backend/coverage:
-	$(DC_UP_TEST)
-	$(DC_RUN) backend-dev uv run --quiet pytest -q tests/ --cov=app; docker compose stop db-test
-
-backend/check: backend/lint backend/types backend/security backend/test
-
-# Frontend
-
-frontend/schema:
-	$(DC_UP_BACKEND)
-	$(DC_RUN) frontend-dev pnpm dlx openapi-typescript http://backend:8000/openapi.json -o src/api/schema.ts
-
-frontend/security:
-	$(DC_RUN) frontend-dev pnpm audit --audit-level=moderate
-
-frontend/format:
-	$(DC_RUN) frontend-dev pnpm biome check --fix .
-
-frontend/lint:
-	$(DC_RUN) frontend-dev pnpm biome check .
-
-frontend/types:
-	$(DC_RUN) frontend-dev pnpm tsc --noEmit
-
-frontend/unit:
-	$(DC_RUN) -e CI=true frontend-dev pnpm vitest run --reporter=dot
-
-frontend/coverage:
-	$(DC_RUN) -e CI=true frontend-dev pnpm vitest run --coverage --reporter=dot
-
-frontend/test: frontend/unit frontend/e2e
-
-frontend/e2e:
-	$(DC_BUILD) frontend-app e2e
-	docker compose --progress quiet up db-test auth-db --force-recreate -V -d --wait --quiet-pull
-	$(DC_RUN) auth-migrate
-	docker compose --progress quiet up auth --no-deps -d --wait --quiet-pull
-	$(DC_RUN) e2e; docker compose stop db-test auth auth-db
-
-frontend/check: frontend/lint frontend/types frontend/security frontend/test
-
-# Auth
-
-auth/build:
-	$(DC_BUILD) auth auth-dev
-
-auth/rebuild:
-	$(DC_BUILD) auth auth-dev --no-cache
-
-auth/migrate:
-	$(DC_RUN) auth-migrate
-
-auth/dev:
-	docker compose --progress quiet up auth-db auth-migrate auth --quiet-pull
-
-auth/shell:
-	$(DC_RUN) auth-dev sh
-
-auth/format:
-	$(DC_RUN) auth-dev sh -c 'uv run --quiet ruff format app/ && uv run --quiet ruff check --fix app/'
-
-auth/lint:
-	$(DC_RUN) auth-dev sh -c 'uv run --quiet ruff check app/ && uv run --quiet ruff format --check app/'
-
-auth/types:
-	$(DC_RUN) auth-dev uv run --quiet ty check app/
-
-auth/security:
-	$(DC_RUN) auth-dev uv run --quiet bandit -q -r app/ -c pyproject.toml
-
-auth/unit:
-	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/unit/
-
-auth/unit-cov:
-	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/unit/ --cov=app
-
-auth/e2e:
-	$(DC_UP_AUTH_TEST)
-	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/e2e/ \
-		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop auth-db-test
-
-auth/e2e-cov:
-	$(DC_UP_AUTH_TEST)
-	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/e2e/ --cov=app \
-		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); docker compose stop auth-db-test
-
-auth/test: auth/unit auth/e2e
-
-auth/coverage:
-	$(DC_UP_AUTH_TEST)
-	$(DC_RUN) auth-dev uv run --quiet pytest -q tests/ --cov=app; docker compose stop auth-db-test
-
-auth/check: auth/lint auth/types auth/security auth/test
-
-# Aggregate
-
-check: backend/check frontend/check auth/check
-
-# Release
+check:
+	$(MAKE) -C backend check
+	$(MAKE) -C auth check
+	$(MAKE) -C frontend check
+	$(MAKE) e2e
 
 release-major:
 	@git diff --exit-code && git diff --cached --exit-code

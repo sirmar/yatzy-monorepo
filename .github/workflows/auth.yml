@@ -51,7 +51,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: auth-dev
-      - run: make auth/${{ matrix.target }}
+      - run: make -C auth ${{ matrix.target }}
 
   unit:
     needs: build
@@ -62,7 +62,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: auth-dev
-      - run: make auth/unit-cov
+      - run: make -C auth unit-cov
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-unit
@@ -78,7 +78,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: auth-dev
-      - run: make auth/e2e-cov
+      - run: make -C auth e2e-cov
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-e2e

@@ -1,11 +1,11 @@
+name: yatzy
+
 services:
-  db:
+  yatzy-db:
     image: mysql:8
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: yatzy
-    ports:
-      - '3306:3306'
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
@@ -14,34 +14,10 @@ services:
       timeout: 5s
       retries: 30
 
-  db-test:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: test
-      MYSQL_DATABASE: yatzy_test
-    ports:
-      - '3307:3306'
-    healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
-      interval: 1s
-      timeout: 5s
-      retries: 30
-
-  migrate:
-    image: ghcr.io/amacneil/dbmate
-    command: ['--migrations-dir', '/db/migrations', '--no-dump-schema', 'up']
-    volumes:
-      - ./backend/migrations:/db/migrations
-    env_file:
-      - ./backend/.env
-    depends_on:
-      db:
-        condition: service_healthy
-
   backend:
     image: backend-dev
     build:
-      context: ./backend
+      context: backend
       target: dev
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
@@ -49,30 +25,45 @@ services:
     volumes:
       - ./backend:/app
       - /app/.venv
-    env_file:
-      - ./backend/.env
+    env_file: backend/.env
     depends_on:
-      db:
+      yatzy-db:
         condition: service_healthy
-      migrate:
-        condition: service_completed_successfully
 
-  backend-dev:
-    image: backend-dev
-    build:
-      context: ./backend
-      target: dev
-    volumes:
-      - ./backend:/app
-      - /app/.venv
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
+  auth-db:
+    image: mysql:8
     environment:
-      TEST_DATABASE_URL: mysql://root:test@db-test:3306/yatzy_test
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: yatzy_auth
+    volumes:
+      - auth_db_data:/var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  auth:
+    image: auth-dev
+    build:
+      context: auth
+      target: dev
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
+    ports:
+      - '8001:8001'
+    volumes:
+      - ./auth:/app
+      - /app/.venv
+    env_file: auth/.env
+    depends_on:
+      auth-db:
+        condition: service_healthy
 
   frontend:
+    image: frontend-dev
     build:
-      context: ./frontend
+      context: frontend
       target: dev
     command: pnpm dev
     ports:
@@ -86,162 +77,6 @@ services:
     depends_on:
       - backend
       - auth
-
-  auth-db:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: yatzy_auth
-    ports:
-      - '3308:3306'
-    volumes:
-      - auth_db_data:/var/lib/mysql
-    healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
-      interval: 1s
-      timeout: 5s
-      retries: 30
-
-  auth-db-test:
-    image: mysql:8
-    environment:
-      MYSQL_ROOT_PASSWORD: test
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: yatzy_auth_test
-    ports:
-      - '3309:3306'
-    healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
-      interval: 1s
-      timeout: 5s
-      retries: 30
-
-  auth-migrate:
-    image: ghcr.io/amacneil/dbmate
-    command: ['--migrations-dir', '/db/migrations', '--no-dump-schema', 'up']
-    volumes:
-      - ./auth/migrations:/db/migrations
-    env_file:
-      - ./auth/.env
-    depends_on:
-      auth-db:
-        condition: service_healthy
-
-  auth:
-    image: auth-dev
-    build:
-      context: ./auth
-      target: dev
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload
-    ports:
-      - '8001:8001'
-    volumes:
-      - ./auth:/app
-      - /app/.venv
-    env_file:
-      - ./auth/.env
-    depends_on:
-      auth-db:
-        condition: service_healthy
-      auth-migrate:
-        condition: service_completed_successfully
-
-  auth-dev:
-    image: auth-dev
-    build:
-      context: ./auth
-      target: dev
-    volumes:
-      - ./auth:/app
-      - /app/.venv
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    environment:
-      TEST_DATABASE_URL: mysql://root:test@auth-db-test:3306/yatzy_auth_test
-
-  frontend-app:
-    image: frontend-app
-    build:
-      context: ./frontend
-      target: production
-    ports:
-      - '80:80'
-    environment:
-      - BACKEND_HOST=backend
-      - AUTH_HOST=auth:8001
-    healthcheck:
-      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    depends_on:
-      - backend
-      - auth
-
-  frontend-dev:
-    image: frontend-dev
-    build:
-      context: ./frontend
-      target: dev
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
-
-  migrate-test:
-    image: ghcr.io/amacneil/dbmate
-    command: ['--migrations-dir', '/db/migrations', '--no-dump-schema', 'up']
-    volumes:
-      - ./backend/migrations:/db/migrations
-    environment:
-      DATABASE_URL: mysql://root:test@db-test:3306/yatzy_test
-    depends_on:
-      db-test:
-        condition: service_healthy
-
-  backend-e2e:
-    image: backend-dev
-    build:
-      context: ./backend
-      target: dev
-    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
-    volumes:
-      - ./backend:/app
-      - /app/.venv
-    environment:
-      DATABASE_URL: mysql://root:test@db-test:3306/yatzy_test
-      JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
-    depends_on:
-      db-test:
-        condition: service_healthy
-      migrate-test:
-        condition: service_completed_successfully
-
-  frontend-app-e2e:
-    image: frontend-app
-    environment:
-      - BACKEND_HOST=backend-e2e
-      - AUTH_HOST=auth:8001
-    healthcheck:
-      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80']
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    depends_on:
-      - backend-e2e
-      - auth
-
-  e2e:
-    image: frontend-e2e
-    build:
-      context: ./frontend
-      target: e2e
-    command: pnpm test:e2e
-    environment:
-      - BASE_URL=http://frontend-app-e2e:80
-    depends_on:
-      frontend-app-e2e:
-        condition: service_healthy
 
 volumes:
   db_data:

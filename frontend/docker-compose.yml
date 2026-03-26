@@ -1,0 +1,15 @@
+name: yatzy-frontend
+
+services:
+  frontend:
+    image: frontend-prod
+    build:
+      context: .
+      target: production
+    ports:
+      - '80:80'
+    environment:
+      - BACKEND_HOST=host.docker.internal
+      - AUTH_HOST=host.docker.internal
+    extra_hosts:
+      - host.docker.internal:host-gateway

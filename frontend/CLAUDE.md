@@ -13,11 +13,13 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 - API client: generated from the backend's OpenAPI schema (backend runs at http://localhost:8000, Swagger at /docs)
 - Package manager: pnpm
 - Linting and formatting: Biome
-- Build: multi-stage Dockerfile (`dev` for Node/pnpm, `production` for Nginx, `e2e` for Playwright)
+- Build: multi-stage Dockerfile (`dev` for Node/pnpm, `production` for Nginx)
 
 **Docker**
 - Nginx serves the production build and proxies `/api/` requests to `http://backend:8000` to avoid CORS
-- All dev workflow runs via `make` targets from the repo root. Key targets: `frontend/build`, `frontend/rebuild`, `frontend/schema`, `frontend/format`, `frontend/lint`, `frontend/types`, `frontend/unit`, `frontend/e2e`, `frontend/security`, `frontend/image-audit`, `frontend/check`.
+- All dev workflow runs via `make` targets from `frontend/` or using `make -C frontend <target>` from the repo root. Key targets: `dev`, `shell`, `schema`, `build`, `rebuild`, `format`, `lint`, `types`, `unit`, `coverage`, `security`, `test`, `check`.
+- Compose files: `docker-compose.yml` (prod), `docker-compose.dev.yml` (dev overrides).
+- E2E (Playwright) smoke tests live in `e2e/` at the repo root — not in this package.
 
 **Folder structure**
 - `src/api/` — generated API client and schema
@@ -37,7 +39,7 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 **Testing**
 - Unit test pure logic (score calculation helpers, formatting) with Vitest
 - Component tests with React Testing Library + jsdom: render components, interact with them and assert what is visible. Mock API calls. This is the primary way to verify component behaviour.
-- Smoke tests with Playwright for the real browser: a minimal suite that verifies the app loads and the happy path works in the target environment. Not a substitute for component tests.
+- Smoke tests with Playwright live in `e2e/` at the repo root — they are a full-stack concern, not part of this package.
 - Component tests follow BDD style using `describe`/`it`/`beforeEach` with `givenX`, `whenX`, `thenX` helper functions scoped inside the `describe` block. Example:
   ```typescript
   describe('ScoreCard', () => {
@@ -61,7 +63,7 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 
 **API**
 - Base URL: http://localhost:8000
-- Regenerate the API client from the OpenAPI schema whenever the backend changes: `make frontend/schema` from the repo root (starts the backend if needed)
+- Regenerate the API client from the OpenAPI schema whenever the backend changes: `make schema` from `frontend/` (requires backend running on port 8000)
 
 **Screens**
 - Player creation / selection

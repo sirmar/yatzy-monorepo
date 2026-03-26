@@ -51,7 +51,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: backend-dev
-      - run: make backend/${{ matrix.target }}
+      - run: make -C backend ${{ matrix.target }}
 
   unit:
     needs: build
@@ -62,7 +62,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: backend-dev
-      - run: make backend/unit-cov
+      - run: make -C backend unit-cov
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-unit
@@ -81,7 +81,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: backend-dev
-      - run: make backend/e2e-cov SHARD_ID=${{ matrix.shard }} NUM_SHARDS=5
+      - run: make -C backend e2e-cov SHARD_ID=${{ matrix.shard }} NUM_SHARDS=5
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-e2e-${{ matrix.shard }}

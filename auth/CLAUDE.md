@@ -8,7 +8,8 @@ A dedicated authentication service. Issues JWTs for email/password login. Isolat
 - Language: Python 3.14
 - Packages: FastAPI (with Pydantic and aiomysql), PyJWT, passlib[bcrypt]. No ORM.
 - Dev packages: Ruff for lint and code formatting. Ty for static type checking.
-- Always build and run using Docker via `make` targets — from the repo root or from `auth/` directly. Never raw `docker compose` or `uvicorn` commands. Key targets: `auth/dev`, `auth/shell`, `auth/build`, `auth/rebuild`, `auth/format`, `auth/lint`, `auth/types`, `auth/security`, `auth/unit`, `auth/unit-cov`, `auth/e2e`, `auth/e2e-cov`, `auth/test`, `auth/coverage`, `auth/check`.
+- Always build and run using Docker via `make` targets — never raw `docker compose` or `uvicorn` commands. Run from `auth/` or using `make -C auth <target>` from the repo root. Key targets: `dev`, `shell`, `migrate`, `build`, `rebuild`, `format`, `lint`, `types`, `security`, `unit`, `unit-cov`, `e2e`, `e2e-cov`, `test`, `coverage`, `check`.
+- Compose files: `docker-compose.yml` (base/prod), `docker-compose.dev.yml` (dev overrides), `docker-compose.test.yml` (test environment).
 - Use uv for package management.
 - Configure project using pyproject.toml.
 

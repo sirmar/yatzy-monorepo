@@ -1,0 +1,31 @@
+name: yatzy-backend-test
+
+networks:
+  default:
+    name: yatzy-backend-test
+
+services:
+  yatzy-db-test:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_DATABASE: yatzy_test
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  backend-test:
+    image: backend-dev
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/app
+      - /app/.venv
+    environment:
+      TEST_DATABASE_URL: mysql://root:test@yatzy-db-test:3306/yatzy_test
+    depends_on:
+      yatzy-db-test:
+        condition: service_healthy

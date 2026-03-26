@@ -1,0 +1,83 @@
+name: yatzy-e2e
+
+networks:
+  default:
+    name: yatzy-e2e
+
+services:
+  yatzy-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_DATABASE: yatzy
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  auth-db:
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_ROOT_HOST: '%'
+      MYSQL_DATABASE: yatzy_auth
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  backend:
+    image: backend-prod
+    build:
+      context: ../backend
+      target: prod
+    environment:
+      DATABASE_URL: mysql://root:test@yatzy-db:3306/yatzy
+      JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
+    depends_on:
+      yatzy-db:
+        condition: service_healthy
+
+  auth:
+    image: auth-prod
+    build:
+      context: ../auth
+      target: prod
+    environment:
+      DATABASE_URL: mysql://root:test@auth-db:3306/yatzy_auth
+      JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
+    depends_on:
+      auth-db:
+        condition: service_healthy
+
+  frontend:
+    image: frontend-prod
+    build:
+      context: ../frontend
+      target: production
+    ports:
+      - '80:80'
+    environment:
+      - BACKEND_HOST=backend
+      - AUTH_HOST=auth
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      - backend
+      - auth
+
+  e2e:
+    image: e2e
+    build:
+      context: .
+    command: npx playwright test
+    environment:
+      - BASE_URL=http://frontend:80
+    depends_on:
+      frontend:
+        condition: service_healthy

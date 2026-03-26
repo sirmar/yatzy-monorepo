@@ -3,10 +3,20 @@
 - `frontend/` — Web client (TypeScript / React / Vite). See `frontend/CLAUDE.md`.
 
 **Docker and make**
-- Single `docker-compose.yml` at the repo root with all services.
-- Single `Makefile` at the repo root with all targets, namespaced by package: `make backend/dev`, `make frontend/check`, `make backend/e2e`, etc.
-- Top-level targets: `dev` (full stack foreground), `start` (detached), `stop`, `logs`, `ps`, `clean` (down), `build`, `rebuild`, `check` (all quality checks), `release-patch/minor/major`.
-- Always run `make` from the repo root.
+- Each package (`backend/`, `auth/`, `frontend/`) has its own `docker-compose.yml` and `Makefile`.
+- Root `docker-compose.yml` is for full-stack dev only (no test/prod services).
+- Root `Makefile` has aggregate targets only: `dev`, `start`, `stop`, `logs`, `ps`, `clean`, `migrate`, `build`, `e2e`, `check`, `prod-up`, `prod-down`, `prod-migrate`, `release-patch/minor/major`.
+- Sub-repo Makefiles are self-contained — run `make <target>` from inside the package directory, or `make -C <pkg> <target>` from the root.
+- Migrations are explicit: `make migrate` at root (dev) or `make prod-migrate` (prod). Never automatic.
+- Always run with Docker — never raw `docker compose` or `uvicorn` commands directly.
+- E2E (Playwright) tests live in `e2e/` at the repo root.
+
+**Deployment**
+- Production uses `docker-compose.prod.yml` with images pulled from GHCR. All commands run locally via a Docker context pointing at the server.
+- One-time server setup: copy `docker-compose.prod.yml` and `.env.prod.example` to the server, rename to `.env.prod` and fill in secrets.
+- One-time local setup: `docker context create prod --docker "host=ssh://user@yourserver"`
+- Deploy: `make prod-migrate` (first deploy and after schema changes), then `make prod-up`
+- `DC_PROD` in the Makefile hardcodes `--context prod`, so all prod targets automatically target the remote server.
 
 **Git**
 - Always commit and push using the `/commit` skill — never raw `git commit`/`git push`
@@ -24,4 +34,4 @@
 - A player creates a game. Other players list and join. When enough have joined, the creator starts the game.
 
 **Cross-package**
-- Regenerate the frontend API client after backend changes: `make frontend/schema` (starts the backend automatically if not running)
+- Regenerate the frontend API client after backend changes: `make schema` from `frontend/` (requires backend running on port 8000).

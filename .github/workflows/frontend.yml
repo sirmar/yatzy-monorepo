@@ -60,27 +60,6 @@ jobs:
             type=gha,scope=frontend-app
           cache-to: type=gha,mode=max,scope=frontend-app
 
-  build-e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: frontend
-          target: e2e
-          push: true
-          tags: ghcr.io/${{ github.repository }}:frontend-e2e-${{ github.sha }}
-          cache-from: |
-            type=gha,scope=frontend-dev
-            type=gha,scope=frontend-e2e
-          cache-to: type=gha,mode=max,scope=frontend-e2e
-
   check:
     needs: build-dev
     runs-on: ubuntu-latest
@@ -93,7 +72,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: frontend-dev
-      - run: make frontend/${{ matrix.target }}
+      - run: make -C frontend ${{ matrix.target }}
 
   unit:
     needs: build-dev
@@ -104,7 +83,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           images: frontend-dev
-      - run: make frontend/coverage
+      - run: make -C frontend coverage
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
@@ -126,23 +105,3 @@ jobs:
             .total |
             "| Metric | % |\n|--------|---|\n| Statements | \(.statements.pct)% |\n| Branches | \(.branches.pct)% |\n| Functions | \(.functions.pct)% |\n| Lines | \(.lines.pct)% |"
           ' coverage/coverage-summary.json >> $GITHUB_STEP_SUMMARY
-
-  e2e:
-    needs: [build-dev, build-app, build-e2e]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
-      - uses: ./.github/actions/pull-image
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          images: frontend-dev frontend-app frontend-e2e
-      - uses: docker/build-push-action@v6
-        with:
-          context: backend
-          target: dev
-          load: true
-          tags: backend-dev
-          cache-from: type=gha,scope=backend-dev
-          cache-to: type=gha,mode=max,scope=backend-dev
-      - run: make frontend/e2e
