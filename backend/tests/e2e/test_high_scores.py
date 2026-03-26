@@ -1,18 +1,9 @@
-import uuid
-import jwt as pyjwt
 from httpx import AsyncClient
-from app.main import settings
 from tests.e2e.games import Game
+from tests.e2e.helpers import active_game, active_game_two_players, lobby_game, make_token
 from tests.e2e.players import Player
 from tests.e2e.scorecards import Scorecard
 from tests.e2e.scoring_options import ScoringOptions
-from tests.e2e.helpers import active_game, active_game_two_players, lobby_game
-
-
-def _make_token() -> str:
-  uid = str(uuid.uuid4())
-  payload = {'sub': uid, 'email': f'{uid}@test.example'}
-  return pyjwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
 
 
 async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: int) -> None:
@@ -27,7 +18,7 @@ async def _play_turn(client: AsyncClient, game: Game, game_id: int, player_id: i
 
 
 async def _finish_one_player_game(client: AsyncClient, mode: str = 'standard') -> tuple[Player, Game]:
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('Alice', token=token)
   game = await Game(client).create(player.id, mode=mode)
   await game.start(game.id, player.id)

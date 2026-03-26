@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { ModeBadge } from '@/components/ModeBadge';
 import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { useErrorToast } from '@/hooks/use-toast';
 import { usePlayerNames } from '@/hooks/usePlayerNames';
 
 type PlayerScore = components['schemas']['PlayerScore'];
+type GameMode = components['schemas']['GameMode'];
 
 export function EndScreen() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -16,6 +18,7 @@ export function EndScreen() {
 
   const [finalScores, setFinalScores] = useState<PlayerScore[]>([]);
   const [winnerIds, setWinnerIds] = useState<number[]>([]);
+  const [gameMode, setGameMode] = useState<GameMode | null>(null);
   const playerNames = usePlayerNames();
 
   useEffect(() => {
@@ -32,6 +35,7 @@ export function EndScreen() {
         }
         setFinalScores(state.final_scores ?? []);
         setWinnerIds(state.winner_ids ?? []);
+        setGameMode(state.mode ?? null);
       })
       .catch(() => errorToast('Failed to load results'));
   }, [gameId, navigate, errorToast]);
@@ -63,7 +67,10 @@ export function EndScreen() {
       <div className="max-w-lg flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-bold text-white">Yatzy</h1>
-          <p className="text-gray-400 text-sm">Game #{gameId}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-gray-400 text-sm">Game #{gameId}</p>
+            {gameMode != null && <ModeBadge mode={gameMode} />}
+          </div>
         </div>
 
         {winnerAnnouncement && (

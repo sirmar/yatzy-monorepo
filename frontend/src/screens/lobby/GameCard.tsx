@@ -2,6 +2,7 @@ import { Users } from 'lucide-react';
 import { useState } from 'react';
 import type { components } from '@/api';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { ModeBadge } from '@/components/ModeBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -53,15 +54,7 @@ export function GameCard({
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <span className="font-semibold text-white">Game #{game.id}</span>
-              {game.mode === 'sequential' ? (
-                <Badge className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30 pointer-events-none">
-                  Sequential
-                </Badge>
-              ) : (
-                <Badge className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30 pointer-events-none">
-                  Standard
-                </Badge>
-              )}
+              <ModeBadge mode={game.mode} />
               {isCreator && (
                 <Badge className="text-xs bg-yellow-500/20 text-yellow-300 border-yellow-500/30">
                   ★ yours

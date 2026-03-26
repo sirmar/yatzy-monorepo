@@ -1,6 +1,6 @@
 from httpx import AsyncClient
 from tests.e2e.games import Game
-from tests.e2e.helpers import active_game, lobby_game, _make_token
+from tests.e2e.helpers import active_game, lobby_game, make_token
 from tests.e2e.players import Player
 from tests.e2e.test_high_scores import _finish_one_player_game, _play_turn
 
@@ -47,7 +47,7 @@ async def test_stats_active_game_not_counted(client: AsyncClient):
 
 
 async def test_stats_multiple_finished_games(client: AsyncClient):
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('StatsPlayer', token=token)
 
   for _ in range(2):

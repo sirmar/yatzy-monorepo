@@ -1,29 +1,13 @@
-import uuid
-import jwt as pyjwt
 from httpx import AsyncClient
-from app.main import settings
 from tests.e2e.games import Game
+from tests.e2e.helpers import active_sequential_game, make_token
 from tests.e2e.players import Player
 from tests.e2e.scorecards import Scorecard
 from tests.e2e.scoring_options import ScoringOptions
 
 
-def _make_token() -> str:
-  uid = str(uuid.uuid4())
-  payload = {'sub': uid, 'email': f'{uid}@test.example'}
-  return pyjwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
-
-
-async def _active_sequential_game(client: AsyncClient) -> tuple[Player, Game]:
-  token = _make_token()
-  player = await Player(client).create('Alice', token=token)
-  game = await Game(client).create(player.id, mode='sequential')
-  await game.start(game.id, player.id)
-  return player, game
-
-
 async def test_start_sequential_game_returns_200(client: AsyncClient):
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('Alice', token=token)
   game = await Game(client).create(player.id, mode='sequential')
   await game.start(game.id, player.id)
@@ -31,7 +15,7 @@ async def test_start_sequential_game_returns_200(client: AsyncClient):
 
 
 async def test_start_sequential_game_returns_sequential_mode(client: AsyncClient):
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('Alice', token=token)
   game = await Game(client).create(player.id, mode='sequential')
   await game.start(game.id, player.id)
@@ -39,21 +23,21 @@ async def test_start_sequential_game_returns_sequential_mode(client: AsyncClient
 
 
 async def test_create_sequential_game_returns_mode(client: AsyncClient):
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('Alice', token=token)
   game = await Game(client).create(player.id, mode='sequential')
   game.assert_status(201).assert_mode('sequential')
 
 
 async def test_create_standard_game_returns_mode(client: AsyncClient):
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('Alice', token=token)
   game = await Game(client).create(player.id)
   game.assert_status(201).assert_mode('standard')
 
 
 async def test_get_sequential_game_includes_mode(client: AsyncClient):
-  token = _make_token()
+  token = make_token()
   player = await Player(client).create('Alice', token=token)
   created = await Game(client).create(player.id, mode='sequential')
   fetched = await Game(client).get(created.id)
@@ -61,28 +45,28 @@ async def test_get_sequential_game_includes_mode(client: AsyncClient):
 
 
 async def test_game_state_includes_mode(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   state = await game.state(game.id)
   state.assert_status(200)
   assert state.json['mode'] == 'sequential'
 
 
 async def test_sequential_allows_first_category(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)
   sc = await Scorecard(client).score(game.id, player.id, 'ones')
   sc.assert_status(200)
 
 
 async def test_sequential_rejects_out_of_order_category(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)
   sc = await Scorecard(client).score(game.id, player.id, 'twos')
   sc.assert_status(409).assert_has_detail()
 
 
 async def test_sequential_allows_second_category_after_first(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)
   await Scorecard(client).score(game.id, player.id, 'ones')
   await game.roll(game.id, player.id)
@@ -91,7 +75,7 @@ async def test_sequential_allows_second_category_after_first(client: AsyncClient
 
 
 async def test_sequential_rejects_skipping_mid_game(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)
   await Scorecard(client).score(game.id, player.id, 'ones')
   await game.roll(game.id, player.id)
@@ -100,14 +84,14 @@ async def test_sequential_rejects_skipping_mid_game(client: AsyncClient):
 
 
 async def test_scoring_options_returns_at_most_one_in_sequential(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)
   opts = await ScoringOptions(client).get(game.id, player.id)
   opts.assert_status(200).assert_count_at_most(1)
 
 
 async def test_scoring_options_only_shows_next_category_in_sequential(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)
   await Scorecard(client).score(game.id, player.id, 'ones')
   await game.roll(game.id, player.id)
@@ -126,7 +110,7 @@ SEQUENTIAL_CATEGORIES = [
 
 
 async def test_full_sequential_game_completes(client: AsyncClient):
-  player, game = await _active_sequential_game(client)
+  player, game = await active_sequential_game(client)
 
   for category in SEQUENTIAL_CATEGORIES:
     await game.roll(game.id, player.id)

@@ -3,9 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { ModeBadge } from '@/components/ModeBadge';
 import { PageHeader } from '@/components/PageHeader';
 import { PageLayout } from '@/components/PageLayout';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
@@ -211,15 +211,7 @@ export function GameScreen() {
           title={
             <div className="flex items-center gap-2">
               <span>Game #{gameId}</span>
-              {gameMode === 'sequential' ? (
-                <Badge className="text-xs bg-blue-500/20 text-blue-300 border-blue-500/30 pointer-events-none">
-                  Sequential
-                </Badge>
-              ) : gameMode === 'standard' ? (
-                <Badge className="text-xs bg-gray-500/20 text-gray-300 border-gray-500/30 pointer-events-none">
-                  Standard
-                </Badge>
-              ) : null}
+              {gameMode != null && <ModeBadge mode={gameMode} />}
             </div>
           }
           action={

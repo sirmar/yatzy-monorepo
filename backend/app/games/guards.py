@@ -85,6 +85,7 @@ def assert_sequential_category(
 ) -> None:
   if mode != GameMode.SEQUENTIAL:
     return
+  # ScoreCategory enum order defines the required scoring sequence — do not reorder
   for cat in ScoreCategory:
     if cat not in scored:
       if cat != requested:
