@@ -36,3 +36,4 @@
 
 **Cross-package**
 - Regenerate the frontend API client after backend changes: `make schema` from `frontend/` (requires backend running on port 8000).
+- Regenerate the frontend auth client after auth service changes: `make auth-schema` from `frontend/` (requires auth running on port 8001).

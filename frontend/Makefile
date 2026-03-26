@@ -1,4 +1,4 @@
-.PHONY: dev shell schema format lint types unit coverage security test check build rebuild
+.PHONY: dev shell schema auth-schema format lint types unit coverage security test check build rebuild
 
 IMAGE := frontend-dev
 
@@ -16,6 +16,13 @@ schema:
 		-v $(CURDIR):/app \
 		$(IMAGE) \
 		pnpm dlx openapi-typescript http://host.docker.internal:8000/openapi.json -o src/api/schema.ts
+
+auth-schema:
+	docker run --rm \
+		--add-host host.docker.internal:host-gateway \
+		-v $(CURDIR):/app \
+		$(IMAGE) \
+		pnpm dlx openapi-typescript http://host.docker.internal:8001/openapi.json -o src/auth/schema.ts
 
 build:
 	$(DC_DEV) build frontend

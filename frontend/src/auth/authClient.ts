@@ -1,52 +1,35 @@
-const AUTH_BASE = '/auth';
+import { authHttpClient } from './client';
+import type { components } from './schema';
 
-export interface AuthTokens {
-  access_token: string;
-  refresh_token: string;
-  token_type: string;
-}
+export type AuthTokens = components['schemas']['TokenResponse'];
+export type AuthUser = components['schemas']['User'];
 
-export interface AuthUser {
-  id: string;
-  email: string;
-  created_at: string;
-}
-
-async function request<T>(path: string, options: RequestInit): Promise<T> {
-  const res = await fetch(`${AUTH_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error((body as { detail?: string }).detail ?? `${res.status} ${res.statusText}`);
+async function throwOnError<T>(promise: Promise<{ data?: T; error?: unknown }>): Promise<T> {
+  const { data, error } = await promise;
+  if (error) {
+    const detail = (error as { detail?: string }).detail;
+    throw new Error(detail ?? 'Request failed');
   }
-  if (res.status === 204) return undefined as T;
-  return res.json() as Promise<T>;
+  return data as T;
 }
 
 export const authClient = {
   register: (email: string, password: string) =>
-    request<AuthTokens>('/register', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    throwOnError(authHttpClient.POST('/register', { body: { email, password } })),
 
   login: (email: string, password: string) =>
-    request<AuthTokens>('/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+    throwOnError(authHttpClient.POST('/login', { body: { email, password } })),
 
-  refresh: (refreshToken: string) =>
-    request<AuthTokens>('/refresh', {
-      method: 'POST',
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    }),
+  refresh: (refresh_token: string) =>
+    throwOnError(authHttpClient.POST('/refresh', { body: { refresh_token } })),
 
-  logout: (refreshToken: string) =>
-    request<void>('/logout', {
-      method: 'POST',
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    }),
+  logout: (refresh_token: string) =>
+    authHttpClient.POST('/logout', { body: { refresh_token } }).then(() => undefined),
 
   me: (accessToken: string) =>
-    request<AuthUser>('/me', {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${accessToken}` },
-    }),
+    throwOnError(
+      authHttpClient.GET('/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+    ),
 };

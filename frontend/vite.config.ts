@@ -29,7 +29,7 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: true,
     exclude: ['**/node_modules/**', '**/dist/**', 'e2e/**'],
-    env: { VITE_API_BASE_URL: 'http://localhost/api' },
+    env: { VITE_API_BASE_URL: 'http://localhost/api', VITE_AUTH_BASE_URL: 'http://localhost/auth' },
     coverage: {
       provider: 'v8',
       include: ['src/**'],
@@ -37,6 +37,7 @@ export default defineConfig({
         'src/**/*.css',
         'src/api/schema.ts',
         'src/api/index.ts',
+        'src/auth/schema.ts',
         'src/main.tsx',
         'src/App.tsx',
         'src/components/ui/**',

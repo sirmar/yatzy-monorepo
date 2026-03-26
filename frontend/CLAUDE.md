@@ -64,6 +64,7 @@ A web frontend for the Yatzy REST API. Allows players to create and join games, 
 **API**
 - Base URL: http://localhost:8000
 - Regenerate the API client from the OpenAPI schema whenever the backend changes: `make schema` from `frontend/` (requires backend running on port 8000)
+- Regenerate the auth client from the OpenAPI schema whenever the auth service changes: `make auth-schema` from `frontend/` (requires auth running on port 8001)
 
 **Screens**
 - Player creation / selection

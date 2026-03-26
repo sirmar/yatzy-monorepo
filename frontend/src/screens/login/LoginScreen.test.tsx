@@ -12,10 +12,10 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-const LOGIN_URL = '/auth/login';
-const REGISTER_URL = '/auth/register';
-const REFRESH_URL = '/auth/refresh';
-const ME_URL = '/auth/me';
+const LOGIN_URL = 'http://localhost/auth/login';
+const REGISTER_URL = 'http://localhost/auth/register';
+const REFRESH_URL = 'http://localhost/auth/refresh';
+const ME_URL = 'http://localhost/auth/me';
 
 const mockUser = { id: '123', email: 'user@example.com', created_at: '2026-01-01' };
 const mockTokens = {

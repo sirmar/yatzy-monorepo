@@ -33,6 +33,7 @@
       "!**/coverage",
       "!**/.vite",
       "!**/src/api/schema.ts",
+      "!**/src/auth/schema.ts",
       "!**/src/components/ui",
       "!**/src/hooks/use-toast.ts",
       "!**/test-results",
