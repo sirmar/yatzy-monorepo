@@ -85,6 +85,13 @@ async def test_scoring_options_returns_at_most_one_in_sequential(client: AsyncCl
   opts.assert_status(200).assert_count_at_most(1)
 
 
+async def test_scoring_options_always_returns_next_category_in_sequential(client: AsyncClient):
+  player, game = await active_sequential_game(client)
+  await game.roll(game.id, player.id)
+  opts = await ScoringOptions(client).get(game.id, player.id)
+  opts.assert_status(200).assert_count_exactly(1).assert_only_category('ones')
+
+
 async def test_scoring_options_only_shows_next_category_in_sequential(client: AsyncClient):
   player, game = await active_sequential_game(client)
   await game.roll(game.id, player.id)

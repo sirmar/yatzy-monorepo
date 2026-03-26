@@ -145,7 +145,7 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
     player_id: int,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[ScoringOption]:
-    """List scoring categories that would yield points with the current dice. Returns an empty list if no roll has been taken yet this turn."""
+    """List scoring categories available for the current dice. In sequential mode, always includes the next required category even if it scores zero. Returns an empty list if no roll has been taken yet this turn."""
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_player_in_game(game, player_id)
     assert_game_active(game)
@@ -167,7 +167,7 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
       ScoringOption(category=cat, score=score)
       for cat in ScoreCategory
       if cat in allowed
-      if (score := calculate(cat, dice)) > 0
+      if (score := calculate(cat, dice)) > 0 or game.mode == GameMode.SEQUENTIAL
     ]
 
   @router.get('/high-scores', response_model=list[HighScore])

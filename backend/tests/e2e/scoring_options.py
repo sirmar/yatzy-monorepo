@@ -38,6 +38,10 @@ class ScoringOptions:
     assert len(self.json) <= n
     return self
 
+  def assert_count_exactly(self, n: int) -> 'ScoringOptions':
+    assert len(self.json) == n
+    return self
+
   def assert_only_category(self, category: str) -> 'ScoringOptions':
     categories = [c['category'] for c in self.json]
     assert all(c == category for c in categories)
