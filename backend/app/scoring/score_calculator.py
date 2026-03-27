@@ -80,4 +80,7 @@ def calculate(category: ScoreCategory, dice: list[int]) -> int:
   if category == ScoreCategory.MAXI_YATZY:
     return 100 if len(counts) == 1 else 0
 
+  if category == ScoreCategory.YATZY:
+    return 50 if len(counts) == 1 else 0
+
   return 0

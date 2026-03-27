@@ -8,14 +8,21 @@ type SortBy = components['schemas']['GamesPlayedSortBy'];
 
 const SECTIONS: { label: string; sortBy: SortBy }[] = [
   { label: 'Total', sortBy: 'total' },
-  { label: 'Standard', sortBy: 'standard' },
-  { label: 'Sequential', sortBy: 'sequential' },
+  { label: 'Maxi Yatzy', sortBy: 'maxi' },
+  { label: 'Maxi Yatzy Sequential', sortBy: 'maxi_sequential' },
+  { label: 'Yatzy', sortBy: 'yatzy' },
+  { label: 'Yatzy Sequential', sortBy: 'yatzy_sequential' },
 ];
 
-const SORT_BY_KEY: Record<SortBy, keyof Pick<GamesPlayed, 'total' | 'standard' | 'sequential'>> = {
+const SORT_BY_KEY: Record<
+  SortBy,
+  keyof Pick<GamesPlayed, 'total' | 'maxi' | 'maxi_sequential' | 'yatzy' | 'yatzy_sequential'>
+> = {
   total: 'total',
-  standard: 'standard',
-  sequential: 'sequential',
+  maxi: 'maxi',
+  maxi_sequential: 'maxi_sequential',
+  yatzy: 'yatzy',
+  yatzy_sequential: 'yatzy_sequential',
 };
 
 const RANK_TROPHY: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };

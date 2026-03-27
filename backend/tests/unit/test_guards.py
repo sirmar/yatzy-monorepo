@@ -24,7 +24,7 @@ def make_game(**kwargs) -> Game:
   defaults = dict(
     id=1,
     status=GameStatus.LOBBY,
-    mode=GameMode.STANDARD,
+    mode=GameMode.MAXI,
     creator_id=10,
     player_ids=[10],
     created_at=datetime(2024, 1, 1),

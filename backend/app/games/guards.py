@@ -1,6 +1,5 @@
 from fastapi import HTTPException
 from app.games.game import Game
-from app.games.game_mode import GameMode
 from app.games.game_status import GameStatus
 from app.players.player import Player
 from app.scoring.score_category import ScoreCategory
@@ -91,14 +90,14 @@ def assert_player_owns(player: Player, account_id: str) -> None:
 
 
 def assert_sequential_category(
-  mode: GameMode,
+  categories: list[ScoreCategory],
+  is_sequential: bool,
   scored: set[ScoreCategory],
   requested: ScoreCategory,
 ) -> None:
-  if mode != GameMode.SEQUENTIAL:
+  if not is_sequential:
     return
-  # ScoreCategory enum order defines the required scoring sequence — do not reorder
-  for cat in ScoreCategory:
+  for cat in categories:
     if cat not in scored:
       if cat != requested:
         raise HTTPException(status_code=409, detail='Must score categories in order')

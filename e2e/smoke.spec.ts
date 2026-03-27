@@ -162,23 +162,35 @@ test('profile page shows player stats', async ({ page, request }) => {
   await page.getByRole('button', { name: /alice/i }).click();
   await page.getByRole('menuitem', { name: 'Profile' }).click();
   await page.waitForURL('/profile');
-  await expect(page.getByText('Games played')).toBeVisible();
+  await expect(page.getByText(/Total games played/)).toBeVisible();
 });
 
-test('high scores page shows mode selector and table', async ({ page, request }) => {
+test('high scores page shows all four mode buttons', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, '/statistics/high-scores');
-  await expect(page.getByRole('button', { name: 'Standard' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sequential' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'High Scores' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Maxi Yatzy', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Maxi Yatzy Sequential', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yatzy', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yatzy Sequential', exact: true })).toBeVisible();
 });
 
-test('games played page is accessible from statistics nav and shows leaderboard table', async ({
-  page,
-  request,
-}) => {
+test('games played page shows all five mode buttons', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/statistics/games-played');
+  await expect(page.getByRole('heading', { name: 'Games Played' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Total', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Maxi Yatzy', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Maxi Yatzy Sequential', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yatzy', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Yatzy Sequential', exact: true })).toBeVisible();
+});
+
+test('games played page is accessible from statistics nav', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
@@ -187,20 +199,48 @@ test('games played page is accessible from statistics nav and shows leaderboard 
   await page.getByRole('menuitem', { name: 'Games Played' }).click();
   await page.waitForURL('/statistics/games-played');
   await expect(page.getByRole('heading', { name: 'Games Played' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Total' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Standard' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sequential' })).toBeVisible();
 });
 
-test('creating a sequential game shows Sequential badge in lobby', async ({ page, request }) => {
+test('creating a maxi sequential game shows Maxi Yatzy Sequential badge in lobby', async ({
+  page,
+  request,
+}) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, '/lobby');
-  await page.getByRole('combobox', { name: /mode/i }).selectOption('sequential');
+  await page.getByRole('combobox', { name: /mode/i }).selectOption('maxi_sequential');
   await page.getByRole('button', { name: 'New Game' }).click();
   await expect(page.getByRole('button', { name: /Start game/ })).toBeVisible();
-  await expect(page.locator('ul').getByText('Sequential')).toBeVisible();
+  await expect(page.locator('ul').getByText('Maxi Yatzy Sequential')).toBeVisible();
+});
+
+test('creating a yatzy game shows Yatzy badge in lobby', async ({
+  page,
+  request,
+}) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('combobox', { name: /mode/i }).selectOption('yatzy');
+  await page.getByRole('button', { name: 'New Game' }).click();
+  await expect(page.getByRole('button', { name: /Start game/ })).toBeVisible();
+  await expect(page.locator('ul').getByText('Yatzy', { exact: true })).toBeVisible();
+});
+
+test('creating a yatzy sequential game shows Yatzy Sequential badge in lobby', async ({
+  page,
+  request,
+}) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('combobox', { name: /mode/i }).selectOption('yatzy_sequential');
+  await page.getByRole('button', { name: 'New Game' }).click();
+  await expect(page.getByRole('button', { name: /Start game/ })).toBeVisible();
+  await expect(page.locator('ul').getByText('Yatzy Sequential', { exact: true })).toBeVisible();
 });
 
 test('game screen shows mode badge', async ({ page, request }) => {
@@ -210,8 +250,37 @@ test('game screen shows mode badge', async ({ page, request }) => {
   await loginAs(page, player);
   await gotoAuthenticated(page, `/games/${game.id}`);
   await expect(page.getByText(/Alice's turn/)).toBeVisible();
-  await expect(page.locator('h1').getByText(/Standard|Sequential/)).toBeVisible();
+  await expect(page.locator('h1').getByText(/Maxi Yatzy|Yatzy/)).toBeVisible();
 });
+
+test('yatzy game screen has 5 dice', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('combobox', { name: /mode/i }).selectOption('yatzy');
+  await page.getByRole('button', { name: 'New Game' }).click();
+  await page.getByRole('button', { name: /Start game/ }).click();
+  await page.waitForURL(/\/games\/\d+$/);
+  await page.getByRole('button', { name: 'Roll' }).click();
+  for (let i = 0; i < 5; i++) {
+    await expect(page.getByRole('button', { name: `Die ${i}` })).toHaveAttribute('data-value', /[1-6]/);
+  }
+  await expect(page.getByRole('button', { name: 'Die 5' })).not.toBeVisible();
+});
+
+test('yatzy game screen does not show saved rolls', async ({ page, request }) => {
+  const { accessToken } = await registerUser(request, page);
+  const player = await createPlayer(request, 'Alice', accessToken);
+  await loginAs(page, player);
+  await gotoAuthenticated(page, '/lobby');
+  await page.getByRole('combobox', { name: /mode/i }).selectOption('yatzy');
+  await page.getByRole('button', { name: 'New Game' }).click();
+  await page.getByRole('button', { name: /Start game/ }).click();
+  await page.waitForURL(/\/games\/\d+$/);
+  await expect(page.getByText(/Saved rolls/)).not.toBeVisible();
+});
+
 
 test('aborting a game redirects to lobby', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);

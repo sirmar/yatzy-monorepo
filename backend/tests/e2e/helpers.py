@@ -57,6 +57,22 @@ async def play_turn(client: AsyncClient, game: Game, game_id: int, player_id: in
 async def active_sequential_game(client: AsyncClient) -> tuple[Player, Game]:
   token = make_token()
   player = await Player(client).create('Alice', token=token)
-  game = await Game(client).create(player.id, mode='sequential', token=token)
+  game = await Game(client).create(player.id, mode='maxi_sequential', token=token)
+  await game.start(game.id, player.id)
+  return player, game
+
+
+async def active_yatzy_game(client: AsyncClient) -> tuple[Player, Game]:
+  token = make_token()
+  player = await Player(client).create('Alice', token=token)
+  game = await Game(client).create(player.id, mode='yatzy', token=token)
+  await game.start(game.id, player.id)
+  return player, game
+
+
+async def active_yatzy_sequential_game(client: AsyncClient) -> tuple[Player, Game]:
+  token = make_token()
+  player = await Player(client).create('Alice', token=token)
+  game = await Game(client).create(player.id, mode='yatzy_sequential', token=token)
   await game.start(game.id, player.id)
   return player, game

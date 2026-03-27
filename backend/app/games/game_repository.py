@@ -37,7 +37,7 @@ class GameRepository:
     player_rows = await cursor.fetchall()
     return self._to_game(row, [r[0] for r in player_rows])
 
-  async def create(self, creator_id: int, mode: GameMode = GameMode.STANDARD) -> Game:
+  async def create(self, creator_id: int, mode: GameMode = GameMode.MAXI) -> Game:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'INSERT INTO games (creator_id, mode) VALUES (%s, %s)',

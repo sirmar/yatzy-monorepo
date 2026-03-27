@@ -36,11 +36,21 @@ class TestCalculateBonus:
     self.WhenBonusCalculated()
     self.ThenBonusIs(0)
 
+  def test_yatzy_returns_50_at_threshold(self):
+    self.GivenUpperScores({'ones': 3, 'twos': 6, 'threes': 9, 'fours': 12, 'fives': 15, 'sixes': 18})
+    self.WhenBonusCalculated(threshold=63, score=50)
+    self.ThenBonusIs(50)
+
+  def test_yatzy_returns_zero_one_below_threshold(self):
+    self.GivenUpperScores({'ones': 3, 'twos': 6, 'threes': 9, 'fours': 12, 'fives': 15, 'sixes': 17})
+    self.WhenBonusCalculated(threshold=63, score=50)
+    self.ThenBonusIs(0)
+
   def GivenUpperScores(self, scores: dict[str, int]):
     self.scores = scores
 
-  def WhenBonusCalculated(self):
-    self.result = calculate_bonus(self.scores)
+  def WhenBonusCalculated(self, threshold: int = 84, score: int = 100):
+    self.result = calculate_bonus(self.scores, threshold, score)
 
   def ThenBonusIs(self, expected: int):
     assert self.result == expected

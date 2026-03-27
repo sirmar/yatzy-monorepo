@@ -445,7 +445,7 @@ export interface components {
             creator_id: number;
             /**
              * @description Game mode
-             * @default standard
+             * @default maxi
              */
             mode: components["schemas"]["GameMode"];
         };
@@ -461,7 +461,7 @@ export interface components {
          * GameMode
          * @enum {string}
          */
-        GameMode: "standard" | "sequential";
+        GameMode: "maxi" | "maxi_sequential" | "yatzy" | "yatzy_sequential";
         /** GameStart */
         GameStart: {
             /**
@@ -520,16 +520,20 @@ export interface components {
             player_name: string;
             /** Total */
             total: number;
-            /** Standard */
-            standard: number;
-            /** Sequential */
-            sequential: number;
+            /** Maxi */
+            maxi: number;
+            /** Maxi Sequential */
+            maxi_sequential: number;
+            /** Yatzy */
+            yatzy: number;
+            /** Yatzy Sequential */
+            yatzy_sequential: number;
         };
         /**
          * GamesPlayedSortBy
          * @enum {string}
          */
-        GamesPlayedSortBy: "total" | "standard" | "sequential";
+        GamesPlayedSortBy: "total" | "maxi" | "maxi_sequential" | "yatzy" | "yatzy_sequential";
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -551,6 +555,19 @@ export interface components {
             /** Total Score */
             total_score: number;
             mode: components["schemas"]["GameMode"];
+        };
+        /** ModeStats */
+        ModeStats: {
+            /** Games Played */
+            games_played: number;
+            /** High Score */
+            high_score: number | null;
+            /** Average Score */
+            average_score: number | null;
+            /** Bonus Count */
+            bonus_count: number;
+            /** Yatzy Hit Count */
+            yatzy_hit_count: number;
         };
         /** Player */
         Player: {
@@ -631,16 +648,12 @@ export interface components {
              * Format: date-time
              */
             member_since: string;
-            /** Games Played */
-            games_played: number;
-            /** High Score */
-            high_score: number | null;
-            /** Average Score */
-            average_score: number | null;
-            /** Bonus Count */
-            bonus_count: number;
-            /** Maxi Yatzy Count */
-            maxi_yatzy_count: number;
+            /** Total Games Played */
+            total_games_played: number;
+            maxi: components["schemas"]["ModeStats"];
+            maxi_sequential: components["schemas"]["ModeStats"];
+            yatzy: components["schemas"]["ModeStats"];
+            yatzy_sequential: components["schemas"]["ModeStats"];
         };
         /** PlayerUpdate */
         PlayerUpdate: {
@@ -667,7 +680,7 @@ export interface components {
          * ScoreCategory
          * @enum {string}
          */
-        ScoreCategory: "ones" | "twos" | "threes" | "fours" | "fives" | "sixes" | "one_pair" | "two_pairs" | "three_pairs" | "three_of_a_kind" | "four_of_a_kind" | "five_of_a_kind" | "small_straight" | "large_straight" | "full_straight" | "full_house" | "villa" | "tower" | "chance" | "maxi_yatzy";
+        ScoreCategory: "ones" | "twos" | "threes" | "fours" | "fives" | "sixes" | "one_pair" | "two_pairs" | "three_pairs" | "three_of_a_kind" | "four_of_a_kind" | "five_of_a_kind" | "small_straight" | "large_straight" | "full_straight" | "full_house" | "villa" | "tower" | "chance" | "maxi_yatzy" | "yatzy";
         /** ScoreEntry */
         ScoreEntry: {
             /** @description Scoring category */

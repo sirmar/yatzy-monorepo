@@ -6,7 +6,7 @@ from app.games.game_status import GameStatus
 
 class GameCreate(BaseModel):
   creator_id: int = Field(gt=0, description='ID of the player creating the game')
-  mode: GameMode = Field(default=GameMode.STANDARD, description='Game mode')
+  mode: GameMode = Field(default=GameMode.MAXI, description='Game mode')
 
 
 class Game(BaseModel):

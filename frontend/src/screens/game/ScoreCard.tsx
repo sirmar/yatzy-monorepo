@@ -6,23 +6,14 @@ type ScoringOption = components['schemas']['ScoringOption'];
 type ScoreCategory = components['schemas']['ScoreCategory'];
 type GameMode = components['schemas']['GameMode'];
 
-const UPPER_CATEGORIES: ScoreCategory[] = ['ones', 'twos', 'threes', 'fours', 'fives', 'sixes'];
-const LOWER_CATEGORIES: ScoreCategory[] = [
-  'one_pair',
-  'two_pairs',
-  'three_pairs',
-  'three_of_a_kind',
-  'four_of_a_kind',
-  'five_of_a_kind',
-  'small_straight',
-  'large_straight',
-  'full_straight',
-  'full_house',
-  'villa',
-  'tower',
-  'chance',
-  'maxi_yatzy',
-];
+const UPPER_CATEGORIES = new Set<ScoreCategory>([
+  'ones',
+  'twos',
+  'threes',
+  'fours',
+  'fives',
+  'sixes',
+]);
 
 const CATEGORY_LABELS: Record<ScoreCategory, string> = {
   ones: 'Ones',
@@ -45,6 +36,7 @@ const CATEGORY_LABELS: Record<ScoreCategory, string> = {
   tower: 'Tower',
   chance: 'Chance',
   maxi_yatzy: 'Maxi Yatzy',
+  yatzy: 'Yatzy',
 };
 
 interface Props {
@@ -71,6 +63,9 @@ export function ScoreCard({
   onScore,
 }: Props) {
   const playerIds = scoreboard.map((s) => s.player_id);
+  const allCategories: ScoreCategory[] = scoreboard[0]?.entries.map((e) => e.category) ?? [];
+  const upperCategories = allCategories.filter((c) => UPPER_CATEGORIES.has(c));
+  const lowerCategories = allCategories.filter((c) => !UPPER_CATEGORIES.has(c));
 
   function getEntry(playerId: number, category: ScoreCategory) {
     return scoreboard
@@ -82,7 +77,7 @@ export function ScoreCard({
     const entry = getEntry(myPlayerId, category);
     const isUnscored = entry?.score === null || entry?.score === undefined;
     if (!isMyTurn || !hasRolled || !isUnscored) return false;
-    if (mode === 'sequential') {
+    if (mode === 'maxi_sequential' || mode === 'yatzy_sequential') {
       return scoringOptions?.some((o) => o.category === category) ?? false;
     }
     return true;
@@ -110,7 +105,7 @@ export function ScoreCard({
           </span>
         );
       }
-      if (mode === 'sequential') return null;
+      if (mode === 'maxi_sequential' || mode === 'yatzy_sequential') return null;
       return (
         <span className="relative inline-block text-gray-500">
           ×
@@ -158,7 +153,7 @@ export function ScoreCard({
   }
 
   function upperSubtotal(playerId: number) {
-    return UPPER_CATEGORIES.reduce((sum, cat) => {
+    return upperCategories.reduce((sum, cat) => {
       const entry = getEntry(playerId, cat);
       return sum + (entry?.score ?? 0);
     }, 0);
@@ -193,7 +188,7 @@ export function ScoreCard({
           </tr>
         </thead>
         <tbody>
-          {UPPER_CATEGORIES.map(renderCategoryRow)}
+          {upperCategories.map(renderCategoryRow)}
           <tr className="border-b border-gray-700 bg-gray-800/50">
             <th scope="row" className="text-left py-1 px-2 text-gray-400 font-normal text-xs">
               Subtotal
@@ -214,7 +209,7 @@ export function ScoreCard({
               </td>
             ))}
           </tr>
-          {LOWER_CATEGORIES.map(renderCategoryRow)}
+          {lowerCategories.map(renderCategoryRow)}
           <tr className="border-t border-gray-600">
             <th scope="row" className="text-left py-1 px-2 text-white font-semibold">
               Total

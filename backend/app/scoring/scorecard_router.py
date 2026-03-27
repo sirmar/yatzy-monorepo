@@ -6,7 +6,7 @@ from app.config import Settings
 from app.database import Database
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
-from app.games.game_mode import GameMode
+from app.games.game_variant import get_variant
 from app.games.guards import (
   assert_game_exists,
   assert_game_active,
@@ -22,7 +22,6 @@ from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.players.player_repository import PlayerRepository
 from app.scoring.score_calculator import calculate
-from app.scoring.score_category import ScoreCategory
 from app.scoring.scorecard import (
   PlayerScorecard,
   Scorecard,
@@ -53,7 +52,9 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> Scorecard:
     """Get the scorecard for a player in a game."""
-    scorecard = await ScorecardRepository(conn).get(game_id, player_id)
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    variant = get_variant(game.mode)
+    scorecard = await ScorecardRepository(conn).get(game_id, player_id, variant)
     if scorecard is None:
       raise HTTPException(status_code=404, detail='Game or player not found')
     return scorecard
@@ -94,28 +95,33 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
     if await scorecard_repo.is_category_scored(game_id, player_id, body.category):
       raise HTTPException(status_code=409, detail='Category already scored')
 
+    variant = get_variant(game.mode)
     scored = await scorecard_repo.get_scored_categories(game_id, player_id)
-    assert_sequential_category(game.mode, scored, body.category)
+    assert_sequential_category(
+      variant.categories, variant.is_sequential, scored, body.category
+    )
 
     dice = await roll_repo.get_dice_values(turn_id)
     score = calculate(body.category, dice)
     await scorecard_repo.save(game_id, player_id, body.category, score)
 
-    new_saved = saved_rolls + rolls_remaining
+    new_saved = (saved_rolls + rolls_remaining) if variant.saves_rolls else 0
     await GamePlayerRepository(conn).update_saved_rolls(game_id, player_id, new_saved)
 
     turn_repo = TurnRepository(conn)
     total_scored = await scorecard_repo.count_all_scored(game_id)
-    if total_scored >= len(game.player_ids) * 20:
+    if total_scored >= len(game.player_ids) * len(variant.categories):
       await game_repo.end(game_id)
     else:
       current_index = game.player_ids.index(player_id)
       next_player_id = game.player_ids[(current_index + 1) % len(game.player_ids)]
       turn_number = await turn_repo.get_turn_number(turn_id)
-      new_turn_id = await turn_repo.create(game_id, next_player_id, turn_number + 1)
+      new_turn_id = await turn_repo.create(
+        game_id, next_player_id, turn_number + 1, variant.dice_count
+      )
       await game_repo.set_current_turn(game_id, new_turn_id)
 
-    scorecard = await scorecard_repo.get(game_id, player_id)
+    scorecard = await scorecard_repo.get(game_id, player_id, variant)
     assert scorecard is not None
     return scorecard
 
@@ -131,8 +137,9 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
   ) -> list[PlayerScorecard]:
     """Get the full scoreboard for all players in a game."""
-    assert_game_exists(await GameRepository(conn).get_by_id(game_id))
-    return await ScorecardRepository(conn).get_all(game_id)
+    game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
+    variant = get_variant(game.mode)
+    return await ScorecardRepository(conn).get_all(game_id, variant)
 
   @router.get(
     '/games/{game_id}/players/{player_id}/scoring-options',
@@ -158,18 +165,19 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
     )
     assert_current_player(player_id, current_player_id)
 
+    variant = get_variant(game.mode)
     dice = await roll_repo.get_dice_values(turn_id)
     scored = await ScorecardRepository(conn).get_scored_categories(game_id, player_id)
-    if game.mode == GameMode.SEQUENTIAL:
-      next_cat = next((c for c in ScoreCategory if c not in scored), None)
+    if variant.is_sequential:
+      next_cat = next((c for c in variant.categories if c not in scored), None)
       allowed = {next_cat} if next_cat else set()
     else:
-      allowed = set(ScoreCategory) - scored
+      allowed = set(variant.categories) - scored
     return [
       ScoringOption(category=cat, score=score)
-      for cat in ScoreCategory
+      for cat in variant.categories
       if cat in allowed
-      if (score := calculate(cat, dice)) > 0 or game.mode == GameMode.SEQUENTIAL
+      if (score := calculate(cat, dice)) > 0 or variant.is_sequential
     ]
 
   @router.get('/high-scores', response_model=list[HighScore])

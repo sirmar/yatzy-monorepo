@@ -311,3 +311,22 @@ class TestMaxiYatzy:
 
   def ThenScoreIs(self, expected):
     assert self.result == expected
+
+
+class TestYatzy:
+  def setup_method(self):
+    pass
+
+  def test_scores_50_when_all_same(self):
+    self.WhenCalculated(ScoreCategory.YATZY, [4, 4, 4, 4, 4])
+    self.ThenScoreIs(50)
+
+  def test_returns_zero_when_not_all_same(self):
+    self.WhenCalculated(ScoreCategory.YATZY, [4, 4, 4, 4, 3])
+    self.ThenScoreIs(0)
+
+  def WhenCalculated(self, category, dice):
+    self.result = calculate(category, dice)
+
+  def ThenScoreIs(self, expected):
+    assert self.result == expected

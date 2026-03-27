@@ -100,7 +100,7 @@ describe('GameScreen', () => {
     givenGame({ id: 42, creator_id: ALICE.id });
     givenGameState({
       status: 'active',
-      mode: 'standard',
+      mode: 'maxi',
       current_player_id: ALICE.id,
       dice: makeDice(),
       rolls_remaining: 3,
@@ -111,14 +111,14 @@ describe('GameScreen', () => {
 
   describe('game state display', () => {
     it('shows Sequential badge in header for sequential games', async () => {
-      givenGame({ id: 42, creator_id: ALICE.id, mode: 'sequential' });
+      givenGame({ id: 42, creator_id: ALICE.id, mode: 'maxi_sequential' });
       whenRendered();
-      await screen.findByText('Sequential');
+      await thenTextIsVisible('Maxi Yatzy Sequential');
     });
 
     it('shows Standard badge for standard games', async () => {
       whenRendered();
-      await screen.findByText('Standard');
+      await thenBadgeVisible('Maxi Yatzy');
     });
 
     it('shows player names in scorecard header', async () => {
@@ -129,20 +129,20 @@ describe('GameScreen', () => {
 
     it('shows whose turn it is', async () => {
       whenRendered();
-      await screen.findByText("Alice's turn");
+      await thenTextIsVisible("Alice's turn");
     });
 
     it('shows filled scores from scoreboard', async () => {
       givenScoreboard([makeScorecard(ALICE.id, { ones: 3 }), makeScorecard(BOB.id)]);
       whenRendered();
-      await screen.findAllByText('3');
+      await thenScoreVisible(3);
     });
   });
 
   describe('rolling dice', () => {
     it('shows roll button when it is my turn', async () => {
       whenRendered();
-      await screen.findByRole('button', { name: /roll/i });
+      await thenRollButtonIsVisible();
     });
 
     it('clicking roll shows updated dice values', async () => {
@@ -150,9 +150,7 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await waitFor(() =>
-        expect(screen.getByRole('button', { name: 'Die 0' })).toHaveAttribute('data-value', '3')
-      );
+      await thenDieHasValue(0, '3');
     });
 
     it('disables roll button after 3 rolls', async () => {
@@ -160,9 +158,9 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await screen.findByText('Rolls remaining: 2');
+      await thenTextIsVisible('Rolls remaining: 2');
       await whenRollClicked();
-      await screen.findByText('Rolls remaining: 1');
+      await thenTextIsVisible('Rolls remaining: 1');
       await whenRollClicked();
       await thenRollButtonIsDisabled();
     });
@@ -176,8 +174,8 @@ describe('GameScreen', () => {
         saved_rolls: 0,
       });
       whenRendered();
-      await screen.findByText("Bob's turn");
-      expect(screen.queryByRole('button', { name: /roll/i })).toBeNull();
+      await thenTextIsVisible("Bob's turn");
+      thenRollButtonIsNotVisible();
     });
   });
 
@@ -187,14 +185,14 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await waitFor(() => expect(screen.getByRole('button', { name: 'Die 0' })).not.toBeDisabled());
+      await thenDieIsEnabled(0);
       await whenDieClicked(0);
       thenDieIsKept(0);
     });
 
     it('cannot toggle dice before rolling', async () => {
       whenRendered();
-      await screen.findByRole('button', { name: /roll/i });
+      await thenRollButtonIsVisible();
       thenDieIsDisabled(0);
     });
   });
@@ -219,7 +217,7 @@ describe('GameScreen', () => {
 
     describe('sequential mode', () => {
       beforeEach(() => {
-        givenGame({ id: 42, creator_id: ALICE.id, mode: 'sequential' });
+        givenGame({ id: 42, creator_id: ALICE.id, mode: 'maxi_sequential' });
       });
 
       it('only shows scoring option for the next required category', async () => {
@@ -253,7 +251,7 @@ describe('GameScreen', () => {
         await whenRollClicked();
         await thenScoringOptionVisible('Ones', 3);
         await whenCategoryClicked('Twos');
-        expect(scoreCalled).toBe(false);
+        thenScoreWasNotCalled(scoreCalled);
       });
     });
 
@@ -271,7 +269,7 @@ describe('GameScreen', () => {
       await whenRollClicked();
       await thenScoringOptionVisible('Ones', 3);
       await whenCategoryClicked('Ones');
-      await waitFor(() => expect(scoreCalled).toBe(true));
+      await thenScoreWasCalled(() => scoreCalled);
     });
   });
 
@@ -302,14 +300,14 @@ describe('GameScreen', () => {
   describe('aborting a game', () => {
     it('shows abort button for the creator', async () => {
       whenRendered();
-      await screen.findByRole('button', { name: /abort game/i });
+      await thenAbortButtonIsVisible();
     });
 
     it('does not show abort button for non-creator', async () => {
       givenGame({ id: 42, creator_id: BOB.id });
       whenRendered();
-      await screen.findByText("Alice's turn");
-      expect(screen.queryByRole('button', { name: /abort game/i })).toBeNull();
+      await thenTextIsVisible("Alice's turn");
+      thenAbortButtonIsNotVisible();
     });
 
     it('clicking abort opens confirmation dialog', async () => {
@@ -330,7 +328,7 @@ describe('GameScreen', () => {
       whenRendered();
       await whenAbortClicked();
       await whenAbortCancelled();
-      expect(mockNavigate).not.toHaveBeenCalled();
+      thenDidNotNavigate();
     });
 
     it('shows error toast when abort fails', async () => {
@@ -340,7 +338,7 @@ describe('GameScreen', () => {
       whenRendered();
       await whenAbortClicked();
       await whenAbortConfirmed();
-      await screen.findByText('Failed to abort game');
+      await thenTextIsVisible('Failed to abort game');
     });
   });
 
@@ -351,7 +349,7 @@ describe('GameScreen', () => {
       );
       whenRendered();
       await whenRollClicked();
-      await screen.findByText('Failed to roll dice');
+      await thenTextIsVisible('Failed to roll dice');
     });
 
     it('shows error toast when score fails', async () => {
@@ -364,7 +362,7 @@ describe('GameScreen', () => {
       await whenRollClicked();
       await thenScoringOptionVisible('Ones', 3);
       await whenCategoryClicked('Ones');
-      await screen.findByText('Failed to score category');
+      await thenTextIsVisible('Failed to score category');
     });
   });
 
@@ -373,7 +371,7 @@ describe('GameScreen', () => {
   }
 
   function givenGame(game: { id: number; creator_id: number; mode?: string }) {
-    server.use(http.get(GAME_URL, () => HttpResponse.json({ mode: 'standard', ...game })));
+    server.use(http.get(GAME_URL, () => HttpResponse.json({ mode: 'maxi', ...game })));
   }
 
   function givenGameState(state: {
@@ -470,5 +468,61 @@ describe('GameScreen', () => {
 
   async function thenNavigatedTo(path: string) {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
+  }
+
+  async function thenTextIsVisible(text: string) {
+    await screen.findByText(text);
+  }
+
+  async function thenBadgeVisible(label: string) {
+    const heading = await screen.findByRole('heading', { level: 1 });
+    expect(heading).toHaveTextContent(label);
+  }
+
+  async function thenScoreVisible(score: number) {
+    await screen.findAllByText(String(score));
+  }
+
+  async function thenRollButtonIsVisible() {
+    await screen.findByRole('button', { name: /roll/i });
+  }
+
+  function thenRollButtonIsNotVisible() {
+    expect(screen.queryByRole('button', { name: /roll/i })).toBeNull();
+  }
+
+  async function thenDieHasValue(index: number, value: string) {
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: `Die ${index}` })).toHaveAttribute(
+        'data-value',
+        value
+      )
+    );
+  }
+
+  async function thenDieIsEnabled(index: number) {
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: `Die ${index}` })).not.toBeDisabled()
+    );
+  }
+
+  async function thenAbortButtonIsVisible() {
+    await screen.findByRole('button', { name: /abort game/i });
+  }
+
+  function thenAbortButtonIsNotVisible() {
+    expect(screen.queryByRole('button', { name: /abort game/i })).toBeNull();
+  }
+
+  function thenDidNotNavigate() {
+    expect(mockNavigate).not.toHaveBeenCalled();
+  }
+
+  function thenScoreWasNotCalled(scoreCalled: boolean) {
+    expect(scoreCalled).toBe(false);
+  }
+
+  async function thenScoreWasCalled(getScoreCalled: () => boolean) {
+    await waitFor(() => expect(getScoreCalled()).toBe(true));
   }
 });

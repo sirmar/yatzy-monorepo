@@ -54,8 +54,8 @@ e2e:
 		-v $(PWD)/auth/migrations:/db/migrations \
 		-e DATABASE_URL=mysql://root:test@auth-db:3306/yatzy_auth \
 		ghcr.io/amacneil/dbmate --no-dump-schema up
-	$(DC_E2E) up -d --wait backend auth frontend --quiet-pull
-	$(DC_E2E) run --rm --no-deps e2e; \
+	$(DC_E2E) up -d --wait --build backend auth frontend
+	$(DC_E2E) run --rm --no-deps --build e2e; \
 	$(DC_E2E) down
 
 prod-up:

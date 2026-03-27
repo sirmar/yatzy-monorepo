@@ -11,6 +11,42 @@ import { formatDate } from '@/lib/format';
 import { INPUT_CLASS } from '@/lib/styles';
 
 type PlayerStats = components['schemas']['PlayerStats'];
+type ModeStats = components['schemas']['ModeStats'];
+
+const MODE_SECTIONS: {
+  key: keyof Pick<PlayerStats, 'maxi' | 'maxi_sequential' | 'yatzy' | 'yatzy_sequential'>;
+  label: string;
+  yatzyLabel: string;
+}[] = [
+  { key: 'maxi', label: 'Maxi Yatzy', yatzyLabel: 'Maxi Yatzy' },
+  { key: 'maxi_sequential', label: 'Maxi Yatzy Sequential', yatzyLabel: 'Maxi Yatzy' },
+  { key: 'yatzy', label: 'Yatzy', yatzyLabel: 'Yatzy' },
+  { key: 'yatzy_sequential', label: 'Yatzy Sequential', yatzyLabel: 'Yatzy' },
+];
+
+function ModeStatsTable({ modeStats, yatzyLabel }: { modeStats: ModeStats; yatzyLabel: string }) {
+  return (
+    <table className="w-full text-sm text-white">
+      <tbody>
+        {[
+          ['Games played', modeStats.games_played],
+          ['High score', modeStats.high_score ?? '—'],
+          [
+            'Average score',
+            modeStats.average_score != null ? Math.round(modeStats.average_score) : '—',
+          ],
+          ['Bonus earned', modeStats.bonus_count],
+          [yatzyLabel, modeStats.yatzy_hit_count],
+        ].map(([label, value]) => (
+          <tr key={label as string} className="border-b border-gray-800/50">
+            <td className="py-1.5 text-gray-400">{label}</td>
+            <td className="py-1.5 text-right">{value}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
 
 export function ProfileScreen() {
   const { player, setPlayer } = usePlayer();
@@ -19,13 +55,19 @@ export function ProfileScreen() {
   const [name, setName] = useState(player?.name ?? '');
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<PlayerStats | null>(null);
+  const [selectedMode, setSelectedMode] = useState<(typeof MODE_SECTIONS)[number]['key'] | null>(
+    null
+  );
 
   useEffect(() => {
     if (!player) return;
     apiClient
       .GET('/players/{player_id}/stats', { params: { path: { player_id: player.id } } })
       .then(({ data }) => {
-        if (data) setStats(data);
+        if (data) {
+          setStats(data);
+          setSelectedMode(MODE_SECTIONS[0].key);
+        }
       });
   }, [player]);
 
@@ -73,30 +115,45 @@ export function ProfileScreen() {
             </Button>
           </form>
           {stats && (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
                 Statistics
               </h2>
-              <table className="w-full text-sm text-white">
-                <tbody>
-                  {[
-                    ['Member since', formatDate(stats.member_since)],
-                    ['Games played', stats.games_played],
-                    ['High score', stats.high_score ?? '—'],
-                    [
-                      'Average score',
-                      stats.average_score != null ? Math.round(stats.average_score) : '—',
-                    ],
-                    ['Bonuses', stats.bonus_count],
-                    ['Maxi Yatzy', stats.maxi_yatzy_count],
-                  ].map(([label, value]) => (
-                    <tr key={label as string} className="border-b border-gray-800/50">
-                      <td className="py-2 text-gray-400">{label}</td>
-                      <td className="py-2 text-right">{value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="flex flex-col gap-1">
+                <span className="text-xs text-gray-500">
+                  Member since {formatDate(stats.member_since)}
+                </span>
+                <span className="text-sm text-white">
+                  Total games played:{' '}
+                  <span className="font-semibold">{stats.total_games_played}</span>
+                </span>
+              </div>
+              <div className="flex gap-2">
+                {MODE_SECTIONS.map(({ key, label }) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => setSelectedMode(key)}
+                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                      selectedMode === key
+                        ? 'bg-yellow-400 text-gray-900'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {selectedMode &&
+                (() => {
+                  const section = MODE_SECTIONS.find(({ key }) => key === selectedMode);
+                  return section ? (
+                    <ModeStatsTable
+                      modeStats={stats[selectedMode]}
+                      yatzyLabel={section.yatzyLabel}
+                    />
+                  ) : null;
+                })()}
             </div>
           )}
         </div>

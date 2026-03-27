@@ -1,9 +1,6 @@
 .PHONY: dev shell db migrate format lint types security \
 	unit unit-cov e2e e2e-cov test coverage check build rebuild
 
-SHARD_ID  ?= 0
-NUM_SHARDS ?= 1
-
 IMAGE := backend-dev
 
 DC_DEV  := docker compose --progress quiet -f docker-compose.yml -f docker-compose.dev.yml
@@ -64,15 +61,13 @@ unit-cov:
 e2e:
 	$(DC_TEST) up -d --wait yatzy-db-test --quiet-pull
 	$(DBMATE_TEST) up
-	$(DC_TEST) run --rm --no-deps backend-test uv run --quiet pytest -q tests/e2e/ \
-		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); \
+	$(DC_TEST) run --rm --no-deps backend-test uv run --quiet pytest -q tests/e2e/; \
 	$(DC_TEST) stop yatzy-db-test
 
 e2e-cov:
 	$(DC_TEST) up -d --wait yatzy-db-test --quiet-pull
 	$(DBMATE_TEST) up
-	$(DC_TEST) run --rm --no-deps backend-test uv run --quiet pytest -q tests/e2e/ --cov=app \
-		--shard-id=$(SHARD_ID) --num-shards=$(NUM_SHARDS); \
+	$(DC_TEST) run --rm --no-deps backend-test uv run --quiet pytest -q tests/e2e/ --cov=app; \
 	$(DC_TEST) stop yatzy-db-test
 
 test: unit e2e

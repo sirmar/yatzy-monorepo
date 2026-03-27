@@ -22,3 +22,4 @@ class ScoreCategory(StrEnum):
   TOWER = 'tower'
   CHANCE = 'chance'
   MAXI_YATZY = 'maxi_yatzy'
+  YATZY = 'yatzy'

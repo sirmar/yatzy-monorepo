@@ -16,15 +16,17 @@ class TurnRepository:
         raise RuntimeError(f'Turn {turn_id} not found')
       return row[0]
 
-  async def create(self, game_id: int, player_id: int, turn_number: int) -> int:
+  async def create(
+    self, game_id: int, player_id: int, turn_number: int, dice_count: int = 6
+  ) -> int:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'INSERT INTO turns (game_id, player_id, turn_number) VALUES (%s, %s, %s)',
         (game_id, player_id, turn_number),
       )
       turn_id = cursor.lastrowid
-      placeholders = ', '.join(['(%s, %s)'] * 6)
-      values = [v for i in range(6) for v in (turn_id, i)]
+      placeholders = ', '.join(['(%s, %s)'] * dice_count)
+      values = [v for i in range(dice_count) for v in (turn_id, i)]
       await cursor.execute(
         'INSERT INTO turn_dice (turn_id, die_index) VALUES ' + placeholders,  # nosec B608
         values,

@@ -6,7 +6,7 @@ from tests.e2e.scorecards import Scorecard
 from tests.e2e.scoring_options import ScoringOptions
 
 
-async def _finish_one_player_game(client: AsyncClient, mode: str = 'standard') -> tuple[Player, Game]:
+async def _finish_one_player_game(client: AsyncClient, mode: str = 'maxi') -> tuple[Player, Game]:
   player = await Player(client).create('Alice', token=make_token())
   game = await Game(client).create(player.id, mode=mode, token=player.token)
   await game.start(game.id, player.id)
@@ -67,32 +67,32 @@ async def test_results_sorted_by_total_score_descending(client: AsyncClient):
 
 
 async def test_high_score_includes_mode(client: AsyncClient):
-  await _finish_one_player_game(client, mode='standard')
+  await _finish_one_player_game(client, mode='maxi')
 
   response = await client.get('/high-scores')
   assert response.status_code == 200
   scores = response.json()
   assert len(scores) == 1
-  assert scores[0]['mode'] == 'standard'
+  assert scores[0]['mode'] == 'maxi'
 
 
 async def test_sequential_game_high_score_has_sequential_mode(client: AsyncClient):
-  await _finish_one_player_game(client, mode='sequential')
+  await _finish_one_player_game(client, mode='maxi_sequential')
 
   response = await client.get('/high-scores')
   assert response.status_code == 200
   scores = response.json()
   assert len(scores) == 1
-  assert scores[0]['mode'] == 'sequential'
+  assert scores[0]['mode'] == 'maxi_sequential'
 
 
 async def test_high_scores_from_different_modes_returned_together(client: AsyncClient):
-  await _finish_one_player_game(client, mode='standard')
-  await _finish_one_player_game(client, mode='sequential')
+  await _finish_one_player_game(client, mode='maxi')
+  await _finish_one_player_game(client, mode='maxi_sequential')
 
   response = await client.get('/high-scores')
   assert response.status_code == 200
   scores = response.json()
   assert len(scores) == 2
   modes = {s['mode'] for s in scores}
-  assert modes == {'standard', 'sequential'}
+  assert modes == {'maxi', 'maxi_sequential'}

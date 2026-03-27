@@ -28,7 +28,7 @@ function makeHighScore(
     game_id: 10,
     finished_at: '2024-06-01T12:00:00Z',
     total_score: 300,
-    mode: 'standard',
+    mode: 'maxi',
     ...overrides,
   };
 }
@@ -47,29 +47,57 @@ describe('HighScoresScreen', () => {
   });
 
   describe('mode selector', () => {
-    it('shows Standard and Sequential buttons', async () => {
+    it('shows all mode buttons', async () => {
       givenHighScores([]);
       whenRendered();
-      await screen.findByRole('button', { name: 'Standard' });
-      await screen.findByRole('button', { name: 'Sequential' });
+      await thenModeButtonsVisible([
+        'Maxi Yatzy',
+        'Maxi Yatzy Sequential',
+        'Yatzy',
+        'Yatzy Sequential',
+      ]);
     });
 
-    it('defaults to Standard', async () => {
-      givenHighScores([makeHighScore({ player_name: 'Alice', mode: 'standard' })]);
+    it('defaults to Maxi Standard', async () => {
+      givenHighScores([makeHighScore({ player_name: 'Alice', mode: 'maxi' })]);
       whenRendered();
-      await screen.findByText('Alice');
+      await thenPlayerVisible('Alice');
     });
 
-    it('switches to Sequential on click', async () => {
+    it('switches to Maxi Sequential on click', async () => {
       givenHighScores([
-        makeHighScore({ player_name: 'Alice', mode: 'standard' }),
-        makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, mode: 'sequential' }),
+        makeHighScore({ player_name: 'Alice', mode: 'maxi' }),
+        makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, mode: 'maxi_sequential' }),
       ]);
       whenRendered();
-      await screen.findByText('Alice');
-      await userEvent.click(screen.getByRole('button', { name: 'Sequential' }));
-      expect(screen.queryByText('Alice')).not.toBeInTheDocument();
-      expect(screen.getByText('Bob')).toBeInTheDocument();
+      await thenPlayerVisible('Alice');
+      await whenModeSelected('Maxi Yatzy Sequential');
+      await thenPlayerNotVisible('Alice');
+      await thenPlayerVisible('Bob');
+    });
+
+    it('switches to Yatzy Standard on click', async () => {
+      givenHighScores([
+        makeHighScore({ player_name: 'Alice', mode: 'maxi' }),
+        makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, mode: 'yatzy' }),
+      ]);
+      whenRendered();
+      await thenPlayerVisible('Alice');
+      await whenModeSelected('Yatzy');
+      await thenPlayerNotVisible('Alice');
+      await thenPlayerVisible('Bob');
+    });
+
+    it('switches to Yatzy Sequential on click', async () => {
+      givenHighScores([
+        makeHighScore({ player_name: 'Alice', mode: 'maxi' }),
+        makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, mode: 'yatzy_sequential' }),
+      ]);
+      whenRendered();
+      await thenPlayerVisible('Alice');
+      await whenModeSelected('Yatzy Sequential');
+      await thenPlayerNotVisible('Alice');
+      await thenPlayerVisible('Bob');
     });
   });
 
@@ -83,9 +111,9 @@ describe('HighScoresScreen', () => {
     it('shows player name, score, game id and date', async () => {
       givenHighScores([makeHighScore({ player_name: 'Alice', total_score: 300, game_id: 42 })]);
       whenRendered();
-      await screen.findByText('Alice');
-      expect(screen.getByText('300')).toBeInTheDocument();
-      expect(screen.getByText('#42')).toBeInTheDocument();
+      await thenPlayerVisible('Alice');
+      await thenTextEventuallyVisible('300');
+      await thenTextEventuallyVisible('#42');
     });
 
     it('numbers rows by rank', async () => {
@@ -94,10 +122,9 @@ describe('HighScoresScreen', () => {
         makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, total_score: 250 }),
       ]);
       whenRendered();
-      await screen.findByText('Alice');
-      const rows = document.querySelectorAll('tbody tr');
-      expect(rows[0]).toHaveTextContent('🥇');
-      expect(rows[1]).toHaveTextContent('🥈');
+      await thenPlayerVisible('Alice');
+      await thenRowHasTrophy(0, '🥇');
+      await thenRowHasTrophy(1, '🥈');
     });
 
     it('shows "No high scores yet" when selected mode has no entries', async () => {
@@ -139,5 +166,28 @@ describe('HighScoresScreen', () => {
 
   async function thenTextEventuallyVisible(text: string) {
     await screen.findByText(new RegExp(text));
+  }
+
+  async function thenModeButtonsVisible(labels: string[]) {
+    for (const label of labels) {
+      expect(await screen.findByRole('button', { name: label })).toBeInTheDocument();
+    }
+  }
+
+  async function whenModeSelected(label: string) {
+    await userEvent.click(screen.getByRole('button', { name: label }));
+  }
+
+  async function thenPlayerVisible(name: string) {
+    await screen.findByText(name);
+  }
+
+  function thenPlayerNotVisible(name: string) {
+    expect(screen.queryByText(name)).not.toBeInTheDocument();
+  }
+
+  async function thenRowHasTrophy(index: number, trophy: string) {
+    const rows = document.querySelectorAll('tbody tr');
+    expect(rows[index]).toHaveTextContent(trophy);
   }
 });

@@ -52,8 +52,7 @@ describe('EndScreen', () => {
         ],
       });
       whenRendered();
-      const winnerRow = await screen.findByTestId('winner-row-1');
-      expect(winnerRow).toHaveClass('text-yellow-400');
+      await thenWinnerRowIsHighlighted(1);
     });
 
     it('shows the winner announcement text', async () => {
@@ -89,14 +88,14 @@ describe('EndScreen', () => {
       givenFinishedGame({ winnerIds: [1], scores: [{ player_id: 1, total: 287 }] });
       whenRendered();
       await whenBackToLobbyClicked();
-      expect(mockNavigate).toHaveBeenCalledWith('/lobby');
+      await thenNavigatedTo('/lobby');
     });
 
     it('redirects to /games/42 if game is not finished', async () => {
       givenPlayers([ALICE]);
       givenActiveGame();
       whenRendered();
-      await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/games/42'));
+      await thenNavigatedTo('/games/42');
     });
   });
 
@@ -158,5 +157,14 @@ describe('EndScreen', () => {
 
   async function thenTextIsVisible(text: string) {
     await screen.findAllByText(new RegExp(text));
+  }
+
+  async function thenWinnerRowIsHighlighted(playerId: number) {
+    const row = await screen.findByTestId(`winner-row-${playerId}`);
+    expect(row).toHaveClass('text-yellow-400');
+  }
+
+  async function thenNavigatedTo(path: string) {
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
   }
 });

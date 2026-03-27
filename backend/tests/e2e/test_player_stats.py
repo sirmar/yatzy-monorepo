@@ -19,11 +19,12 @@ async def test_stats_no_finished_games(client: AsyncClient):
   assert data['player_id'] == player.id
   assert data['player_name'] == player.json['name']
   assert data['member_since'] is not None
-  assert data['games_played'] == 0
-  assert data['high_score'] is None
-  assert data['average_score'] is None
-  assert data['bonus_count'] == 0
-  assert data['maxi_yatzy_count'] == 0
+  assert data['total_games_played'] == 0
+  assert data['maxi']['games_played'] == 0
+  assert data['maxi']['high_score'] is None
+  assert data['maxi']['average_score'] is None
+  assert data['maxi']['bonus_count'] == 0
+  assert data['maxi']['yatzy_hit_count'] == 0
 
 
 async def test_stats_with_one_finished_game(client: AsyncClient):
@@ -32,10 +33,11 @@ async def test_stats_with_one_finished_game(client: AsyncClient):
   response = await client.get(f'/players/{player.id}/stats')
   assert response.status_code == 200
   data = response.json()
-  assert data['games_played'] == 1
-  assert data['high_score'] is not None
-  assert data['high_score'] > 0
-  assert data['average_score'] == data['high_score']
+  assert data['total_games_played'] == 1
+  assert data['maxi']['games_played'] == 1
+  assert data['maxi']['high_score'] is not None
+  assert data['maxi']['high_score'] > 0
+  assert data['maxi']['average_score'] == data['maxi']['high_score']
 
 
 async def test_stats_active_game_not_counted(client: AsyncClient):
@@ -43,7 +45,7 @@ async def test_stats_active_game_not_counted(client: AsyncClient):
 
   response = await client.get(f'/players/{player.id}/stats')
   assert response.status_code == 200
-  assert response.json()['games_played'] == 0
+  assert response.json()['total_games_played'] == 0
 
 
 async def test_stats_multiple_finished_games(client: AsyncClient):
@@ -58,5 +60,29 @@ async def test_stats_multiple_finished_games(client: AsyncClient):
   response = await client.get(f'/players/{player.id}/stats')
   assert response.status_code == 200
   data = response.json()
-  assert data['games_played'] == 2
-  assert data['high_score'] >= data['average_score']
+  assert data['total_games_played'] == 2
+  assert data['maxi']['games_played'] == 2
+  assert data['maxi']['high_score'] >= data['maxi']['average_score']
+
+
+async def test_stats_split_by_mode(client: AsyncClient):
+  player = await Player(client).create('ModePlayer', token=make_token())
+
+  standard_game = await Game(client).create(player.id, token=player.token)
+  await standard_game.start(standard_game.id, player.id)
+  for _ in range(20):
+    await play_turn(client, standard_game, standard_game.id, player.id, player.token)
+
+  yatzy_game = await Game(client).create(player.id, mode='yatzy', token=player.token)
+  await yatzy_game.start(yatzy_game.id, player.id)
+  for _ in range(15):
+    await play_turn(client, yatzy_game, yatzy_game.id, player.id, player.token)
+
+  response = await client.get(f'/players/{player.id}/stats')
+  assert response.status_code == 200
+  data = response.json()
+  assert data['total_games_played'] == 2
+  assert data['maxi']['games_played'] == 1
+  assert data['yatzy']['games_played'] == 1
+  assert data['maxi_sequential']['games_played'] == 0
+  assert data['yatzy_sequential']['games_played'] == 0

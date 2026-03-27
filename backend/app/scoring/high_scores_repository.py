@@ -1,5 +1,7 @@
 from collections import defaultdict
 import aiomysql
+from app.games.game_mode import GameMode
+from app.games.game_variant import get_variant
 from app.scoring.high_score import HighScore
 from app.scoring.scoring_rules import calculate_bonus
 
@@ -36,7 +38,8 @@ class HighScoresRepository:
     for (player_id, game_id), data in entries.items():
       scores = data['scores']
       base = sum(scores.values())
-      bonus = calculate_bonus(scores)
+      variant = get_variant(GameMode(data['mode']))
+      bonus = calculate_bonus(scores, variant.bonus_threshold, variant.bonus_score)
       result.append(
         HighScore(
           player_id=player_id,

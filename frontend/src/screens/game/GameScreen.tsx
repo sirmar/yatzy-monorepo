@@ -43,6 +43,7 @@ export function GameScreen() {
   const isMyTurn = gameState?.current_player_id === player?.id;
   const rollsRemaining = gameState?.rolls_remaining ?? 0;
   const savedRolls = gameState?.saved_rolls ?? 0;
+  const showSavedRolls = gameMode === 'maxi' || gameMode === 'maxi_sequential';
   const canRoll = isMyTurn && (rollsRemaining > 0 || savedRolls > 0);
   const hasRolled = dice.some((d) => d.value !== null);
 
@@ -246,6 +247,7 @@ export function GameScreen() {
           hasRolled={hasRolled}
           rollsRemaining={rollsRemaining}
           savedRolls={savedRolls}
+          showSavedRolls={showSavedRolls}
           isMyTurn={isMyTurn}
           onRoll={handleRoll}
           onToggle={handleToggleDie}

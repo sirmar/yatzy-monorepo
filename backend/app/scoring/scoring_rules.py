@@ -12,6 +12,10 @@ BONUS_THRESHOLD = 84
 BONUS_SCORE = 100
 
 
-def calculate_bonus(scores: dict[str, int]) -> int:
+def calculate_bonus(
+  scores: dict[str, int],
+  bonus_threshold: int = BONUS_THRESHOLD,
+  bonus_score: int = BONUS_SCORE,
+) -> int:
   upper_total = sum(scores.get(cat, 0) for cat in UPPER_CATEGORIES)
-  return BONUS_SCORE if upper_total >= BONUS_THRESHOLD else 0
+  return bonus_score if upper_total >= bonus_threshold else 0

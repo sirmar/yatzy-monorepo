@@ -4,8 +4,10 @@ from app.scoring.games_played import GamesPlayed, GamesPlayedSortBy
 
 ORDER_BY_CLAUSE = {
   GamesPlayedSortBy.TOTAL: 'ORDER BY total DESC',
-  GamesPlayedSortBy.STANDARD: 'ORDER BY standard DESC',
-  GamesPlayedSortBy.SEQUENTIAL: 'ORDER BY sequential DESC',
+  GamesPlayedSortBy.MAXI: 'ORDER BY maxi DESC',
+  GamesPlayedSortBy.MAXI_SEQUENTIAL: 'ORDER BY maxi_sequential DESC',
+  GamesPlayedSortBy.YATZY: 'ORDER BY yatzy DESC',
+  GamesPlayedSortBy.YATZY_SEQUENTIAL: 'ORDER BY yatzy_sequential DESC',
 }
 
 
@@ -18,8 +20,10 @@ class GamesPlayedRepository:
       await cursor.execute(
         'SELECT p.id, p.name, '
         '  COUNT(*) AS total, '
-        "  COUNT(CASE WHEN g.mode = 'standard' THEN 1 END) AS standard, "
-        "  COUNT(CASE WHEN g.mode = 'sequential' THEN 1 END) AS sequential "
+        "  COUNT(CASE WHEN g.mode = 'maxi' THEN 1 END) AS maxi, "
+        "  COUNT(CASE WHEN g.mode = 'maxi_sequential' THEN 1 END) AS maxi_sequential, "
+        "  COUNT(CASE WHEN g.mode = 'yatzy' THEN 1 END) AS yatzy, "
+        "  COUNT(CASE WHEN g.mode = 'yatzy_sequential' THEN 1 END) AS yatzy_sequential "
         'FROM games g '
         'JOIN game_players gp ON gp.game_id = g.id AND gp.deleted_at IS NULL '
         'JOIN players p ON p.id = gp.player_id AND p.deleted_at IS NULL '
@@ -35,8 +39,10 @@ class GamesPlayedRepository:
         player_id=player_id,
         player_name=player_name,
         total=total,
-        standard=standard,
-        sequential=sequential,
+        maxi=maxi,
+        maxi_sequential=maxi_sequential,
+        yatzy=yatzy,
+        yatzy_sequential=yatzy_sequential,
       )
-      for player_id, player_name, total, standard, sequential in rows
+      for player_id, player_name, total, maxi, maxi_sequential, yatzy, yatzy_sequential in rows
     ]

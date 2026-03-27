@@ -11,6 +11,7 @@ interface Props {
   hasRolled: boolean;
   rollsRemaining: number;
   savedRolls: number;
+  showSavedRolls: boolean;
   isMyTurn: boolean;
   onRoll: () => void;
   onToggle: (index: number) => void;
@@ -23,6 +24,7 @@ export function DiceRoller({
   hasRolled,
   rollsRemaining,
   savedRolls,
+  showSavedRolls,
   isMyTurn,
   onRoll,
   onToggle,
@@ -47,7 +49,7 @@ export function DiceRoller({
       </Button>
       <div className="ml-auto text-sm text-gray-300 text-right flex flex-col gap-1">
         <span>Rolls remaining: {rollsRemaining}</span>
-        <span>Saved rolls: {savedRolls}</span>
+        {showSavedRolls && <span>Saved rolls: {savedRolls}</span>}
       </div>
     </div>
   );

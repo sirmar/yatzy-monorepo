@@ -18,7 +18,7 @@ type GameMode = components['schemas']['GameMode'];
 export function LobbyScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [creating, setCreating] = useState(false);
-  const [mode, setMode] = useState<GameMode>('standard');
+  const [mode, setMode] = useState<GameMode>('maxi');
   const playerNames = usePlayerNames();
   const { player } = usePlayer();
   const navigate = useNavigate();
@@ -118,8 +118,10 @@ export function LobbyScreen() {
                 onChange={(e) => setMode(e.target.value as GameMode)}
                 className="bg-gray-800 text-white text-sm rounded px-2 py-1.5 border border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-500"
               >
-                <option value="standard">Standard</option>
-                <option value="sequential">Sequential</option>
+                <option value="maxi">Maxi Yatzy</option>
+                <option value="maxi_sequential">Maxi Yatzy Sequential</option>
+                <option value="yatzy">Yatzy</option>
+                <option value="yatzy_sequential">Yatzy Sequential</option>
               </select>
               <CreateGameButton onCreate={handleCreate} loading={creating} />
             </div>

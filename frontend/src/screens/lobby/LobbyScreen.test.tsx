@@ -98,36 +98,18 @@ describe('LobbyScreen', () => {
     });
 
     it('creates a sequential game when sequential mode is selected', async () => {
-      let capturedBody: unknown;
-      server.use(
-        http.post(GAMES_URL, async ({ request }) => {
-          capturedBody = await request.json();
-          return HttpResponse.json(
-            { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' },
-            { status: 201 }
-          );
-        })
-      );
+      const { getMode } = givenCreateGameCapturingMode();
       whenRendered();
-      await whenModeSelected('sequential');
+      await whenModeSelected('maxi_sequential');
       await whenNewGameClicked();
-      expect(capturedBody).toMatchObject({ mode: 'sequential' });
+      thenCreatedWithMode(getMode(), 'maxi_sequential');
     });
 
     it('creates a standard game by default', async () => {
-      let capturedBody: unknown;
-      server.use(
-        http.post(GAMES_URL, async ({ request }) => {
-          capturedBody = await request.json();
-          return HttpResponse.json(
-            { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' },
-            { status: 201 }
-          );
-        })
-      );
+      const { getMode } = givenCreateGameCapturingMode();
       whenRendered();
       await whenNewGameClicked();
-      expect(capturedBody).toMatchObject({ mode: 'standard' });
+      thenCreatedWithMode(getMode(), 'maxi');
     });
 
     it('shows own game with Start and Delete buttons', async () => {
@@ -143,7 +125,7 @@ describe('LobbyScreen', () => {
       await thenYoursBadgeIsVisible();
     });
 
-    it('shows Sequential badge on sequential games', async () => {
+    it('shows Maxi Sequential badge on sequential games', async () => {
       givenGames([
         {
           id: 42,
@@ -151,14 +133,14 @@ describe('LobbyScreen', () => {
           creator_id: 1,
           player_ids: [1],
           created_at: '',
-          mode: 'sequential',
+          mode: 'maxi_sequential',
         },
       ]);
       whenRendered();
-      await screen.findByText('Sequential');
+      await thenBadgeVisible('Maxi Yatzy Sequential');
     });
 
-    it('shows Standard badge on standard games', async () => {
+    it('shows Maxi Standard badge on standard games', async () => {
       givenGames([
         {
           id: 42,
@@ -166,11 +148,50 @@ describe('LobbyScreen', () => {
           creator_id: 1,
           player_ids: [1],
           created_at: '',
-          mode: 'standard',
+          mode: 'maxi',
         },
       ]);
       whenRendered();
-      await screen.findByText('Standard');
+      await thenBadgeVisible('Maxi Yatzy');
+    });
+
+    it('shows Yatzy Standard badge on yatzy games', async () => {
+      givenGames([
+        { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '', mode: 'yatzy' },
+      ]);
+      whenRendered();
+      await thenBadgeVisible('Yatzy');
+    });
+
+    it('shows Yatzy Sequential badge on yatzy_sequential games', async () => {
+      givenGames([
+        {
+          id: 42,
+          status: 'lobby',
+          creator_id: 1,
+          player_ids: [1],
+          created_at: '',
+          mode: 'yatzy_sequential',
+        },
+      ]);
+      whenRendered();
+      await thenBadgeVisible('Yatzy Sequential');
+    });
+
+    it('creates a yatzy game when yatzy mode is selected', async () => {
+      const { getMode } = givenCreateGameCapturingMode();
+      whenRendered();
+      await whenModeSelected('yatzy');
+      await whenNewGameClicked();
+      thenCreatedWithMode(getMode(), 'yatzy');
+    });
+
+    it('creates a yatzy sequential game when yatzy_sequential mode is selected', async () => {
+      const { getMode } = givenCreateGameCapturingMode();
+      whenRendered();
+      await whenModeSelected('yatzy_sequential');
+      await whenNewGameClicked();
+      thenCreatedWithMode(getMode(), 'yatzy_sequential');
     });
   });
 
@@ -478,5 +499,28 @@ describe('LobbyScreen', () => {
 
   async function thenErrorToastIsVisible(title: string) {
     await screen.findByText(title);
+  }
+
+  function givenCreateGameCapturingMode() {
+    let capturedMode: unknown;
+    server.use(
+      http.post(GAMES_URL, async ({ request }) => {
+        const body = (await request.json()) as Record<string, unknown>;
+        capturedMode = body.mode;
+        return HttpResponse.json(
+          { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' },
+          { status: 201 }
+        );
+      })
+    );
+    return { getMode: () => capturedMode };
+  }
+
+  function thenCreatedWithMode(mode: unknown, expected: string) {
+    expect(mode).toBe(expected);
+  }
+
+  async function thenBadgeVisible(label: string) {
+    await screen.findByText(label);
   }
 });

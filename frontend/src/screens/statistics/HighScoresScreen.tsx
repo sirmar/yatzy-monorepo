@@ -8,8 +8,10 @@ type HighScore = components['schemas']['HighScore'];
 type GameMode = components['schemas']['GameMode'];
 
 const MODES: { label: string; value: GameMode }[] = [
-  { label: 'Standard', value: 'standard' },
-  { label: 'Sequential', value: 'sequential' },
+  { label: 'Maxi Yatzy', value: 'maxi' },
+  { label: 'Maxi Yatzy Sequential', value: 'maxi_sequential' },
+  { label: 'Yatzy', value: 'yatzy' },
+  { label: 'Yatzy Sequential', value: 'yatzy_sequential' },
 ];
 
 const RANK_TROPHY: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
@@ -54,7 +56,7 @@ export function HighScoresScreen() {
   const [scores, setScores] = useState<HighScore[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMode, setSelectedMode] = useState<GameMode>('standard');
+  const [selectedMode, setSelectedMode] = useState<GameMode>('maxi');
 
   useEffect(() => {
     apiClient.GET('/high-scores').then(({ data, error }) => {

@@ -1,4 +1,5 @@
 import aiomysql
+from app.games.game_variant import GameVariant
 from app.scoring.score_category import ScoreCategory
 from app.scoring.scorecard import PlayerScorecard, ScoreEntry, Scorecard
 from app.scoring.scoring_rules import calculate_bonus
@@ -8,10 +9,12 @@ class ScorecardRepository:
   def __init__(self, conn: aiomysql.Connection) -> None:
     self._conn = conn
 
-  def _build_scorecard(self, rows: list[tuple]) -> Scorecard:
+  def _build_scorecard(self, rows: list[tuple], variant: GameVariant) -> Scorecard:
     scores = {row[0]: row[1] for row in rows}
-    entries = [ScoreEntry(category=cat, score=scores.get(cat)) for cat in ScoreCategory]
-    bonus_value = calculate_bonus(scores)
+    entries = [
+      ScoreEntry(category=cat, score=scores.get(cat)) for cat in variant.categories
+    ]
+    bonus_value = calculate_bonus(scores, variant.bonus_threshold, variant.bonus_score)
     bonus = bonus_value if bonus_value > 0 else None
     total = sum(e.score for e in entries if e.score is not None) + bonus_value
     return Scorecard(entries=entries, bonus=bonus, total=total)
@@ -59,7 +62,7 @@ class ScorecardRepository:
       rows = await cursor.fetchall()
       return {ScoreCategory(row[0]) for row in rows}
 
-  async def get_all(self, game_id: int) -> list[PlayerScorecard]:
+  async def get_all(self, game_id: int, variant: GameVariant) -> list[PlayerScorecard]:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT player_id FROM game_players WHERE game_id = %s AND deleted_at IS NULL',
@@ -81,7 +84,7 @@ class ScorecardRepository:
           entries_by_player[pid].append((cat, score))
       result = []
       for pid in player_ids:
-        sc = self._build_scorecard(entries_by_player[pid])
+        sc = self._build_scorecard(entries_by_player[pid], variant)
         result.append(
           PlayerScorecard(
             player_id=pid, entries=sc.entries, bonus=sc.bonus, total=sc.total
@@ -89,7 +92,9 @@ class ScorecardRepository:
         )
       return result
 
-  async def get(self, game_id: int, player_id: int) -> Scorecard | None:
+  async def get(
+    self, game_id: int, player_id: int, variant: GameVariant
+  ) -> Scorecard | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
         'SELECT id FROM games WHERE id = %s AND deleted_at IS NULL',
@@ -110,4 +115,4 @@ class ScorecardRepository:
         (game_id, player_id),
       )
       rows = await cursor.fetchall()
-      return self._build_scorecard(rows)
+      return self._build_scorecard(rows, variant)

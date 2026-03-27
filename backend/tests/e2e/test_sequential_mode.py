@@ -8,42 +8,42 @@ from tests.e2e.scoring_options import ScoringOptions
 
 async def test_start_sequential_game_returns_200(client: AsyncClient):
   player = await Player(client).create('Alice', token=make_token())
-  game = await Game(client).create(player.id, mode='sequential', token=player.token)
+  game = await Game(client).create(player.id, mode='maxi_sequential', token=player.token)
   await game.start(game.id, player.id)
   game.assert_status(200)
 
 
 async def test_start_sequential_game_returns_sequential_mode(client: AsyncClient):
   player = await Player(client).create('Alice', token=make_token())
-  game = await Game(client).create(player.id, mode='sequential', token=player.token)
+  game = await Game(client).create(player.id, mode='maxi_sequential', token=player.token)
   await game.start(game.id, player.id)
-  game.assert_status(200).assert_mode('sequential')
+  game.assert_status(200).assert_mode('maxi_sequential')
 
 
 async def test_create_sequential_game_returns_mode(client: AsyncClient):
   player = await Player(client).create('Alice', token=make_token())
-  game = await Game(client).create(player.id, mode='sequential', token=player.token)
-  game.assert_status(201).assert_mode('sequential')
+  game = await Game(client).create(player.id, mode='maxi_sequential', token=player.token)
+  game.assert_status(201).assert_mode('maxi_sequential')
 
 
 async def test_create_standard_game_returns_mode(client: AsyncClient):
   player = await Player(client).create('Alice', token=make_token())
   game = await Game(client).create(player.id, token=player.token)
-  game.assert_status(201).assert_mode('standard')
+  game.assert_status(201).assert_mode('maxi')
 
 
 async def test_get_sequential_game_includes_mode(client: AsyncClient):
   player = await Player(client).create('Alice', token=make_token())
-  created = await Game(client).create(player.id, mode='sequential', token=player.token)
+  created = await Game(client).create(player.id, mode='maxi_sequential', token=player.token)
   fetched = await Game(client).get(created.id)
-  fetched.assert_status(200).assert_mode('sequential')
+  fetched.assert_status(200).assert_mode('maxi_sequential')
 
 
 async def test_game_state_includes_mode(client: AsyncClient):
   player, game = await active_sequential_game(client)
   state = await game.state(game.id)
   state.assert_status(200)
-  assert state.json['mode'] == 'sequential'
+  assert state.json['mode'] == 'maxi_sequential'
 
 
 async def test_sequential_allows_first_category(client: AsyncClient):

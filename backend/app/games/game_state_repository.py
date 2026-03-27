@@ -1,7 +1,9 @@
 import aiomysql
 from app.games.dice import Die
+from app.games.game_mode import GameMode
 from app.games.game_state import GameState, PlayerScore
 from app.games.game_status import GameStatus
+from app.games.game_variant import get_variant
 from app.scoring.scoring_rules import calculate_bonus
 
 
@@ -36,10 +38,15 @@ class GameStateRepository:
         for entry_pid, cat, score in entry_rows:
           if entry_pid in entries_by_player:
             entries_by_player[entry_pid].append((cat, score))
+        variant = get_variant(GameMode(mode))
         final_scores = []
         for pid in player_ids:
           scores = {r[0]: r[1] for r in entries_by_player[pid]}
-          bonus = calculate_bonus(scores)
+          bonus = calculate_bonus(
+            scores,
+            bonus_threshold=variant.bonus_threshold,
+            bonus_score=variant.bonus_score,
+          )
           total = sum(scores.values()) + bonus
           final_scores.append(PlayerScore(player_id=pid, total=total))
         max_total = max((ps.total for ps in final_scores), default=0)

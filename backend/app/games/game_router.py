@@ -28,6 +28,7 @@ from app.games.game_repository import GameRepository
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_state import GameState
 from app.games.game_state_repository import GameStateRepository
+from app.games.game_variant import get_variant
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.players.player_repository import PlayerRepository
@@ -185,7 +186,10 @@ def create_game_router(database: Database, settings: Settings) -> APIRouter:
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_is_creator(game, body.player_id)
-    turn_id = await TurnRepository(conn).create(game_id, body.player_id, 1)
+    variant = get_variant(game.mode)
+    turn_id = await TurnRepository(conn).create(
+      game_id, body.player_id, 1, variant.dice_count
+    )
     started = await GameRepository(conn).start(game_id, turn_id)
     if started is None:
       raise HTTPException(status_code=409, detail='Game could not be started')
