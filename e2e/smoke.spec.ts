@@ -35,11 +35,19 @@ async function createPlayer(request: APIRequestContext, name: string, accessToke
   return await res.json();
 }
 
-async function createAndStartGame(request: APIRequestContext, playerId: number) {
-  const gameRes = await request.post('/api/games', { data: { creator_id: playerId } });
+async function createAndStartGame(
+  request: APIRequestContext,
+  playerId: number,
+  accessToken: string
+) {
+  const gameRes = await request.post('/api/games', {
+    data: { creator_id: playerId },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
   const game = await gameRes.json();
   const startRes = await request.post(`/api/games/${game.id}/start`, {
     data: { player_id: playerId },
+    headers: { Authorization: `Bearer ${accessToken}` },
   });
   return await startRes.json();
 }
@@ -120,9 +128,10 @@ test('starting a game navigates to the game screen', async ({ page, request }) =
 test('rolling dice shows dice values', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
-  const game = await createAndStartGame(request, player.id);
+  const game = await createAndStartGame(request, player.id, accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, `/games/${game.id}`);
+  await expect(page.getByRole('heading', { name: /Game #/ })).toBeVisible();
   await page.getByRole('button', { name: 'Roll' }).click();
   for (let i = 0; i < 6; i++) {
     await expect(page.getByRole('button', { name: `Die ${i}` })).toHaveAttribute(
@@ -135,9 +144,10 @@ test('rolling dice shows dice values', async ({ page, request }) => {
 test('scoring a category completes the turn', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
-  const game = await createAndStartGame(request, player.id);
+  const game = await createAndStartGame(request, player.id, accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, `/games/${game.id}`);
+  await expect(page.getByRole('heading', { name: /Game #/ })).toBeVisible();
   await page.getByRole('button', { name: 'Roll' }).click();
   await expect(page.getByRole('button', { name: 'Die 0' })).toHaveAttribute('data-value', /[1-6]/);
   await page.getByRole('rowheader', { name: 'Chance' }).click();
@@ -196,7 +206,7 @@ test('creating a sequential game shows Sequential badge in lobby', async ({ page
 test('game screen shows mode badge', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
-  const game = await createAndStartGame(request, player.id);
+  const game = await createAndStartGame(request, player.id, accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, `/games/${game.id}`);
   await expect(page.getByText(/Alice's turn/)).toBeVisible();
@@ -206,9 +216,10 @@ test('game screen shows mode badge', async ({ page, request }) => {
 test('aborting a game redirects to lobby', async ({ page, request }) => {
   const { accessToken } = await registerUser(request, page);
   const player = await createPlayer(request, 'Alice', accessToken);
-  const game = await createAndStartGame(request, player.id);
+  const game = await createAndStartGame(request, player.id, accessToken);
   await loginAs(page, player);
   await gotoAuthenticated(page, `/games/${game.id}`);
+  await expect(page.getByRole('heading', { name: /Game #/ })).toBeVisible();
   await page.getByRole('button', { name: /abort game/i }).click();
   await page.getByRole('button', { name: /^abort$/i }).click();
   await page.waitForURL('/lobby');
