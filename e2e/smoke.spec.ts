@@ -6,18 +6,26 @@ async function registerUser(
   page: Page
 ): Promise<{ accessToken: string }> {
   const email = `test-${Date.now()}-${Math.random().toString(36).slice(2)}@e2e.com`;
-  const res = await request.post('/auth/register', {
+  const registerRes = await request.post('/auth/register', {
     data: { email, password: 'password123' },
   });
-  if (!res.ok()) {
-    throw new Error(`Auth registration failed: ${res.status()} ${await res.text()}`);
+  if (!registerRes.ok()) {
+    throw new Error(`Auth registration failed: ${registerRes.status()} ${await registerRes.text()}`);
   }
-  const body = await res.json();
-  if (!body.refresh_token) {
-    throw new Error(`Auth registration returned no refresh_token: ${JSON.stringify(body)}`);
+  const tokenRes = await request.get(`/auth/dev/verification-token?email=${encodeURIComponent(email)}`);
+  if (!tokenRes.ok()) {
+    throw new Error(`Failed to get verification token: ${tokenRes.status()} ${await tokenRes.text()}`);
   }
-  await page.addInitScript((token) => {
-    localStorage.setItem('yatzy_refresh_token', token);
+  const { token } = await tokenRes.json();
+  const verifyRes = await request.post('/auth/verify-email', {
+    data: { token },
+  });
+  if (!verifyRes.ok()) {
+    throw new Error(`Email verification failed: ${verifyRes.status()} ${await verifyRes.text()}`);
+  }
+  const body = await verifyRes.json();
+  await page.addInitScript((refreshToken) => {
+    localStorage.setItem('yatzy_refresh_token', refreshToken);
   }, body.refresh_token);
   return { accessToken: body.access_token };
 }

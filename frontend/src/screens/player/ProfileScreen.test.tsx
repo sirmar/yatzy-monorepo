@@ -196,7 +196,7 @@ describe('ProfileScreen', () => {
 
   function whenRendered() {
     mockUseAuth.mockReturnValue({
-      user: { id: ACCOUNT_ID, email: 'test@example.com', created_at: '' },
+      user: { id: ACCOUNT_ID, email: 'test@example.com', email_verified: true, created_at: '' },
       accessToken: 'test-token',
       isLoading: false,
       login: vi.fn(),

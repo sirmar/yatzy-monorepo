@@ -92,7 +92,9 @@ describe('PlayerScreen', () => {
 
   function whenRendered({ accountId }: { accountId?: string } = {}) {
     mockUseAuth.mockReturnValue({
-      user: accountId ? { id: accountId, email: 'test@example.com', created_at: '' } : null,
+      user: accountId
+        ? { id: accountId, email: 'test@example.com', email_verified: true, created_at: '' }
+        : null,
       accessToken: accountId ? 'test-token' : null,
       isLoading: false,
       login: vi.fn(),

@@ -47,3 +47,11 @@ class TokenRepository:
         'WHERE token_hash = %s AND revoked_at IS NULL',
         (token_hash,),
       )
+
+  async def revoke_all_for_user(self, user_id: str) -> None:
+    async with await self._conn.cursor() as cursor:
+      await cursor.execute(
+        'UPDATE refresh_tokens SET revoked_at = NOW() '
+        'WHERE user_id = %s AND revoked_at IS NULL',
+        (user_id,),
+      )

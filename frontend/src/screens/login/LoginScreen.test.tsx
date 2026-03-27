@@ -17,7 +17,12 @@ const REGISTER_URL = 'http://localhost/auth/register';
 const REFRESH_URL = 'http://localhost/auth/refresh';
 const ME_URL = 'http://localhost/auth/me';
 
-const mockUser = { id: '123', email: 'user@example.com', created_at: '2026-01-01' };
+const mockUser = {
+  id: '123',
+  email: 'user@example.com',
+  email_verified: true,
+  created_at: '2026-01-01',
+};
 const mockTokens = {
   access_token: 'access-tok',
   refresh_token: 'refresh-tok',
@@ -82,14 +87,14 @@ describe('LoginScreen', () => {
       thenRegisterButtonIsVisible();
     });
 
-    it('registers and navigates to / on success', async () => {
+    it('shows verify email message on success', async () => {
       givenRegisterSucceeds();
       whenRendered();
       await whenToggledToRegister();
       await whenEmailEntered('new@example.com');
       await whenPasswordEntered('password123');
       await whenFormSubmitted();
-      thenNavigatedTo('/');
+      await screen.findByText(/check your email/i);
     });
 
     it('shows error when registration fails', async () => {
@@ -134,8 +139,9 @@ describe('LoginScreen', () => {
 
   function givenRegisterSucceeds() {
     server.use(
-      http.post(REGISTER_URL, () => HttpResponse.json(mockTokens, { status: 201 })),
-      http.get(ME_URL, () => HttpResponse.json(mockUser))
+      http.post(REGISTER_URL, () =>
+        HttpResponse.json({ message: 'Verification email sent' }, { status: 201 })
+      )
     );
   }
 

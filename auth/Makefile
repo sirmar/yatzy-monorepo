@@ -1,4 +1,4 @@
-.PHONY: dev shell migrate format lint types security \
+.PHONY: dev shell migrate seed format lint types security \
 	unit unit-cov e2e e2e-cov test coverage check build rebuild
 
 SHARD_ID  ?= 0
@@ -27,6 +27,9 @@ migrate:
 		-v $(CURDIR)/migrations:/db/migrations \
 		--env-file .env \
 		ghcr.io/amacneil/dbmate --no-dump-schema up
+
+seed:
+	sh scripts/seed.sh
 
 build:
 	$(DC_DEV) build auth

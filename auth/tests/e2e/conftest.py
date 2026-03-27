@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL', 'mysql://root:test@127.0.0.1:3309/yatzy_auth_test')
 os.environ['DATABASE_URL'] = TEST_DATABASE_URL
+os.environ.setdefault('APP_ENV', 'test')
 
 from app.main import app, database  # noqa: E402
 import pytest  # noqa: E402

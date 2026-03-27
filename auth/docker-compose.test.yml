@@ -27,6 +27,7 @@ services:
       - /app/.venv
     environment:
       TEST_DATABASE_URL: mysql://root:test@auth-db-test:3306/yatzy_auth_test
+      APP_ENV: test
     depends_on:
       auth-db-test:
         condition: service_healthy

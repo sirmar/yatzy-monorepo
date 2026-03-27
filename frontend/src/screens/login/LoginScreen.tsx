@@ -14,6 +14,7 @@ export function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   if (!isLoading && user) return <Navigate to="/" replace />;
 
@@ -28,15 +29,44 @@ export function LoginScreen() {
     try {
       if (mode === 'login') {
         await login(email, password);
+        navigate('/');
       } else {
         await register(email, password);
+        setRegistered(true);
       }
-      navigate('/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
       setSubmitting(false);
     }
+  }
+
+  if (registered) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-gray-900 border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-3xl font-bold text-center text-white">Yatzy</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-center text-gray-300">
+              Check your email to verify your account, then{' '}
+              <button
+                type="button"
+                className="text-white underline"
+                onClick={() => {
+                  setRegistered(false);
+                  setMode('login');
+                }}
+              >
+                sign in
+              </button>
+              .
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
