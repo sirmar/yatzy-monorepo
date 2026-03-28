@@ -9,6 +9,8 @@ import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/format';
 import { INPUT_CLASS } from '@/lib/styles';
+import { ChangePasswordForm } from './ChangePasswordForm';
+import { DeleteAccountSection } from './DeleteAccountSection';
 
 type PlayerStats = components['schemas']['PlayerStats'];
 type ModeStats = components['schemas']['ModeStats'];
@@ -96,24 +98,28 @@ export function ProfileScreen() {
       <div className="flex flex-col gap-6">
         <h1 className="text-2xl font-bold text-white">Profile</h1>
         <div className="grid grid-cols-2 gap-8">
-          <form onSubmit={handleSave} className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1">
-              <label htmlFor="player-name" className="text-sm text-gray-400">
-                Name
-              </label>
-              <Input
-                id="player-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your name"
-                disabled={loading}
-                className={INPUT_CLASS}
-              />
-            </div>
-            <Button type="submit" disabled={loading || !name.trim()}>
-              Save
-            </Button>
-          </form>
+          <div className="flex flex-col gap-6">
+            <form onSubmit={handleSave} className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <label htmlFor="player-name" className="text-sm text-gray-400">
+                  Name
+                </label>
+                <Input
+                  id="player-name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Enter your name"
+                  disabled={loading}
+                  className={INPUT_CLASS}
+                />
+              </div>
+              <Button type="submit" className="w-40" disabled={loading || !name.trim()}>
+                Save
+              </Button>
+            </form>
+            <ChangePasswordForm />
+            <DeleteAccountSection />
+          </div>
           {stats && (
             <div className="flex flex-col gap-4">
               <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">

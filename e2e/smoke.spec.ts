@@ -107,7 +107,7 @@ test('editing player name via nav updates the displayed name', async ({ page, re
   await page.getByRole('button', { name: /alice/i }).click();
   await page.getByRole('menuitem', { name: 'Profile' }).click();
   await page.waitForURL('/profile');
-  await page.getByRole('textbox').fill('Alicia');
+  await page.getByLabel('Name').fill('Alicia');
   await page.getByRole('button', { name: 'Save' }).click();
   await page.waitForURL('/lobby');
   await expect(page.getByRole('button', { name: /alicia/i })).toBeVisible();

@@ -9,6 +9,9 @@ interface AuthContextValue {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  loginWithTokens: (tokens: { access_token: string; refresh_token: string }) => Promise<void>;
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -68,8 +71,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }
 
+  async function loginWithTokens(tokens: { access_token: string; refresh_token: string }) {
+    await applyTokens(tokens);
+  }
+
+  async function changePassword(currentPassword: string, newPassword: string) {
+    if (!accessToken) throw new Error('Not authenticated');
+    await authClient.changePassword(currentPassword, newPassword, accessToken);
+  }
+
+  async function deleteAccount() {
+    if (!accessToken) throw new Error('Not authenticated');
+    await authClient.deleteAccount(accessToken);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    setAccessToken(null);
+    setAuthToken(null);
+    setUser(null);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, accessToken, isLoading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        accessToken,
+        isLoading,
+        login,
+        register,
+        logout,
+        loginWithTokens,
+        changePassword,
+        deleteAccount,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Navigate, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +15,7 @@ export function LoginScreen() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
 
   if (!isLoading && user) return <Navigate to="/" replace />;
 
@@ -25,6 +26,7 @@ export function LoginScreen() {
       return;
     }
     setError('');
+    setEmailNotVerified(false);
     setSubmitting(true);
     try {
       if (mode === 'login') {
@@ -35,7 +37,12 @@ export function LoginScreen() {
         setRegistered(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const msg = err instanceof Error ? err.message : 'Something went wrong';
+      if (msg === 'Email not verified') {
+        setEmailNotVerified(true);
+      } else {
+        setError(msg);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -48,7 +55,7 @@ export function LoginScreen() {
           <CardHeader>
             <CardTitle className="text-3xl font-bold text-center text-white">Yatzy</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-col gap-3">
             <p className="text-center text-gray-300">
               Check your email to verify your account, then{' '}
               <button
@@ -62,6 +69,21 @@ export function LoginScreen() {
                 sign in
               </button>
               .
+            </p>
+            <p className="text-center text-sm text-gray-400">
+              Wrong email?{' '}
+              <button
+                type="button"
+                className="text-white underline"
+                onClick={() => {
+                  setRegistered(false);
+                  setMode('register');
+                  setEmail('');
+                  setPassword('');
+                }}
+              >
+                Register again
+              </button>
             </p>
           </CardContent>
         </Card>
@@ -104,10 +126,33 @@ export function LoginScreen() {
               />
             </div>
             {error && <p className="text-red-400 text-sm">{error}</p>}
+            {emailNotVerified && (
+              <p className="text-yellow-400 text-sm">
+                Email not verified. Check your inbox, or{' '}
+                <button
+                  type="button"
+                  className="underline"
+                  onClick={() => {
+                    setEmailNotVerified(false);
+                    setMode('register');
+                  }}
+                >
+                  re-register
+                </button>{' '}
+                to get a new link.
+              </p>
+            )}
             <Button type="submit" disabled={submitting}>
               {mode === 'login' ? 'Sign in' : 'Create account'}
             </Button>
           </form>
+          {mode === 'login' && (
+            <p className="mt-2 text-center text-sm text-gray-400">
+              <Link to="/forgot-password" className="text-white underline">
+                Forgot password?
+              </Link>
+            </p>
+          )}
           <p className="mt-4 text-center text-sm text-gray-400">
             {mode === 'login' ? (
               <>

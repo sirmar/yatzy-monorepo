@@ -6,7 +6,10 @@ import { usePlayer } from '@/hooks/PlayerContext';
 import { EndScreen } from '@/screens/end/EndScreen';
 import { GameScreen } from '@/screens/game/GameScreen';
 import { LobbyScreen } from '@/screens/lobby/LobbyScreen';
+import { ForgotPasswordScreen } from '@/screens/login/ForgotPasswordScreen';
 import { LoginScreen } from '@/screens/login/LoginScreen';
+import { ResetPasswordScreen } from '@/screens/login/ResetPasswordScreen';
+import { VerifyEmailScreen } from '@/screens/login/VerifyEmailScreen';
 import { PlayerScreen } from '@/screens/player/PlayerScreen';
 import { ProfileScreen } from '@/screens/player/ProfileScreen';
 import { GamesPlayedScreen } from '@/screens/statistics/GamesPlayedScreen';
@@ -35,6 +38,9 @@ export default function App() {
     <>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
+        <Route path="/forgot-password" element={<ForgotPasswordScreen />} />
+        <Route path="/reset-password" element={<ResetPasswordScreen />} />
+        <Route path="/verify-email" element={<VerifyEmailScreen />} />
         <Route element={<AuthGuard />}>
           <Route path="/" element={<PlayerScreen />} />
           <Route element={<ProtectedLayout />}>
