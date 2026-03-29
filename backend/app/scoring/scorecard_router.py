@@ -4,6 +4,7 @@ import aiomysql
 from app.auth import make_get_current_user
 from app.config import Settings
 from app.database import Database
+from app.events import EventBus
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
 from app.games.game_variant import get_variant
@@ -35,7 +36,9 @@ from app.scoring.high_scores_repository import HighScoresRepository
 from app.scoring.scorecard_repository import ScorecardRepository
 
 
-def create_scorecard_router(database: Database, settings: Settings) -> APIRouter:
+def create_scorecard_router(
+  database: Database, settings: Settings, event_bus: EventBus
+) -> APIRouter:
   router = APIRouter(tags=['Scoring'])
   get_current_user = make_get_current_user(settings)
 
@@ -110,7 +113,8 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
 
     turn_repo = TurnRepository(conn)
     total_scored = await scorecard_repo.count_all_scored(game_id)
-    if total_scored >= len(game.player_ids) * len(variant.categories):
+    game_ended = total_scored >= len(game.player_ids) * len(variant.categories)
+    if game_ended:
       await game_repo.end(game_id)
     else:
       current_index = game.player_ids.index(player_id)
@@ -120,6 +124,10 @@ def create_scorecard_router(database: Database, settings: Settings) -> APIRouter
         game_id, next_player_id, turn_number + 1, variant.dice_count
       )
       await game_repo.set_current_turn(game_id, new_turn_id)
+
+    event_bus.publish_game(game_id)
+    if game_ended:
+      event_bus.publish_player(game.player_ids)
 
     scorecard = await scorecard_repo.get(game_id, player_id, variant)
     assert scorecard is not None

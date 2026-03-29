@@ -6,9 +6,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { useEventSource } from '@/hooks/useEventSource';
 import { usePlayerNames } from '@/hooks/usePlayerNames';
-import { usePolling } from '@/hooks/usePolling';
-import { POLLING_INTERVAL_MS } from '@/lib/constants';
 import { CreateGameButton } from './CreateGameButton';
 import { GameList } from './GameList';
 
@@ -31,10 +30,15 @@ export function LobbyScreen() {
   }, [player]);
 
   useEffect(() => {
-    fetchGames();
-  }, [fetchGames]);
+    if (!player) return;
+    const controller = new AbortController();
+    apiClient
+      .GET('/games', { params: { query: { status: 'lobby' } }, signal: controller.signal })
+      .then(({ data }) => setGames(data ?? []));
+    return () => controller.abort();
+  }, [player]);
 
-  usePolling(fetchGames, { interval: POLLING_INTERVAL_MS });
+  useEventSource('/api/games/lobby/events', fetchGames);
 
   async function withMutation(title: string, fn: () => Promise<{ error?: unknown }>) {
     const { error } = await fn();

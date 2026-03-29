@@ -32,7 +32,7 @@ async function registerUser(
 
 async function gotoAuthenticated(page: Page, url: string) {
   await page.goto(url);
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('load');
 }
 
 async function createPlayer(request: APIRequestContext, name: string, accessToken: string) {

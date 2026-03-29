@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
-import { usePolling } from '@/hooks/usePolling';
+import { useEventSource } from '@/hooks/useEventSource';
 
 const activeClass = 'text-yellow-400';
 const inactiveClass = 'text-gray-400 hover:text-white transition-colors';
@@ -28,10 +28,21 @@ function useActiveGameIds(): number[] {
   }, [player]);
 
   useEffect(() => {
-    fetchActiveGames();
-  }, [fetchActiveGames]);
+    if (!player) return;
+    const controller = new AbortController();
+    apiClient
+      .GET('/games', { params: { query: { status: 'active' } }, signal: controller.signal })
+      .then(({ data }) => {
+        if (!data) return;
+        setGameIds(data.filter((g) => g.player_ids.includes(player.id)).map((g) => g.id));
+      });
+    return () => controller.abort();
+  }, [player]);
 
-  usePolling(fetchActiveGames);
+  useEventSource(
+    player ? `/api/games/active/events?player_id=${player.id}` : null,
+    fetchActiveGames
+  );
 
   return gameIds;
 }

@@ -63,14 +63,19 @@ export function ProfileScreen() {
 
   useEffect(() => {
     if (!player) return;
+    const controller = new AbortController();
     apiClient
-      .GET('/players/{player_id}/stats', { params: { path: { player_id: player.id } } })
+      .GET('/players/{player_id}/stats', {
+        params: { path: { player_id: player.id } },
+        signal: controller.signal,
+      })
       .then(({ data }) => {
         if (data) {
           setStats(data);
           setSelectedMode(MODE_SECTIONS[0].key);
         }
       });
+    return () => controller.abort();
   }, [player]);
 
   async function handleSave(e: React.FormEvent) {

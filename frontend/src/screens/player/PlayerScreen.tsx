@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,16 +10,20 @@ export function PlayerScreen() {
   const { setPlayer } = usePlayer();
   const { accessToken } = useAuth();
   const navigate = useNavigate();
+  const setPlayerRef = useRef(setPlayer);
+  const navigateRef = useRef(navigate);
 
   useEffect(() => {
     if (!accessToken) return;
-    apiClient.GET('/players/me', {}).then(({ data }) => {
+    const controller = new AbortController();
+    apiClient.GET('/players/me', { signal: controller.signal }).then(({ data }) => {
       if (data) {
-        setPlayer(data);
-        navigate('/lobby');
+        setPlayerRef.current(data);
+        navigateRef.current('/lobby');
       }
     });
-  }, [accessToken, setPlayer, navigate]);
+    return () => controller.abort();
+  }, [accessToken]);
 
   async function handleCreate(name: string) {
     const { data, error } = await apiClient.POST('/players', {

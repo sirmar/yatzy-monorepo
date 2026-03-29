@@ -67,10 +67,14 @@ export function GamesPlayedScreen() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
     setIsLoading(true);
     setError(null);
     apiClient
-      .GET('/games-played-leaderboard', { params: { query: { sort_by: selectedSortBy } } })
+      .GET('/games-played-leaderboard', {
+        params: { query: { sort_by: selectedSortBy } },
+        signal: controller.signal,
+      })
       .then(({ data, error }) => {
         if (error) {
           setError('Failed to load games played');
@@ -78,7 +82,11 @@ export function GamesPlayedScreen() {
           setEntries(data ?? []);
         }
         setIsLoading(false);
+      })
+      .catch((e: unknown) => {
+        if ((e as { name?: string })?.name !== 'AbortError') throw e;
       });
+    return () => controller.abort();
   }, [selectedSortBy]);
 
   return (

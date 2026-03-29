@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
@@ -9,9 +9,8 @@ import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { useEventSource } from '@/hooks/useEventSource';
 import { usePlayerNames } from '@/hooks/usePlayerNames';
-import { usePolling } from '@/hooks/usePolling';
-import { POLLING_INTERVAL_MS } from '@/lib/constants';
 import { DiceRoller } from './DiceRoller';
 import { ScoreCard } from './ScoreCard';
 
@@ -50,11 +49,21 @@ export function GameScreen() {
   useEffect(() => {
     if (!gameId) return;
     const gid = Number(gameId);
+    const controller = new AbortController();
 
     Promise.all([
-      apiClient.GET('/games/{game_id}', { params: { path: { game_id: gid } } }),
-      apiClient.GET('/games/{game_id}/state', { params: { path: { game_id: gid } } }),
-      apiClient.GET('/games/{game_id}/scoreboard', { params: { path: { game_id: gid } } }),
+      apiClient.GET('/games/{game_id}', {
+        params: { path: { game_id: gid } },
+        signal: controller.signal,
+      }),
+      apiClient.GET('/games/{game_id}/state', {
+        params: { path: { game_id: gid } },
+        signal: controller.signal,
+      }),
+      apiClient.GET('/games/{game_id}/scoreboard', {
+        params: { path: { game_id: gid } },
+        signal: controller.signal,
+      }),
     ]).then(([{ data: game }, { data: state }, { data: board }]) => {
       if (game) {
         setCreatorId(game.creator_id);
@@ -76,6 +85,7 @@ export function GameScreen() {
           apiClient
             .GET('/games/{game_id}/players/{player_id}/scoring-options', {
               params: { path: { game_id: gid, player_id: currentPlayerId } },
+              signal: controller.signal,
             })
             .then(({ data: options }) => {
               if (options) setScoringOptions(options);
@@ -84,39 +94,42 @@ export function GameScreen() {
       }
       if (board) setScoreboard(board);
     });
+    return () => controller.abort();
   }, [gameId, navigate, player?.id]);
 
-  usePolling(
-    async () => {
-      if (!gameId) return;
-      const { data } = await apiClient.GET('/games/{game_id}/state', {
+  const fetchGameState = useCallback(async () => {
+    if (!gameId) return;
+    const { data } = await apiClient.GET('/games/{game_id}/state', {
+      params: { path: { game_id: Number(gameId) } },
+    });
+    if (!data) return;
+
+    const currentId = data.current_player_id;
+    if (prevPlayerIdRef.current !== undefined && currentId !== prevPlayerIdRef.current) {
+      setScoringOptions(null);
+      setDice(data.dice ?? []);
+      const { data: board } = await apiClient.GET('/games/{game_id}/scoreboard', {
         params: { path: { game_id: Number(gameId) } },
       });
-      if (!data) return;
+      if (board) setScoreboard(board);
+    } else if (currentId !== player?.id) {
+      setDice(data.dice ?? []);
+    }
 
-      const currentId = data.current_player_id;
-      if (prevPlayerIdRef.current !== undefined && currentId !== prevPlayerIdRef.current) {
-        setScoringOptions(null);
-        setDice(data.dice ?? []);
-        const { data: board } = await apiClient.GET('/games/{game_id}/scoreboard', {
-          params: { path: { game_id: Number(gameId) } },
-        });
-        if (board) setScoreboard(board);
-      } else if (currentId !== player?.id) {
-        setDice(data.dice ?? []);
-      }
+    prevPlayerIdRef.current = currentId;
+    setGameState(data);
 
-      prevPlayerIdRef.current = currentId;
-      setGameState(data);
+    if (data.status === 'finished') {
+      navigate(`/games/${gameId}/end`);
+    }
+    if (data.status === 'abandoned') {
+      navigate('/lobby');
+    }
+  }, [gameId, navigate, player?.id]);
 
-      if (data.status === 'finished') {
-        navigate(`/games/${gameId}/end`);
-      }
-      if (data.status === 'abandoned') {
-        navigate('/lobby');
-      }
-    },
-    { interval: POLLING_INTERVAL_MS, enabled: gameState?.status === 'active' }
+  useEventSource(
+    gameState?.status === 'active' ? `/api/games/${gameId}/events` : null,
+    fetchGameState
   );
 
   function handleConfirmAbort() {

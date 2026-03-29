@@ -59,14 +59,21 @@ export function HighScoresScreen() {
   const [selectedMode, setSelectedMode] = useState<GameMode>('maxi');
 
   useEffect(() => {
-    apiClient.GET('/high-scores').then(({ data, error }) => {
-      if (error) {
-        setError('Failed to load high scores');
-      } else if (data) {
-        setScores(data);
-      }
-      setIsLoading(false);
-    });
+    const controller = new AbortController();
+    apiClient
+      .GET('/high-scores', { signal: controller.signal })
+      .then(({ data, error }) => {
+        if (error) {
+          setError('Failed to load high scores');
+        } else if (data) {
+          setScores(data);
+        }
+        setIsLoading(false);
+      })
+      .catch((e: unknown) => {
+        if ((e as { name?: string })?.name !== 'AbortError') throw e;
+      });
+    return () => controller.abort();
   }, []);
 
   return (
