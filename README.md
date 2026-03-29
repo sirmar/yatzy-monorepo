@@ -19,6 +19,8 @@ A Swedish Maxi Yatzy game built with FastAPI + React.
 
 ```bash
 make dev
+make migrate                # first time only: run database migrations
+make -C auth seed           # first time only: create a verified dev account (dev@example.com / devpassword123)
 ```
 
 - Frontend: http://localhost:5173
