@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authClient } from '@/auth/authClient';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthScreenLayout } from '@/components/AuthScreenLayout';
 import { useAuth } from '@/hooks/AuthContext';
 
 export function VerifyEmailScreen() {
@@ -32,26 +32,19 @@ export function VerifyEmailScreen() {
   }, [token]);
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-900 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center text-white">Yatzy</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {error ? (
-            <div className="flex flex-col gap-3">
-              <p className="text-center text-red-400">{error}</p>
-              <p className="text-center text-sm text-gray-400">
-                <Link to="/login" className="text-white underline">
-                  Back to sign in
-                </Link>
-              </p>
-            </div>
-          ) : (
-            <p className="text-center text-gray-300">Verifying your email…</p>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <AuthScreenLayout>
+      {error ? (
+        <div className="flex flex-col gap-3">
+          <p className="text-center text-red-400">{error}</p>
+          <p className="text-center text-sm text-gray-400">
+            <Link to="/login" className="text-white underline">
+              Back to sign in
+            </Link>
+          </p>
+        </div>
+      ) : (
+        <p className="text-center text-gray-300">Verifying your email…</p>
+      )}
+    </AuthScreenLayout>
   );
 }

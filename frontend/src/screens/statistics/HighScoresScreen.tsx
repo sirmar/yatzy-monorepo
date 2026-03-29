@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
+import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
+import { RANK_TROPHY } from '@/lib/constants';
 import { formatDate } from '@/lib/format';
 
 type HighScore = components['schemas']['HighScore'];
@@ -13,8 +15,6 @@ const MODES: { label: string; value: GameMode }[] = [
   { label: 'Yatzy', value: 'yatzy' },
   { label: 'Yatzy Sequential', value: 'yatzy_sequential' },
 ];
-
-const RANK_TROPHY: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 function HighScoresTable({ scores }: { scores: HighScore[] }) {
   return (
@@ -79,27 +79,11 @@ export function HighScoresScreen() {
   return (
     <PageLayout>
       <h1 className="text-white text-xl font-semibold mb-6">High Scores</h1>
-
-      <div className="flex gap-2 mb-6">
-        {MODES.map(({ label, value }) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setSelectedMode(value)}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-              selectedMode === value
-                ? 'bg-yellow-400 text-gray-900'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mb-6">
+        <ModeSelector options={MODES} selected={selectedMode} onChange={setSelectedMode} />
       </div>
-
       {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
       {error && <p className="text-red-400 text-sm">{error}</p>}
-
       {!isLoading && !error && (
         <HighScoresTable scores={scores.filter((s) => s.mode === selectedMode)} />
       )}

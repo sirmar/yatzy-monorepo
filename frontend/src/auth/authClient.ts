@@ -4,12 +4,13 @@ import type { components } from './schema';
 export type AuthTokens = components['schemas']['TokenResponse'];
 export type AuthUser = components['schemas']['User'];
 
+function extractDetail(error: unknown): string {
+  return (error as { detail?: string } | undefined)?.detail ?? 'Request failed';
+}
+
 async function throwOnError<T>(promise: Promise<{ data?: T; error?: unknown }>): Promise<T> {
   const { data, error } = await promise;
-  if (error) {
-    const detail = (error as { detail?: string }).detail;
-    throw new Error(detail ?? 'Request failed');
-  }
+  if (error) throw new Error(extractDetail(error));
   return data as T;
 }
 
@@ -22,10 +23,7 @@ export const authClient = {
       .POST('/login', { body: { email, password } })
       .then(({ data, error, response }) => {
         if (response.status === 403) throw new Error('Email not verified');
-        if (error) {
-          const detail = (error as { detail?: string }).detail;
-          throw new Error(detail ?? 'Request failed');
-        }
+        if (error) throw new Error(extractDetail(error));
         return data as import('./schema').components['schemas']['TokenResponse'];
       }),
 
@@ -52,10 +50,7 @@ export const authClient = {
     authHttpClient
       .POST('/reset-password', { body: { token, new_password } })
       .then(({ error, response }) => {
-        if (!response.ok) {
-          const detail = (error as { detail?: string } | undefined)?.detail;
-          throw new Error(detail ?? 'Request failed');
-        }
+        if (!response.ok) throw new Error(extractDetail(error));
       }),
 
   changePassword: (current_password: string, new_password: string, accessToken: string) =>
@@ -65,19 +60,13 @@ export const authClient = {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
       .then(({ error, response }) => {
-        if (!response.ok) {
-          const detail = (error as { detail?: string } | undefined)?.detail;
-          throw new Error(detail ?? 'Request failed');
-        }
+        if (!response.ok) throw new Error(extractDetail(error));
       }),
 
   deleteAccount: (accessToken: string) =>
     authHttpClient
       .DELETE('/me', { headers: { Authorization: `Bearer ${accessToken}` } })
       .then(({ error, response }) => {
-        if (!response.ok) {
-          const detail = (error as { detail?: string } | undefined)?.detail;
-          throw new Error(detail ?? 'Request failed');
-        }
+        if (!response.ok) throw new Error(extractDetail(error));
       }),
 };

@@ -2,41 +2,33 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/AuthContext';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { INPUT_CLASS } from '@/lib/styles';
+import { validatePassword, validatePasswordsMatch } from '@/lib/utils';
 
 export function ChangePasswordForm() {
   const { changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
+  const { submitting, error, setError, submit } = useFormSubmit();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters');
+    const pwError =
+      validatePassword(newPassword) ?? validatePasswordsMatch(newPassword, confirmPassword);
+    if (pwError) {
+      setError(pwError);
       return;
     }
-    if (newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-    setError('');
-    setSuccess(false);
-    setSubmitting(true);
-    try {
+    await submit(async () => {
       await changePassword(currentPassword, newPassword);
       setSuccess(true);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-    } finally {
-      setSubmitting(false);
-    }
+    });
   }
 
   return (

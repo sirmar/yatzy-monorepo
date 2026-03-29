@@ -11,25 +11,21 @@ import {
 } from '@/components/ui/dialog';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
+import { useFormSubmit } from '@/hooks/useFormSubmit';
 
 export function DeleteAccountSection() {
   const { deleteAccount } = useAuth();
   const { setPlayer } = usePlayer();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [error, setError] = useState('');
+  const { submitting: deleting, error, submit } = useFormSubmit();
 
   async function handleConfirm() {
-    setDeleting(true);
-    try {
+    await submit(async () => {
       await deleteAccount();
       setPlayer(null);
       navigate('/login');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
-      setDeleting(false);
-    }
+    });
   }
 
   return (

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
+import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -139,22 +140,11 @@ export function ProfileScreen() {
                   <span className="font-semibold">{stats.total_games_played}</span>
                 </span>
               </div>
-              <div className="flex gap-2">
-                {MODE_SECTIONS.map(({ key, label }) => (
-                  <button
-                    key={key}
-                    type="button"
-                    onClick={() => setSelectedMode(key)}
-                    className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                      selectedMode === key
-                        ? 'bg-yellow-400 text-gray-900'
-                        : 'text-gray-400 hover:text-white'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
+              <ModeSelector
+                options={MODE_SECTIONS.map(({ key, label }) => ({ label, value: key }))}
+                selected={selectedMode ?? MODE_SECTIONS[0].key}
+                onChange={setSelectedMode}
+              />
               {selectedMode &&
                 (() => {
                   const section = MODE_SECTIONS.find(({ key }) => key === selectedMode);

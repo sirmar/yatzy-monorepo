@@ -1,17 +1,19 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
+import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
+import { RANK_TROPHY } from '@/lib/constants';
 
 type GamesPlayed = components['schemas']['GamesPlayed'];
 type SortBy = components['schemas']['GamesPlayedSortBy'];
 
-const SECTIONS: { label: string; sortBy: SortBy }[] = [
-  { label: 'Total', sortBy: 'total' },
-  { label: 'Maxi Yatzy', sortBy: 'maxi' },
-  { label: 'Maxi Yatzy Sequential', sortBy: 'maxi_sequential' },
-  { label: 'Yatzy', sortBy: 'yatzy' },
-  { label: 'Yatzy Sequential', sortBy: 'yatzy_sequential' },
+const SECTIONS: { label: string; value: SortBy }[] = [
+  { label: 'Total', value: 'total' },
+  { label: 'Maxi Yatzy', value: 'maxi' },
+  { label: 'Maxi Yatzy Sequential', value: 'maxi_sequential' },
+  { label: 'Yatzy', value: 'yatzy' },
+  { label: 'Yatzy Sequential', value: 'yatzy_sequential' },
 ];
 
 const SORT_BY_KEY: Record<
@@ -24,8 +26,6 @@ const SORT_BY_KEY: Record<
   yatzy: 'yatzy',
   yatzy_sequential: 'yatzy_sequential',
 };
-
-const RANK_TROPHY: Record<number, string> = { 1: '🥇', 2: '🥈', 3: '🥉' };
 
 function GamesPlayedTable({ entries, sortBy }: { entries: GamesPlayed[]; sortBy: SortBy }) {
   const countKey = SORT_BY_KEY[sortBy];
@@ -92,27 +92,11 @@ export function GamesPlayedScreen() {
   return (
     <PageLayout>
       <h1 className="text-white text-xl font-semibold mb-6">Games Played</h1>
-
-      <div className="flex gap-2 mb-6">
-        {SECTIONS.map(({ label, sortBy }) => (
-          <button
-            key={sortBy}
-            type="button"
-            onClick={() => setSelectedSortBy(sortBy)}
-            className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-              selectedSortBy === sortBy
-                ? 'bg-yellow-400 text-gray-900'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mb-6">
+        <ModeSelector options={SECTIONS} selected={selectedSortBy} onChange={setSelectedSortBy} />
       </div>
-
       {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
       {error && <p className="text-red-400 text-sm">{error}</p>}
-
       {!isLoading && !error && <GamesPlayedTable entries={entries} sortBy={selectedSortBy} />}
     </PageLayout>
   );
