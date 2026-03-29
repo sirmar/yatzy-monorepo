@@ -6,10 +6,10 @@ Built with FastAPI + MySQL (no ORM), Python 3.14, Docker.
 
 ## Getting started
 
-From the repo root:
+From `backend/`:
 
 ```bash
-make backend/dev
+make dev
 ```
 
 - API: http://localhost:8000
@@ -17,18 +17,18 @@ make backend/dev
 
 ## Development
 
-All commands run from the repo root.
+Run from `backend/` (or `make -C backend <target>` from the repo root).
 
 ```bash
-make backend/format     # auto-fix formatting and lint issues
-make backend/lint       # check formatting and lint
-make backend/types      # type check
-make backend/security   # security scan
-make backend/unit       # unit tests
-make backend/e2e        # e2e tests (starts and stops db-test automatically)
-make backend/check      # lint + types + security + all tests
+make format     # auto-fix formatting and lint issues
+make lint       # check formatting and lint
+make types      # type check
+make security   # security scan
+make unit       # unit tests
+make e2e        # e2e tests (starts and stops db-test automatically)
+make check      # lint + types + security + all tests
 
-make backend/shell      # open a shell in the backend container
-make backend/db         # open a MySQL shell
-make backend/migrate    # run database migrations
+make shell      # open a shell in the backend container
+make db         # open a MySQL shell
+make migrate    # run database migrations
 ```

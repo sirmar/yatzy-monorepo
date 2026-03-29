@@ -16,15 +16,15 @@ make dev
 
 ## Development
 
-All commands run from the repo root.
+Run from `frontend/` (or `make -C frontend <target>` from the repo root).
 
 ```bash
-make frontend/format    # auto-fix formatting and lint issues
-make frontend/lint      # check formatting and lint
-make frontend/types     # type check
-make frontend/unit      # unit tests
-make frontend/e2e       # smoke tests against the production build
-make frontend/check     # lint + types + unit + e2e
+make format     # auto-fix formatting and lint issues
+make lint       # check formatting and lint
+make types      # type check
+make unit       # unit tests
+make check      # lint + types + unit
 
-make frontend/schema    # regenerate API client from backend OpenAPI schema
+make schema     # regenerate API client from backend OpenAPI schema (requires backend on port 8000)
+make auth-schema  # regenerate auth client (requires auth on port 8001)
 ```
