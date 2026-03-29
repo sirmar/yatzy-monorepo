@@ -11,9 +11,8 @@ from app.games.game_variant import get_variant
 from app.games.guards import (
   assert_game_exists,
   assert_game_active,
-  assert_player_exists,
+  assert_player_exists_and_owns,
   assert_player_in_game,
-  assert_player_owns,
   assert_turn_active,
   assert_current_player,
   assert_has_rolled,
@@ -80,8 +79,9 @@ def create_scorecard_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Scorecard:
     """Score a category with the current dice. Ends the player's turn and advances to the next player. Ends the game when all categories are filled."""
-    player = assert_player_exists(await PlayerRepository(conn).get_by_id(player_id))
-    assert_player_owns(player, current_user['sub'])
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(player_id), current_user['sub']
+    )
     game_repo = GameRepository(conn)
     game = assert_game_exists(await game_repo.get_by_id(game_id))
     assert_player_in_game(game, player_id)

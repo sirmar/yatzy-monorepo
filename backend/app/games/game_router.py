@@ -1,5 +1,6 @@
 import asyncio
 import json
+from collections.abc import AsyncGenerator, Callable
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
@@ -15,13 +16,12 @@ from app.games.guards import (
   assert_game_active,
   assert_game_in_lobby,
   assert_game_deletable,
-  assert_player_exists,
+  assert_player_exists_and_owns,
   assert_player_in_game,
   assert_player_not_in_game,
   assert_game_not_full,
   assert_is_creator,
   assert_not_creator,
-  assert_player_owns,
   assert_turn_active,
   assert_current_player,
   assert_rolls_remaining,
@@ -36,6 +36,25 @@ from app.games.game_variant import get_variant
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.players.player_repository import PlayerRepository
+
+
+async def sse_stream(
+  request: Request,
+  subscribe: Callable,
+  unsubscribe: Callable,
+) -> AsyncGenerator[str, None]:
+  q = subscribe()
+  try:
+    while True:
+      if await request.is_disconnected():
+        break
+      try:
+        event = await asyncio.wait_for(q.get(), timeout=15.0)
+        yield f'data: {json.dumps(event)}\n\n'
+      except asyncio.TimeoutError:
+        yield ': heartbeat\n\n'
+  finally:
+    unsubscribe(q)
 
 
 def create_game_router(
@@ -58,10 +77,9 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Create a new game. The requesting player becomes the creator."""
-    player = assert_player_exists(
-      await PlayerRepository(conn).get_by_id(body.creator_id)
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(body.creator_id), current_user['sub']
     )
-    assert_player_owns(player, current_user['sub'])
     game = await GameRepository(conn).create(body.creator_id, body.mode)
     event_bus.publish_lobby()
     return game
@@ -81,21 +99,10 @@ def create_game_router(
   ) -> StreamingResponse:
     """SSE stream: fires when any lobby-visible game changes."""
 
-    async def generator():
-      q = event_bus.subscribe_lobby()
-      try:
-        while True:
-          if await request.is_disconnected():
-            break
-          try:
-            event = await asyncio.wait_for(q.get(), timeout=15.0)
-            yield f'data: {json.dumps(event)}\n\n'
-          except asyncio.TimeoutError:
-            yield ': heartbeat\n\n'
-      finally:
-        event_bus.unsubscribe_lobby(q)
-
-    return StreamingResponse(generator(), media_type='text/event-stream')
+    return StreamingResponse(
+      sse_stream(request, event_bus.subscribe_lobby, event_bus.unsubscribe_lobby),
+      media_type='text/event-stream',
+    )
 
   @router.get('/games/active/events')
   async def active_game_events(
@@ -105,24 +112,17 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> StreamingResponse:
     """SSE stream: fires when a game the authenticated player participates in changes status."""
-    player = assert_player_exists(await PlayerRepository(conn).get_by_id(player_id))
-    assert_player_owns(player, current_user['sub'])
-
-    async def generator():
-      q = event_bus.subscribe_player(player_id)
-      try:
-        while True:
-          if await request.is_disconnected():
-            break
-          try:
-            event = await asyncio.wait_for(q.get(), timeout=15.0)
-            yield f'data: {json.dumps(event)}\n\n'
-          except asyncio.TimeoutError:
-            yield ': heartbeat\n\n'
-      finally:
-        event_bus.unsubscribe_player(player_id, q)
-
-    return StreamingResponse(generator(), media_type='text/event-stream')
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(player_id), current_user['sub']
+    )
+    return StreamingResponse(
+      sse_stream(
+        request,
+        lambda: event_bus.subscribe_player(player_id),
+        lambda q: event_bus.unsubscribe_player(player_id, q),
+      ),
+      media_type='text/event-stream',
+    )
 
   @router.get(
     '/games/{game_id}',
@@ -154,10 +154,9 @@ def create_game_router(
     """Delete a game. Only lobby games can be deleted."""
     repo = GameRepository(conn)
     game = assert_game_exists(await repo.get_by_id(game_id))
-    player = assert_player_exists(
-      await PlayerRepository(conn).get_by_id(game.creator_id)
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(game.creator_id), current_user['sub']
     )
-    assert_player_owns(player, current_user['sub'])
     assert_game_deletable(game)
     await repo.soft_delete(game_id)
     event_bus.publish_lobby()
@@ -178,8 +177,9 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Leave a lobby game. The creator cannot leave — delete the game instead."""
-    player = assert_player_exists(await PlayerRepository(conn).get_by_id(player_id))
-    assert_player_owns(player, current_user['sub'])
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(player_id), current_user['sub']
+    )
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_player_in_game(game, player_id)
@@ -208,10 +208,9 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Join a game that is in the lobby. Up to 6 players can join."""
-    player = assert_player_exists(
-      await PlayerRepository(conn).get_by_id(body.player_id)
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(body.player_id), current_user['sub']
     )
-    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_player_not_in_game(game, body.player_id)
@@ -240,10 +239,9 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Start a game. Only the creator can start it."""
-    player = assert_player_exists(
-      await PlayerRepository(conn).get_by_id(body.player_id)
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(body.player_id), current_user['sub']
     )
-    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_in_lobby(game)
     assert_is_creator(game, body.player_id)
@@ -276,10 +274,9 @@ def create_game_router(
     repo = GameRepository(conn)
     game = assert_game_exists(await repo.get_by_id(game_id))
     assert_game_active(game)
-    player = assert_player_exists(
-      await PlayerRepository(conn).get_by_id(game.creator_id)
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(game.creator_id), current_user['sub']
     )
-    assert_player_owns(player, current_user['sub'])
     aborted = await repo.abort(game_id)
     if aborted is None:
       raise HTTPException(status_code=409, detail='Game could not be aborted')
@@ -305,10 +302,9 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> DiceResponse:
     """Roll dice for the current player's turn. Pass kept_dice to hold specific dice between rolls."""
-    player = assert_player_exists(
-      await PlayerRepository(conn).get_by_id(body.player_id)
+    assert_player_exists_and_owns(
+      await PlayerRepository(conn).get_by_id(body.player_id), current_user['sub']
     )
-    assert_player_owns(player, current_user['sub'])
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_active(game)
     roll_repo = RollRepository(conn)
@@ -348,20 +344,13 @@ def create_game_router(
   ) -> StreamingResponse:
     """SSE stream: fires when in-game state changes (roll, score, abort)."""
 
-    async def generator():
-      q = event_bus.subscribe_game(game_id)
-      try:
-        while True:
-          if await request.is_disconnected():
-            break
-          try:
-            event = await asyncio.wait_for(q.get(), timeout=15.0)
-            yield f'data: {json.dumps(event)}\n\n'
-          except asyncio.TimeoutError:
-            yield ': heartbeat\n\n'
-      finally:
-        event_bus.unsubscribe_game(game_id, q)
-
-    return StreamingResponse(generator(), media_type='text/event-stream')
+    return StreamingResponse(
+      sse_stream(
+        request,
+        lambda: event_bus.subscribe_game(game_id),
+        lambda q: event_bus.unsubscribe_game(game_id, q),
+      ),
+      media_type='text/event-stream',
+    )
 
   return router

@@ -89,6 +89,12 @@ def assert_player_owns(player: Player, account_id: str) -> None:
     raise HTTPException(status_code=403, detail='Forbidden')
 
 
+def assert_player_exists_and_owns(player: Player | None, account_id: str) -> Player:
+  player = assert_player_exists(player)
+  assert_player_owns(player, account_id)
+  return player
+
+
 def assert_sequential_category(
   categories: list[ScoreCategory],
   is_sequential: bool,

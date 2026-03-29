@@ -4,6 +4,7 @@ import aiomysql
 from app.auth import make_get_current_user
 from app.config import Settings
 from app.database import Database
+from app.games.guards import assert_player_exists_and_owns
 from app.players.player import Player, PlayerCreate, PlayerUpdate
 from app.players.player_repository import PlayerRepository
 from app.players.player_stats import PlayerStats
@@ -113,11 +114,7 @@ def create_player_router(database: Database, settings: Settings) -> APIRouter:
   ) -> Player:
     """Update a player's name."""
     repo = PlayerRepository(conn)
-    player = await repo.get_by_id(player_id)
-    if player is None:
-      raise HTTPException(status_code=404, detail='Player not found')
-    if player.account_id != current_user['sub']:
-      raise HTTPException(status_code=403, detail='Forbidden')
+    assert_player_exists_and_owns(await repo.get_by_id(player_id), current_user['sub'])
     updated = await repo.update(player_id, body.name)
     assert updated is not None
     return updated
@@ -138,11 +135,7 @@ def create_player_router(database: Database, settings: Settings) -> APIRouter:
   ) -> Response:
     """Delete a player."""
     repo = PlayerRepository(conn)
-    player = await repo.get_by_id(player_id)
-    if player is None:
-      raise HTTPException(status_code=404, detail='Player not found')
-    if player.account_id != current_user['sub']:
-      raise HTTPException(status_code=403, detail='Forbidden')
+    assert_player_exists_and_owns(await repo.get_by_id(player_id), current_user['sub'])
     await repo.delete(player_id)
     return Response(status_code=204)
 

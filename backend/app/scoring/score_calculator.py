@@ -2,6 +2,10 @@ from collections import Counter
 from app.scoring.score_category import ScoreCategory
 
 
+def _with_count(counts: Counter, n: int) -> list[int]:
+  return [v for v, c in counts.items() if c >= n]
+
+
 def calculate(category: ScoreCategory, dice: list[int]) -> int:
   counts = Counter(dice)
 
@@ -19,27 +23,27 @@ def calculate(category: ScoreCategory, dice: list[int]) -> int:
     return counts[6] * 6
 
   if category == ScoreCategory.ONE_PAIR:
-    pairs = sorted([v for v, c in counts.items() if c >= 2], reverse=True)
+    pairs = sorted(_with_count(counts, 2), reverse=True)
     return pairs[0] * 2 if pairs else 0
 
   if category == ScoreCategory.TWO_PAIRS:
-    pairs = sorted([v for v, c in counts.items() if c >= 2], reverse=True)
+    pairs = sorted(_with_count(counts, 2), reverse=True)
     return sum(v * 2 for v in pairs[:2]) if len(pairs) >= 2 else 0
 
   if category == ScoreCategory.THREE_PAIRS:
-    pairs = [v for v, c in counts.items() if c >= 2]
+    pairs = _with_count(counts, 2)
     return sum(v * 2 for v in pairs) if len(pairs) >= 3 else 0
 
   if category == ScoreCategory.THREE_OF_A_KIND:
-    trips = [v for v, c in counts.items() if c >= 3]
+    trips = _with_count(counts, 3)
     return max(trips) * 3 if trips else 0
 
   if category == ScoreCategory.FOUR_OF_A_KIND:
-    fours = [v for v, c in counts.items() if c >= 4]
+    fours = _with_count(counts, 4)
     return max(fours) * 4 if fours else 0
 
   if category == ScoreCategory.FIVE_OF_A_KIND:
-    fives = [v for v, c in counts.items() if c >= 5]
+    fives = _with_count(counts, 5)
     return max(fives) * 5 if fives else 0
 
   if category == ScoreCategory.SMALL_STRAIGHT:
@@ -52,7 +56,7 @@ def calculate(category: ScoreCategory, dice: list[int]) -> int:
     return 21 if set(counts) == {1, 2, 3, 4, 5, 6} else 0
 
   if category == ScoreCategory.FULL_HOUSE:
-    trips = sorted([v for v, c in counts.items() if c >= 3], reverse=True)
+    trips = sorted(_with_count(counts, 3), reverse=True)
     if not trips:
       return 0
     best_trip = trips[0]
@@ -60,14 +64,14 @@ def calculate(category: ScoreCategory, dice: list[int]) -> int:
     return best_trip * 3 + max(pairs) * 2 if pairs else 0
 
   if category == ScoreCategory.VILLA:
-    trips = [v for v, c in counts.items() if c >= 3]
+    trips = _with_count(counts, 3)
     if len(trips) < 2:
       return 0
     top2 = sorted(trips, reverse=True)[:2]
     return sum(v * 3 for v in top2)
 
   if category == ScoreCategory.TOWER:
-    fours = sorted([v for v, c in counts.items() if c >= 4], reverse=True)
+    fours = sorted(_with_count(counts, 4), reverse=True)
     if not fours:
       return 0
     best_four = fours[0]
