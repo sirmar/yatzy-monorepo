@@ -1,17 +1,20 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, field_validator
+from typing import Annotated
+from pydantic import AfterValidator, BaseModel, EmailStr
+
+
+def _check_password_length(v: str) -> str:
+  if len(v) < 8:
+    raise ValueError('password must be at least 8 characters')
+  return v
+
+
+Password = Annotated[str, AfterValidator(_check_password_length)]
 
 
 class UserCreate(BaseModel):
   email: EmailStr
-  password: str
-
-  @field_validator('password')
-  @classmethod
-  def password_min_length(cls, v: str) -> str:
-    if len(v) < 8:
-      raise ValueError('password must be at least 8 characters')
-    return v
+  password: Password
 
 
 class User(BaseModel):
@@ -45,23 +48,9 @@ class ForgotPasswordRequest(BaseModel):
 
 class ResetPasswordRequest(BaseModel):
   token: str
-  new_password: str
-
-  @field_validator('new_password')
-  @classmethod
-  def password_min_length(cls, v: str) -> str:
-    if len(v) < 8:
-      raise ValueError('password must be at least 8 characters')
-    return v
+  new_password: Password
 
 
 class ChangePasswordRequest(BaseModel):
   current_password: str
-  new_password: str
-
-  @field_validator('new_password')
-  @classmethod
-  def password_min_length(cls, v: str) -> str:
-    if len(v) < 8:
-      raise ValueError('password must be at least 8 characters')
-    return v
+  new_password: Password
