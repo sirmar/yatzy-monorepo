@@ -73,6 +73,7 @@ check:
 	$(MAKE) -C backend check
 	$(MAKE) -C auth check
 	$(MAKE) -C frontend check
+	$(MAKE) -C e2e check
 	$(MAKE) e2e
 
 release-major:
