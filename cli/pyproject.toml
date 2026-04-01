@@ -1,0 +1,26 @@
+[project]
+name = 'yatzy-cli'
+version = '0.1.0'
+requires-python = '>=3.12'
+
+[tool.ruff]
+indent-width = 2
+
+[tool.ruff.format]
+quote-style = 'single'
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = 'single'
+
+[tool.bandit]
+skips = ['B101', 'B311', 'B113']
+
+[tool.coverage.paths]
+source = ['yatzy/', '/app/yatzy/']
+
+[tool.coverage.report]
+omit = ['yatzy/ui.py']
+
+[tool.pytest.ini_options]
+testpaths = ['tests']
+markers = ['integration: requires dev stack running']
