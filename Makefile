@@ -1,4 +1,4 @@
-.PHONY: dev start stop logs ps clean migrate build e2e check \
+.PHONY: dev start stop logs ps clean migrate build e2e check play \
 	prod-up prod-down prod-migrate \
 	release-major release-minor release-patch
 
@@ -69,11 +69,15 @@ prod-migrate:
 	$(DC_PROD) run --rm --no-deps backend dbmate --migrations-dir migrations --no-dump-schema up
 	$(DC_PROD) run --rm --no-deps auth dbmate --migrations-dir migrations --no-dump-schema up
 
+play:
+	$(MAKE) -C cli play
+
 check:
 	$(MAKE) -C backend check
 	$(MAKE) -C auth check
 	$(MAKE) -C frontend check
 	$(MAKE) -C e2e check
+	$(MAKE) -C cli check
 	$(MAKE) e2e
 
 release-major:
