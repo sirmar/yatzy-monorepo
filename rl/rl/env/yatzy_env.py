@@ -13,7 +13,7 @@ _VARIANT = get_variant(GameMode.MAXI)
 
 # Actions 0-63: roll with keep bitmask (bit i = keep die i)
 # Actions 64-83: score category index (0-19 mapped to CATEGORIES)
-ROLL_ACTIONS = 2 ** DICE_COUNT  # 64
+ROLL_ACTIONS = 2**DICE_COUNT  # 64
 SCORE_ACTIONS = len(CATEGORIES)  # 20
 TOTAL_ACTIONS = ROLL_ACTIONS + SCORE_ACTIONS  # 84
 
@@ -36,28 +36,30 @@ _CATEGORY_MAX: dict[ScoreCategory, int] = {
 }
 # The brute-force above won't find all maxima (e.g. TOWER needs 4+2, not 6-of-a-kind).
 # Override with exact values derived from scoring rules.
-_CATEGORY_MAX.update({
-  ScoreCategory.ONES:            6,   # [1,1,1,1,1,1]
-  ScoreCategory.TWOS:            12,  # [2,2,2,2,2,2]
-  ScoreCategory.THREES:          18,  # [3,3,3,3,3,3]
-  ScoreCategory.FOURS:           24,  # [4,4,4,4,4,4]
-  ScoreCategory.FIVES:           30,  # [5,5,5,5,5,5]
-  ScoreCategory.SIXES:           36,  # [6,6,6,6,6,6]
-  ScoreCategory.ONE_PAIR:        12,  # [6,6,_,_,_,_]
-  ScoreCategory.TWO_PAIRS:       22,  # [6,6,5,5,_,_]
-  ScoreCategory.THREE_PAIRS:     30,  # [6,6,5,5,4,4]
-  ScoreCategory.THREE_OF_A_KIND: 18,  # [6,6,6,_,_,_]
-  ScoreCategory.FOUR_OF_A_KIND:  24,  # [6,6,6,6,_,_]
-  ScoreCategory.FIVE_OF_A_KIND:  30,  # [6,6,6,6,6,_]
-  ScoreCategory.SMALL_STRAIGHT:  15,  # [1,2,3,4,5,_]
-  ScoreCategory.LARGE_STRAIGHT:  20,  # [2,3,4,5,6,_]
-  ScoreCategory.FULL_STRAIGHT:   21,  # [1,2,3,4,5,6]
-  ScoreCategory.FULL_HOUSE:      28,  # [6,6,6,5,5,_] = 18+10
-  ScoreCategory.VILLA:           33,  # [6,6,6,5,5,5] = 18+15
-  ScoreCategory.TOWER:           34,  # [6,6,6,6,5,5] = 24+10
-  ScoreCategory.CHANCE:          36,  # [6,6,6,6,6,6]
-  ScoreCategory.MAXI_YATZY:      100,
-})
+_CATEGORY_MAX.update(
+  {
+    ScoreCategory.ONES: 6,  # [1,1,1,1,1,1]
+    ScoreCategory.TWOS: 12,  # [2,2,2,2,2,2]
+    ScoreCategory.THREES: 18,  # [3,3,3,3,3,3]
+    ScoreCategory.FOURS: 24,  # [4,4,4,4,4,4]
+    ScoreCategory.FIVES: 30,  # [5,5,5,5,5,5]
+    ScoreCategory.SIXES: 36,  # [6,6,6,6,6,6]
+    ScoreCategory.ONE_PAIR: 12,  # [6,6,_,_,_,_]
+    ScoreCategory.TWO_PAIRS: 22,  # [6,6,5,5,_,_]
+    ScoreCategory.THREE_PAIRS: 30,  # [6,6,5,5,4,4]
+    ScoreCategory.THREE_OF_A_KIND: 18,  # [6,6,6,_,_,_]
+    ScoreCategory.FOUR_OF_A_KIND: 24,  # [6,6,6,6,_,_]
+    ScoreCategory.FIVE_OF_A_KIND: 30,  # [6,6,6,6,6,_]
+    ScoreCategory.SMALL_STRAIGHT: 15,  # [1,2,3,4,5,_]
+    ScoreCategory.LARGE_STRAIGHT: 20,  # [2,3,4,5,6,_]
+    ScoreCategory.FULL_STRAIGHT: 21,  # [1,2,3,4,5,6]
+    ScoreCategory.FULL_HOUSE: 28,  # [6,6,6,5,5,_] = 18+10
+    ScoreCategory.VILLA: 33,  # [6,6,6,5,5,5] = 18+15
+    ScoreCategory.TOWER: 34,  # [6,6,6,6,5,5] = 24+10
+    ScoreCategory.CHANCE: 36,  # [6,6,6,6,6,6]
+    ScoreCategory.MAXI_YATZY: 100,
+  }
+)
 
 
 def _observe(state: GameState) -> np.ndarray:
@@ -116,17 +118,21 @@ class YatzyEnv(gym.Env):
     self._mask_yatzy = mask_yatzy
     self.observation_space = spaces.Box(
       low=np.array(
-        [1.0] * DICE_COUNT +          # dice values min
-        [0.0] * DICE_COUNT +          # kept flags min
-        [0.0, 0.0, 0.0] +             # rolls_remaining, saved_rolls, has_rolled min
-        [-1.0] * SCORE_ACTIONS,       # category scores min
+        [1.0] * DICE_COUNT  # dice values min
+        + [0.0] * DICE_COUNT  # kept flags min
+        + [0.0, 0.0, 0.0]  # rolls_remaining, saved_rolls, has_rolled min
+        + [-1.0] * SCORE_ACTIONS,  # category scores min
         dtype=np.float32,
       ),
       high=np.array(
-        [6.0] * DICE_COUNT +          # dice values max
-        [1.0] * DICE_COUNT +          # kept flags max
-        [3.0, float(MAX_SAVED_ROLLS), 1.0] +  # rolls_remaining, saved_rolls, has_rolled max
-        [100.0] * SCORE_ACTIONS,      # category scores max
+        [6.0] * DICE_COUNT  # dice values max
+        + [1.0] * DICE_COUNT  # kept flags max
+        + [
+          3.0,
+          float(MAX_SAVED_ROLLS),
+          1.0,
+        ]  # rolls_remaining, saved_rolls, has_rolled max
+        + [100.0] * SCORE_ACTIONS,  # category scores max
         dtype=np.float32,
       ),
       dtype=np.float32,
@@ -142,7 +148,9 @@ class YatzyEnv(gym.Env):
   ) -> tuple[np.ndarray, dict]:
     super().reset(seed=seed)
     self._state = engine.new_game()
-    return _observe(self._state), {'action_mask': _action_mask(self._state, self._mask_yatzy)}
+    return _observe(self._state), {
+      'action_mask': _action_mask(self._state, self._mask_yatzy)
+    }
 
   def step(self, action: int) -> tuple[np.ndarray, float, bool, bool, dict]:
     mask = _action_mask(self._state, self._mask_yatzy)

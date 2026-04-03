@@ -4,7 +4,7 @@ services:
   agent:
     build:
       context: ..
-      dockerfile: agent/Dockerfile
+      dockerfile: rl/Dockerfile
       target: dev
     environment:
       - PYTHONPATH=/agent:/bot
@@ -20,7 +20,7 @@ services:
   tensorboard:
     build:
       context: ..
-      dockerfile: agent/Dockerfile
+      dockerfile: rl/Dockerfile
       target: dev
     environment:
       - PYTHONPATH=/agent:/bot

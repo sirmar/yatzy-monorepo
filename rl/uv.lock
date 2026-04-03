@@ -692,7 +692,7 @@ wheels = [
 ]
 
 [[package]]
-name = "yatzy-agent"
+name = "yatzy-rl"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [

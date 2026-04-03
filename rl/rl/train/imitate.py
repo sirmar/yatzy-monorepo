@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 import torch
 from sb3_contrib import MaskablePPO
-from agent.env.yatzy_env import YatzyEnv, ROLL_ACTIONS, _observe, _action_mask
+from rl.env.yatzy_env import YatzyEnv, ROLL_ACTIONS, _observe, _action_mask
 from app.sim import engine, rule_bot
 from app.sim.game_state import CATEGORIES
 from yatzy_rules.score_category import ScoreCategory as Category
@@ -64,7 +64,7 @@ def train(
     total_loss = 0.0
     n_batches = 0
     for start in range(0, n_samples, batch_size):
-      idx = indices[start:start + batch_size]
+      idx = indices[start : start + batch_size]
       _, log_probs, _ = model.policy.evaluate_actions(
         obs_t[idx],
         act_t[idx],

@@ -4,7 +4,7 @@ from multiprocessing import Pool, cpu_count
 from tqdm import tqdm
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
-from agent.env.yatzy_env import YatzyEnv, ROLL_ACTIONS, CATEGORIES
+from rl.env.yatzy_env import YatzyEnv, ROLL_ACTIONS
 from app.sim import engine
 from yatzy_rules.scoring_rules import UPPER_CATEGORIES, BONUS_THRESHOLD, BONUS_SCORE
 from yatzy_rules.score_category import ScoreCategory
@@ -14,7 +14,9 @@ def mask_fn(env: YatzyEnv) -> list:
   return env.action_masks()
 
 
-def run_episode(model: MaskablePPO, deterministic: bool = True) -> tuple[int, dict, int, int]:
+def run_episode(
+  model: MaskablePPO, deterministic: bool = True
+) -> tuple[int, dict, int, int]:
   env = YatzyEnv()
   obs, _ = env.reset()
   done = False
@@ -22,7 +24,11 @@ def run_episode(model: MaskablePPO, deterministic: bool = True) -> tuple[int, di
   rolls_spent = 0
 
   while not done:
-    action = int(model.predict(obs, action_masks=env.action_masks(), deterministic=deterministic)[0])
+    action = int(
+      model.predict(obs, action_masks=env.action_masks(), deterministic=deterministic)[
+        0
+      ]
+    )
 
     if action < ROLL_ACTIONS:
       if env._state.rolls_remaining == 0:
@@ -39,7 +45,9 @@ def run_episode(model: MaskablePPO, deterministic: bool = True) -> tuple[int, di
 
 def _worker(args: tuple) -> tuple[int, dict, int, int]:
   model_path, deterministic = args
-  import os, sys
+  import os
+  import sys
+
   env = ActionMasker(YatzyEnv(), mask_fn)
   with open(os.devnull, 'w') as devnull:
     old_out, old_err = sys.stdout, sys.stderr
@@ -51,7 +59,9 @@ def _worker(args: tuple) -> tuple[int, dict, int, int]:
   return run_episode(model, deterministic=deterministic)
 
 
-def evaluate(model_path: str, n_episodes: int, deterministic: bool, workers: int) -> None:
+def evaluate(
+  model_path: str, n_episodes: int, deterministic: bool, workers: int
+) -> None:
   scores = []
   bonus_earned = 0
   yatzy_scored = 0
@@ -60,10 +70,12 @@ def evaluate(model_path: str, n_episodes: int, deterministic: bool, workers: int
   total_spent = []
 
   with Pool(workers) as pool:
-    results = list(tqdm(
-      pool.imap_unordered(_worker, [(model_path, deterministic)] * n_episodes),
-      total=n_episodes,
-    ))
+    results = list(
+      tqdm(
+        pool.imap_unordered(_worker, [(model_path, deterministic)] * n_episodes),
+        total=n_episodes,
+      )
+    )
 
   for final, scorecard, banked, spent in results:
     scores.append(final)
@@ -89,9 +101,15 @@ def evaluate(model_path: str, n_episodes: int, deterministic: bool, workers: int
   print(f'Max:          {scores_arr.max()}')
   print(f'Median:       {np.median(scores_arr):.1f}')
   print()
-  print(f'Bonus earned: {bonus_earned}/{n_episodes} ({100 * bonus_earned / n_episodes:.1f}%)')
-  print(f'Maxi Yatzy:   {yatzy_scored}/{n_episodes} ({100 * yatzy_scored / n_episodes:.1f}%)')
-  print(f'Upper mean:   {upper_arr.mean():.1f} (threshold: {BONUS_THRESHOLD}, bonus: {BONUS_SCORE})')
+  print(
+    f'Bonus earned: {bonus_earned}/{n_episodes} ({100 * bonus_earned / n_episodes:.1f}%)'
+  )
+  print(
+    f'Maxi Yatzy:   {yatzy_scored}/{n_episodes} ({100 * yatzy_scored / n_episodes:.1f}%)'
+  )
+  print(
+    f'Upper mean:   {upper_arr.mean():.1f} (threshold: {BONUS_THRESHOLD}, bonus: {BONUS_SCORE})'
+  )
   print()
   print(f'Rolls banked: {banked_arr.mean():.1f} avg, {banked_arr.sum()} total')
   print(f'Rolls spent:  {spent_arr.mean():.1f} avg, {spent_arr.sum()} total')
