@@ -1,0 +1,29 @@
+[project]
+name = 'yatzy-bot'
+version = '0.1.0'
+requires-python = '>=3.14'
+dependencies = ['fastapi[standard]', 'yatzy-rules']
+
+[tool.uv.sources]
+yatzy-rules = {path = '../shared'}
+
+[project.optional-dependencies]
+dev = [
+  'pytest',
+  'pytest-asyncio',
+  'httpx',
+  'ruff',
+]
+
+[tool.ruff]
+indent-width = 2
+
+[tool.ruff.format]
+quote-style = 'single'
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = 'single'
+
+[tool.pytest.ini_options]
+asyncio_mode = 'auto'
+testpaths = ['tests']

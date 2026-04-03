@@ -1,0 +1,34 @@
+from fastapi import APIRouter
+from pydantic import BaseModel
+from sim.game_state import GameState
+from sim import rule_bot
+from yatzy_rules.score_category import ScoreCategory as Category
+
+router = APIRouter()
+
+
+class ActionRequest(BaseModel):
+  dice: list[int]
+  kept: list[bool]
+  rolls_remaining: int
+  saved_rolls: int
+  has_rolled: bool
+  scores: dict[Category, int]
+
+
+class KeepResponse(BaseModel):
+  action: str = 'roll'
+  keep: list[bool]
+
+
+class ScoreResponse(BaseModel):
+  action: str = 'score'
+  category: Category
+
+
+@router.post('/action')
+def get_action(req: ActionRequest) -> KeepResponse | ScoreResponse:
+  act = rule_bot.action(GameState(**req.model_dump()))
+  if isinstance(act, list):
+    return KeepResponse(keep=act)
+  return ScoreResponse(category=act)
