@@ -38,10 +38,11 @@ make shell      # bash shell inside app container
 ## Testing
 
 ```bash
-make unit       # unit tests
-make e2e        # end-to-end tests (spins up test DB)
-make test       # unit + e2e
-make check      # lint + types + security + tests
+make unit         # unit tests
+make e2e          # end-to-end tests (spins up test DB)
+make test         # unit + e2e
+make fast-check   # lint + types + security + unit (no e2e)
+make check        # fast-check + e2e
 ```
 
 ## Configuration
