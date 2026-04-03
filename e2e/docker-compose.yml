@@ -31,7 +31,8 @@ services:
   backend:
     image: backend-prod
     build:
-      context: ../backend
+      context: ..
+      dockerfile: backend/Dockerfile
       target: prod
     environment:
       DATABASE_URL: mysql://root:test@yatzy-db:3306/yatzy

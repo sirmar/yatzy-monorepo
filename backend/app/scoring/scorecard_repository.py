@@ -1,6 +1,6 @@
 import aiomysql
-from app.games.game_variant import GameVariant
-from app.scoring.score_category import ScoreCategory
+from yatzy_rules.game_variant import GameVariant
+from yatzy_rules.score_category import ScoreCategory
 from app.scoring.scorecard import PlayerScorecard, ScoreEntry, Scorecard
 from app.scoring.scoring_rules import calculate_bonus
 

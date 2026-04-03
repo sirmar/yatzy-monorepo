@@ -32,7 +32,7 @@ from app.games.game_repository import GameRepository
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_state import GameState
 from app.games.game_state_repository import GameStateRepository
-from app.games.game_variant import get_variant
+from yatzy_rules.game_variant import get_variant
 from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.players.player_repository import PlayerRepository

@@ -1,9 +1,9 @@
 import aiomysql
 from app.games.dice import Die
-from app.games.game_mode import GameMode
+from yatzy_rules.game_mode import GameMode
 from app.games.game_state import GameState, PlayerScore
 from app.games.game_status import GameStatus
-from app.games.game_variant import get_variant
+from yatzy_rules.game_variant import get_variant
 from app.scoring.scoring_rules import calculate_bonus
 
 

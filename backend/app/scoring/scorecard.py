@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from app.scoring.score_category import ScoreCategory
+from yatzy_rules.score_category import ScoreCategory
 
 
 class ScoreEntry(BaseModel):

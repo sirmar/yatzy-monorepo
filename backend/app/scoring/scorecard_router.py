@@ -7,7 +7,7 @@ from app.database import Database
 from app.events import EventBus
 from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
-from app.games.game_variant import get_variant
+from yatzy_rules.game_variant import get_variant
 from app.games.guards import (
   assert_game_exists,
   assert_game_active,

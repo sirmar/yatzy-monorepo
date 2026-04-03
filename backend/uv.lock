@@ -1029,6 +1029,7 @@ dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
+    { name = "yatzy-rules" },
 ]
 
 [package.optional-dependencies]
@@ -1058,5 +1059,11 @@ requires-dist = [
     { name = "pytest-shard", marker = "extra == 'dev'", specifier = ">=0.1.2" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "ty", marker = "extra == 'dev'" },
+    { name = "yatzy-rules", directory = "../shared" },
 ]
 provides-extras = ["dev"]
+
+[[package]]
+name = "yatzy-rules"
+version = "0.1.0"
+source = { directory = "../shared" }

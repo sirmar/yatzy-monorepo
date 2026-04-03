@@ -2,7 +2,7 @@ from fastapi import HTTPException
 from app.games.game import Game
 from app.games.game_status import GameStatus
 from app.players.player import Player
-from app.scoring.score_category import ScoreCategory
+from yatzy_rules.score_category import ScoreCategory
 
 BASE_ROLLS_PER_TURN = 3
 

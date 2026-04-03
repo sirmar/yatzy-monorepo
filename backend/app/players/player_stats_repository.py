@@ -1,7 +1,7 @@
 from collections import defaultdict
 import aiomysql
-from app.games.game_mode import GameMode
-from app.games.game_variant import get_variant
+from yatzy_rules.game_mode import GameMode
+from yatzy_rules.game_variant import get_variant
 from app.players.player_stats import ModeStats, PlayerStats
 
 

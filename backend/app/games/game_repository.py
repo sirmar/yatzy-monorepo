@@ -1,6 +1,6 @@
 import aiomysql
 from app.games.game import Game
-from app.games.game_mode import GameMode
+from yatzy_rules.game_mode import GameMode
 from app.games.game_status import GameStatus
 
 

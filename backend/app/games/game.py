@@ -1,6 +1,6 @@
 from datetime import datetime
 from pydantic import BaseModel, Field
-from app.games.game_mode import GameMode
+from yatzy_rules.game_mode import GameMode
 from app.games.game_status import GameStatus
 
 

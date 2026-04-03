@@ -19,14 +19,18 @@ services:
     container_name: yatzy-backend
     image: backend-dev
     build:
-      context: backend
+      context: .
+      dockerfile: backend/Dockerfile
       target: dev
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - '8000:8000'
+    environment:
+      - UV_LINK_MODE=copy
     volumes:
       - ./backend:/app
       - /app/.venv
+      - ./shared:/shared
     env_file: backend/.env
     depends_on:
       yatzy-db:

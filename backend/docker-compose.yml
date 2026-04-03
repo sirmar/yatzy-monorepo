@@ -20,7 +20,8 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
+      dockerfile: backend/Dockerfile
       target: prod
     ports:
       - '8000:8000'
