@@ -35,9 +35,9 @@ jobs:
           context: cli
           target: dev
           push: true
-          tags: ghcr.io/${{ github.repository }}:cli-dev-${{ github.sha }}
-          cache-from: type=gha,scope=cli-dev
-          cache-to: type=gha,mode=max,scope=cli-dev
+          tags: ghcr.io/${{ github.repository }}:yatzy-cli-dev-${{ github.sha }}
+          cache-from: type=gha,scope=yatzy-cli-dev
+          cache-to: type=gha,mode=max,scope=yatzy-cli-dev
 
   check:
     needs: build
@@ -50,7 +50,7 @@ jobs:
       - uses: ./.github/actions/pull-image
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          images: cli-dev
+          images: yatzy-cli-dev
       - run: make -C cli ${{ matrix.target }}
 
   unit:
@@ -61,7 +61,7 @@ jobs:
       - uses: ./.github/actions/pull-image
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          images: cli-dev
+          images: yatzy-cli-dev
       - run: make -C cli unit-cov
       - uses: actions/upload-artifact@v4
         with:
@@ -83,7 +83,7 @@ jobs:
       - uses: ./.github/actions/pull-image
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          images: cli-dev
+          images: yatzy-cli-dev
       - uses: docker/build-push-action@v6
         with:
           context: .
