@@ -1,4 +1,4 @@
-.PHONY: dev start stop logs ps clean migrate build e2e check play \
+.PHONY: dev start stop logs ps clean migrate build e2e check fast-check play \
 	prod-up prod-down prod-migrate \
 	release-major release-minor release-patch
 
@@ -72,7 +72,17 @@ prod-migrate:
 play:
 	$(MAKE) -C cli play
 
+fast-check:
+	$(MAKE) -C shared fast-check
+	$(MAKE) -C bot fast-check
+	$(MAKE) -C backend fast-check
+	$(MAKE) -C auth fast-check
+	$(MAKE) -C frontend fast-check
+	$(MAKE) -C cli fast-check
+
 check:
+	$(MAKE) -C shared check
+	$(MAKE) -C bot check
 	$(MAKE) -C backend check
 	$(MAKE) -C auth check
 	$(MAKE) -C frontend check

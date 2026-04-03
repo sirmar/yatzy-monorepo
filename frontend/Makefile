@@ -1,4 +1,4 @@
-.PHONY: dev shell schema auth-schema format lint types unit coverage security test check build rebuild
+.PHONY: dev shell schema auth-schema format lint types unit coverage security test check fast-check build rebuild
 
 IMAGE := frontend-dev
 
@@ -49,5 +49,7 @@ security:
 	docker run --rm -v $(CURDIR):/app -v /app/node_modules $(IMAGE) pnpm audit --audit-level=moderate
 
 test: unit
+
+fast-check: check
 
 check: lint types security test

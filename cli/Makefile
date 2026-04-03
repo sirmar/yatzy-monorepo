@@ -1,5 +1,5 @@
 .PHONY: play build rebuild lint types security format unit unit-cov \
-	integration integration-cov test coverage check
+	integration integration-cov test coverage check fast-check
 
 IMAGE := yatzy-cli-dev
 
@@ -81,4 +81,6 @@ coverage:
 		pytest -q tests/ --cov=yatzy; \
 	$(DC_TEST) stop backend auth auth-db yatzy-db
 
-check: lint types security unit integration-cov
+fast-check: lint types security unit
+
+check: fast-check integration-cov

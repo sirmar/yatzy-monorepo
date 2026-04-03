@@ -1,5 +1,5 @@
 .PHONY: dev shell db migrate format lint types security \
-	unit unit-cov e2e e2e-cov test coverage check build rebuild
+	unit unit-cov e2e e2e-cov test coverage check fast-check build rebuild
 
 IMAGE := backend-dev
 
@@ -78,4 +78,6 @@ coverage:
 	$(DC_TEST) run --rm --no-deps backend-test uv run --quiet pytest -q tests/ --cov=app; \
 	$(DC_TEST) stop yatzy-db-test
 
-check: lint types security test
+fast-check: lint types security unit
+
+check: fast-check e2e
