@@ -18,9 +18,6 @@ imitate:
 evaluate:
 	$(DC) run --rm agent uv run python -m agent.train.evaluate --model $(MODEL) $(ARGS)
 
-evaluate-rule-bot:
-	$(DC) run --rm agent uv run python -m agent.train.evaluate_rule_bot $(ARGS)
-
 tensorboard:
 	$(DC) up tensorboard
 

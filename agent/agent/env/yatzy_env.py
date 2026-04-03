@@ -1,8 +1,8 @@
 import numpy as np
 import gymnasium as gym
 from gymnasium import spaces
-from sim.game_state import GameState, CATEGORIES, DICE_COUNT
-from sim import engine
+from app.sim.game_state import GameState, CATEGORIES, DICE_COUNT
+from app.sim import engine
 from yatzy_rules.scoring_rules import UPPER_CATEGORIES
 from yatzy_rules.score_category import ScoreCategory
 from yatzy_rules.score_calculator import calculate

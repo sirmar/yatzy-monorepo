@@ -5,7 +5,7 @@ from tqdm import tqdm
 from sb3_contrib import MaskablePPO
 from sb3_contrib.common.wrappers import ActionMasker
 from agent.env.yatzy_env import YatzyEnv, ROLL_ACTIONS, CATEGORIES
-from sim import engine
+from app.sim import engine
 from yatzy_rules.scoring_rules import UPPER_CATEGORIES, BONUS_THRESHOLD, BONUS_SCORE
 from yatzy_rules.score_category import ScoreCategory
 

@@ -6,7 +6,7 @@ from sb3_contrib.common.maskable.callbacks import MaskableEvalCallback
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.callbacks import CheckpointCallback
 from agent.env.yatzy_env import YatzyEnv
-from sim import engine
+from app.sim import engine
 from yatzy_rules.scoring_rules import UPPER_CATEGORIES, BONUS_THRESHOLD
 from yatzy_rules.score_category import ScoreCategory
 

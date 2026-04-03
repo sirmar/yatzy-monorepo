@@ -3,8 +3,8 @@ import numpy as np
 import torch
 from sb3_contrib import MaskablePPO
 from agent.env.yatzy_env import YatzyEnv, ROLL_ACTIONS, _observe, _action_mask
-from sim import engine, rule_bot
-from sim.game_state import CATEGORIES
+from app.sim import engine, rule_bot
+from app.sim.game_state import CATEGORIES
 from yatzy_rules.score_category import ScoreCategory as Category
 
 

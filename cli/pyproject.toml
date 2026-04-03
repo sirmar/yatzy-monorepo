@@ -15,6 +15,9 @@ inline-quotes = 'single'
 [tool.bandit]
 skips = ['B101', 'B311', 'B113']
 
+[tool.coverage.run]
+source = ['yatzy']
+
 [tool.coverage.paths]
 source = ['yatzy/', '/app/yatzy/']
 
