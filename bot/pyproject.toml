@@ -11,8 +11,10 @@ yatzy-rules = {path = '../shared'}
 dev = [
   'pytest',
   'pytest-asyncio',
+  'pytest-cov',
   'httpx',
   'ruff',
+  'ty',
 ]
 
 [tool.ruff]
@@ -27,3 +29,6 @@ inline-quotes = 'single'
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
 testpaths = ['tests']
+
+[tool.coverage.paths]
+source = ['app/', 'sim/', '/bot/app/', '/bot/sim/']

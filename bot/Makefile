@@ -1,4 +1,6 @@
-.PHONY: dev build rebuild format lint test
+.PHONY: dev build rebuild format lint types test coverage check fast-check
+
+IMAGE := yatzy-bot-bot
 
 DC := docker compose --progress quiet
 
@@ -11,13 +13,26 @@ build:
 rebuild:
 	$(DC) build --no-cache bot
 
-
-
 format:
-	$(DC) run --rm bot sh -c 'uv run ruff format app/ && uv run ruff check --fix app/'
+	docker run --rm -v $(CURDIR):/bot -v /bot/.venv $(IMAGE) \
+		sh -c 'uv run --quiet ruff format app/ sim/ && uv run --quiet ruff check --fix app/ sim/'
 
 lint:
-	$(DC) run --rm bot sh -c 'uv run ruff check app/ && uv run ruff format --check app/'
+	docker run --rm -v $(CURDIR):/bot -v /bot/.venv $(IMAGE) \
+		sh -c 'uv run --quiet ruff check app/ sim/ && uv run --quiet ruff format --check app/ sim/'
+
+types:
+	docker run --rm -v $(CURDIR):/bot -v /bot/.venv $(IMAGE) \
+		uv run --quiet ty check app/ sim/
 
 test:
-	$(DC) run --rm bot uv run pytest tests/ -v
+	docker run --rm -v $(CURDIR):/bot -v /bot/.venv $(IMAGE) \
+		uv run --quiet pytest -q tests/
+
+coverage:
+	docker run --rm -v $(CURDIR):/bot -v /bot/.venv $(IMAGE) \
+		uv run --quiet pytest -q tests/ --cov=app --cov=sim
+
+fast-check: check
+
+check: lint types test

@@ -3,7 +3,7 @@ from collections.abc import Callable
 from functools import partial
 from yatzy_rules.score_category import ScoreCategory as Category
 from yatzy_rules.score_calculator import calculate
-from sim.game_state import GameState, CATEGORIES, DICE_COUNT
+from sim.game_state import GameState, DICE_COUNT
 from yatzy_rules.scoring_rules import BONUS_SCORE
 
 _UPPER_TARGET_DICE = 4
@@ -82,7 +82,7 @@ def _upper_bonus_contribution(score: float, expected: int) -> float:
   return min(score / expected, 1.0) * (BONUS_SCORE / len(_UPPER_EXPECTED)) * 2
 
 
-def _maxi_yatzy_value(counts: Counter, available: set) -> float:
+def _maxi_yatzy_value(counts: Counter, available: set) -> float | None:
   best_face = max(counts, key=lambda f: (counts[f], f))
   count = counts[best_face]
   if count < 4:
@@ -187,7 +187,9 @@ def _keep_villa(dice: list[int]) -> list[bool]:
 
 def _keep_three_pairs(dice: list[int]) -> list[bool]:
   counts = Counter(dice)
-  faces = sorted([face for face, count in counts.items() if count >= 2], reverse=True)[:3]
+  faces = sorted([face for face, count in counts.items() if count >= 2], reverse=True)[
+    :3
+  ]
   if faces:
     return _keep_pairs_from_faces(dice, faces)
   return _keep_best_single(dice)
@@ -199,7 +201,9 @@ def _keep_full_house(dice: list[int]) -> list[bool]:
 
 def _keep_two_pairs(dice: list[int]) -> list[bool]:
   counts = Counter(dice)
-  faces = sorted([face for face, count in counts.items() if count >= 2], reverse=True)[:2]
+  faces = sorted([face for face, count in counts.items() if count >= 2], reverse=True)[
+    :2
+  ]
   if len(faces) >= 2:
     return _keep_pairs_from_faces(dice, faces)
   return _keep_best_single(dice)
@@ -219,20 +223,20 @@ def _keep_chance(dice: list[int]) -> list[bool]:
 
 _KEEP_DISPATCH: dict[Category, Callable[[list[int]], list[bool]]] = {
   **{cat: partial(_keep_upper, cat) for cat in _CAT_TO_FACE},
-  Category.MAXI_YATZY:      partial(_keep_n_of_a_kind, n=DICE_COUNT),
-  Category.FULL_STRAIGHT:   _keep_for_straight,
-  Category.LARGE_STRAIGHT:  _keep_for_straight,
-  Category.SMALL_STRAIGHT:  _keep_for_straight,
-  Category.TOWER:           _keep_tower,
-  Category.VILLA:           _keep_villa,
-  Category.FIVE_OF_A_KIND:  partial(_keep_n_of_a_kind, n=5),
-  Category.FOUR_OF_A_KIND:  partial(_keep_n_of_a_kind, n=4),
+  Category.MAXI_YATZY: partial(_keep_n_of_a_kind, n=DICE_COUNT),
+  Category.FULL_STRAIGHT: _keep_for_straight,
+  Category.LARGE_STRAIGHT: _keep_for_straight,
+  Category.SMALL_STRAIGHT: _keep_for_straight,
+  Category.TOWER: _keep_tower,
+  Category.VILLA: _keep_villa,
+  Category.FIVE_OF_A_KIND: partial(_keep_n_of_a_kind, n=5),
+  Category.FOUR_OF_A_KIND: partial(_keep_n_of_a_kind, n=4),
   Category.THREE_OF_A_KIND: partial(_keep_n_of_a_kind, n=3),
-  Category.THREE_PAIRS:     _keep_three_pairs,
-  Category.FULL_HOUSE:      _keep_full_house,
-  Category.TWO_PAIRS:       _keep_two_pairs,
-  Category.ONE_PAIR:        _keep_one_pair,
-  Category.CHANCE:          _keep_chance,
+  Category.THREE_PAIRS: _keep_three_pairs,
+  Category.FULL_HOUSE: _keep_full_house,
+  Category.TWO_PAIRS: _keep_two_pairs,
+  Category.ONE_PAIR: _keep_one_pair,
+  Category.CHANCE: _keep_chance,
 }
 
 
