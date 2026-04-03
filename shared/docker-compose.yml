@@ -1,0 +1,10 @@
+name: yatzy-shared
+
+services:
+  shared:
+    build:
+      context: .
+      target: dev
+    volumes:
+      - .:/shared
+      - /shared/.venv

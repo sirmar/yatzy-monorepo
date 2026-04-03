@@ -4,6 +4,15 @@ version = '0.1.0'
 requires-python = '>=3.12'
 dependencies = []
 
+[project.optional-dependencies]
+dev = ['pytest', 'pytest-cov', 'ruff', 'ty']
+
+[tool.pytest.ini_options]
+testpaths = ['tests']
+
+[tool.coverage.paths]
+source = ['yatzy_rules/', '/shared/yatzy_rules/']
+
 [tool.ruff]
 indent-width = 2
 

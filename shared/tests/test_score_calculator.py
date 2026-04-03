@@ -1,5 +1,5 @@
-from app.scoring.score_calculator import calculate
-from app.scoring.score_category import ScoreCategory
+from yatzy_rules.score_calculator import calculate
+from yatzy_rules.score_category import ScoreCategory
 
 
 class TestUpperSection:
