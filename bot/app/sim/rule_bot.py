@@ -3,7 +3,7 @@ from collections.abc import Callable
 from functools import partial
 from yatzy_rules.score_category import ScoreCategory as Category
 from yatzy_rules.score_calculator import calculate
-from sim.game_state import GameState, DICE_COUNT
+from app.sim.game_state import GameState, DICE_COUNT
 from yatzy_rules.scoring_rules import BONUS_SCORE
 
 _UPPER_TARGET_DICE = 4

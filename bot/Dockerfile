@@ -11,7 +11,6 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 FROM base AS prod
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --no-dev
-COPY bot/sim/ sim/
 COPY bot/app/ app/
 EXPOSE 8002
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]

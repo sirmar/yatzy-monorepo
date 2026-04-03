@@ -1,5 +1,5 @@
 from collections import Counter
-from sim.rule_bot import (
+from app.sim.rule_bot import (
   _keep_for_straight,
   _keep_for_target,
   _keep_full_house,

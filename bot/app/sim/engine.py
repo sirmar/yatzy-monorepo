@@ -4,7 +4,12 @@ from yatzy_rules.score_calculator import calculate
 from yatzy_rules.scoring_rules import calculate_bonus
 from yatzy_rules.game_variant import get_variant
 from yatzy_rules.game_mode import GameMode
-from sim.game_state import GameState, DICE_COUNT, ROLLS_PER_TURN, INITIAL_SAVED_ROLLS
+from app.sim.game_state import (
+  GameState,
+  DICE_COUNT,
+  ROLLS_PER_TURN,
+  INITIAL_SAVED_ROLLS,
+)
 
 _VARIANT = get_variant(GameMode.MAXI)
 

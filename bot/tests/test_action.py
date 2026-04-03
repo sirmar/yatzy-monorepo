@@ -1,5 +1,5 @@
-from sim.rule_bot import action
-from sim.game_state import GameState, DICE_COUNT, CATEGORIES
+from app.sim.rule_bot import action
+from app.sim.game_state import GameState, DICE_COUNT, CATEGORIES
 from yatzy_rules.score_category import ScoreCategory as Category
 
 

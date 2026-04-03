@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from sim.game_state import GameState
-from sim import rule_bot
+from app.sim.game_state import GameState
+from app.sim import rule_bot
 from yatzy_rules.score_category import ScoreCategory as Category
 
 router = APIRouter()

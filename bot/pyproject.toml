@@ -2,7 +2,7 @@
 name = 'yatzy-bot'
 version = '0.1.0'
 requires-python = '>=3.14'
-dependencies = ['fastapi[standard]', 'yatzy-rules']
+dependencies = ['fastapi[standard]', 'yatzy-rules', 'numpy>=1.26']
 
 [tool.uv.sources]
 yatzy-rules = {path = '../shared'}
@@ -31,4 +31,4 @@ asyncio_mode = 'auto'
 testpaths = ['tests']
 
 [tool.coverage.paths]
-source = ['app/', 'sim/', '/bot/app/', '/bot/sim/']
+source = ['app/', '/bot/app/']
