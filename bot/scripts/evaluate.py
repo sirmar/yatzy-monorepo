@@ -76,7 +76,7 @@ def run_episode(verbose: bool = False) -> tuple[int, dict, int, int, int]:
   return engine.final_score(state), dict(state.scores), rolls_banked, rolls_spent, chance_turn
 
 
-def evaluate(n_episodes: int = 10000, verbose_episodes: int = 1, workers: int = cpu_count()) -> None:
+def evaluate(n_episodes: int = 10000, verbose_episodes: int = 0, workers: int = cpu_count()) -> None:
   cfg = _config
   variant = cfg['variant']
 
