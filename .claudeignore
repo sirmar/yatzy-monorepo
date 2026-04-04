@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.venv/
+venv/
+.uv/
+
+# Pytest
+.pytest_cache/
+htmlcov/
+
+# Ruff / ty
+.ruff_cache/
+
+# Node
+node_modules
+.pnpm-store
+dist-ssr
+*.local
+.vite
