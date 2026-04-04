@@ -1,4 +1,4 @@
-from yatzy_rules.scoring_rules import calculate_bonus
+from yatzy_rules.score_calculator import calculate_bonus
 
 
 class TestCalculateBonus:

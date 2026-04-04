@@ -1,13 +1,40 @@
 from collections import Counter
-from app.sim.rule_bot import (
-  _keep_for_straight,
-  _keep_for_target,
-  _keep_full_house,
-  _keep_n_of_face,
-  _keep_pairs_from_faces,
-  _keep_top_faces_with_limits,
+from app.sim.bot_core import keep_for_target
+from app.sim.maxi_bot import _CONFIG as _maxi_config
+
+
+def _keep_for_target(dice, cat):
+  return keep_for_target(dice, cat, _maxi_config)
+from app.sim.dice_keep import (
+  keep_for_straight,
+  keep_full_house,
+  keep_n_of_face,
+  keep_pairs_from_faces,
+  keep_top_faces_with_limits,
 )
 from yatzy_rules.score_category import ScoreCategory as Category
+
+_MAXI_STRAIGHTS = [{1, 2, 3, 4, 5, 6}, {2, 3, 4, 5, 6}, {1, 2, 3, 4, 5}]
+
+
+def _keep_for_straight(dice):
+  return keep_for_straight(dice, _MAXI_STRAIGHTS)
+
+
+def _keep_n_of_face(dice, face, n):
+  return keep_n_of_face(dice, face, n)
+
+
+def _keep_pairs_from_faces(dice, faces):
+  return keep_pairs_from_faces(dice, faces)
+
+
+def _keep_top_faces_with_limits(dice, limits):
+  return keep_top_faces_with_limits(dice, limits)
+
+
+def _keep_full_house(dice):
+  return keep_full_house(dice)
 
 
 def test_keep_n_of_face_keeps_up_to_n():

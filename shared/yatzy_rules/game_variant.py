@@ -6,7 +6,10 @@ from yatzy_rules.score_category import ScoreCategory
 @dataclass(frozen=True)
 class GameVariant:
   dice_count: int
+  rolls_per_turn: int
   categories: list[ScoreCategory]
+  yatzy_category: ScoreCategory
+  upper_target_dice: int
   bonus_threshold: int
   bonus_score: int
   saves_rolls: bool
@@ -57,7 +60,10 @@ _YATZY_CATEGORIES = [
 _VARIANTS: dict[GameMode, GameVariant] = {
   GameMode.MAXI: GameVariant(
     dice_count=6,
+    rolls_per_turn=3,
     categories=_MAXI_CATEGORIES,
+    yatzy_category=ScoreCategory.MAXI_YATZY,
+    upper_target_dice=4,
     bonus_threshold=84,
     bonus_score=100,
     saves_rolls=True,
@@ -65,7 +71,10 @@ _VARIANTS: dict[GameMode, GameVariant] = {
   ),
   GameMode.MAXI_SEQUENTIAL: GameVariant(
     dice_count=6,
+    rolls_per_turn=3,
     categories=_MAXI_CATEGORIES,
+    yatzy_category=ScoreCategory.MAXI_YATZY,
+    upper_target_dice=4,
     bonus_threshold=84,
     bonus_score=100,
     saves_rolls=True,
@@ -73,7 +82,10 @@ _VARIANTS: dict[GameMode, GameVariant] = {
   ),
   GameMode.YATZY: GameVariant(
     dice_count=5,
+    rolls_per_turn=3,
     categories=_YATZY_CATEGORIES,
+    yatzy_category=ScoreCategory.YATZY,
+    upper_target_dice=3,
     bonus_threshold=63,
     bonus_score=50,
     saves_rolls=False,
@@ -81,7 +93,10 @@ _VARIANTS: dict[GameMode, GameVariant] = {
   ),
   GameMode.YATZY_SEQUENTIAL: GameVariant(
     dice_count=5,
+    rolls_per_turn=3,
     categories=_YATZY_CATEGORIES,
+    yatzy_category=ScoreCategory.YATZY,
+    upper_target_dice=3,
     bonus_threshold=63,
     bonus_score=50,
     saves_rolls=False,

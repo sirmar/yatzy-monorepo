@@ -1,5 +1,7 @@
-from app.sim.rule_bot import action
-from app.sim.game_state import GameState, DICE_COUNT, CATEGORIES
+from app.sim.maxi_bot import action, DICE_COUNT, _VARIANT
+
+CATEGORIES = _VARIANT.categories
+from app.sim.game_state import GameState
 from yatzy_rules.score_category import ScoreCategory as Category
 
 
@@ -8,6 +10,7 @@ def make_state(dice, rolls_remaining=2, saved_rolls=0, has_rolled=True, scores=N
     dice=dice,
     kept=[False] * DICE_COUNT,
     rolls_remaining=rolls_remaining,
+    categories=_VARIANT.categories,
     saved_rolls=saved_rolls,
     has_rolled=has_rolled,
     scores=scores or {},

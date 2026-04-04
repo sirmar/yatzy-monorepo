@@ -1,5 +1,14 @@
 from collections import Counter
-from yatzy_rules.score_category import ScoreCategory
+from yatzy_rules.score_category import ScoreCategory, UPPER_CATEGORIES
+
+
+def calculate_bonus(
+  scores: dict[str, int],
+  bonus_threshold: int,
+  bonus_score: int,
+) -> int:
+  upper_total = sum(scores.get(cat, 0) for cat in UPPER_CATEGORIES)
+  return bonus_score if upper_total >= bonus_threshold else 0
 
 
 def _with_count(counts: Counter, n: int) -> list[int]:

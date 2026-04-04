@@ -23,3 +23,15 @@ class ScoreCategory(StrEnum):
   CHANCE = 'chance'
   MAXI_YATZY = 'maxi_yatzy'
   YATZY = 'yatzy'
+
+
+UPPER_CATEGORIES = frozenset(
+  {
+    ScoreCategory.ONES,
+    ScoreCategory.TWOS,
+    ScoreCategory.THREES,
+    ScoreCategory.FOURS,
+    ScoreCategory.FIVES,
+    ScoreCategory.SIXES,
+  }
+)
