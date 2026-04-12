@@ -28,7 +28,9 @@ inline-quotes = 'single'
 
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
-testpaths = ['tests']
+testpaths = ['src/tests']
+addopts = ''
+pythonpath = ['src']
 
 [tool.coverage.paths]
-source = ['app/', '/bot/app/']
+source = ['src/app/', '/workspace/src/app/']

@@ -30,19 +30,19 @@ Runs on port **8001**. Interactive docs at `http://localhost:8001/docs`.
 ## Dev setup
 
 ```bash
-make dev        # start service + DB with hot reload
-make migrate    # run pending migrations
-make shell      # bash shell inside app container
+dev up           # start service + DB
+dev watch        # start with hot reload
+dev db-migrate   # run pending migrations
+dev shell        # bash shell inside running container
 ```
 
 ## Testing
 
 ```bash
-make unit         # unit tests
-make e2e          # end-to-end tests (spins up test DB)
-make test         # unit + e2e
-make fast-check   # lint + types + security + unit (no e2e)
-make check        # fast-check + e2e
+dev unit         # unit tests
+dev e2e          # end-to-end tests (spins up test DB)
+dev coverage     # unit + e2e with coverage report
+dev check        # format + lint + types + coverage
 ```
 
 ## Configuration

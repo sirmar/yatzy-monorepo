@@ -1,0 +1,59 @@
+name: Package CI
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        type: string
+        required: true
+      check_targets:
+        type: string
+        required: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: sirmar/dev@main
+      - run: cd ${{ inputs.package }} && dev build
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(inputs.check_targets) }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: sirmar/dev@main
+      - run: cd ${{ inputs.package }} && dev ${{ matrix.target }}
+
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: sirmar/dev@main
+      - run: cd ${{ inputs.package }} && dev coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: ${{ inputs.package }}/coverage.md
+
+  coverage-report:
+    needs: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage
+      - run: echo '## Coverage' >> $GITHUB_STEP_SUMMARY && cat coverage.md >> $GITHUB_STEP_SUMMARY

@@ -17,6 +17,7 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.md
 
 # Ruff / ty
 .ruff_cache/

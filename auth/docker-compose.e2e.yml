@@ -1,0 +1,31 @@
+x-test-base: &test-base
+  volumes:
+    - .:/workspace
+  environment:
+    TEST_DATABASE_URL: mysql://${DEV_DB_USER}:${DEV_DB_PASSWORD}@${DEV_E2E_DB_CONTAINER}:3306/${DEV_DB_NAME}
+  depends_on:
+    auth-db-e2e:
+      condition: service_healthy
+
+services:
+  auth-db-e2e:
+    container_name: ${DEV_E2E_DB_CONTAINER}
+    image: mysql:8
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DEV_DB_PASSWORD}
+      MYSQL_DATABASE: ${DEV_DB_NAME}
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-u${DEV_DB_USER}', '-p${DEV_DB_PASSWORD}']
+      interval: 1s
+      timeout: 5s
+      retries: 30
+
+  e2e:
+    <<: *test-base
+    container_name: ${DEV_E2E_CONTAINER}
+    image: ${DEV_E2E_IMAGE}
+
+  coverage:
+    <<: *test-base
+    container_name: ${DEV_COVERAGE_CONTAINER}
+    image: ${DEV_COVERAGE_IMAGE}

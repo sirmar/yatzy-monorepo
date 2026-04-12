@@ -16,7 +16,6 @@ DBMATE_AUTH := docker run --rm \
 	--env-file auth/.env \
 	ghcr.io/amacneil/dbmate --no-dump-schema
 
-DC_E2E  := docker compose --progress quiet -f e2e/docker-compose.yml
 DC_PROD := docker compose --progress quiet --context prod -f docker-compose.prod.yml --env-file .env.prod
 
 dev:
@@ -45,18 +44,7 @@ build:
 	$(DC) build
 
 e2e:
-	$(DC_E2E) up -d --wait yatzy-db auth-db --quiet-pull
-	docker run --rm --network yatzy-e2e \
-		-v $(PWD)/backend/migrations:/db/migrations \
-		-e DATABASE_URL=mysql://root:test@yatzy-db:3306/yatzy \
-		ghcr.io/amacneil/dbmate --no-dump-schema up
-	docker run --rm --network yatzy-e2e \
-		-v $(PWD)/auth/migrations:/db/migrations \
-		-e DATABASE_URL=mysql://root:test@auth-db:3306/yatzy_auth \
-		ghcr.io/amacneil/dbmate --no-dump-schema up
-	$(DC_E2E) up -d --wait --build backend auth frontend
-	$(DC_E2E) run --rm --no-deps --build e2e; \
-	$(DC_E2E) down
+	cd e2e && dev e2e
 
 prod-up:
 	$(DC_PROD) up -d --wait --quiet-pull
@@ -86,7 +74,7 @@ check:
 	$(MAKE) -C backend check
 	$(MAKE) -C auth check
 	$(MAKE) -C frontend check
-	$(MAKE) -C e2e check
+	cd e2e && dev check
 	$(MAKE) -C cli check
 	$(MAKE) e2e
 

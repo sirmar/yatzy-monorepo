@@ -1,0 +1,8 @@
+DEV_NAME=yatzy-backend
+DEV_REPO_TYPE=service
+DEV_CONTEXT=..
+DEV_NETWORK=yatzy
+DEV_PORT=8000
+DEV_DB_NAME=yatzy
+DEV_DB_USER=root
+DEV_DB_PASSWORD=root

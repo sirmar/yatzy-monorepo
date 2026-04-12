@@ -26,3 +26,20 @@ node_modules
 dist-ssr
 *.local
 .vite
+
+# Lock files
+*.lock
+pnpm-lock.yaml
+
+# Generated files
+frontend/src/api/client.ts
+frontend/src/api/schema.ts
+frontend/src/api/index.ts
+
+# RL artifacts
+rl/checkpoints/
+rl/logs/
+
+# Playwright
+e2e/test-results/
+e2e/playwright-report/

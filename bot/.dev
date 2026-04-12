@@ -1,0 +1,6 @@
+DEV_NAME=yatzy-bot
+DEV_REPO_TYPE=service
+DEV_CONTEXT=..
+DEV_NETWORK=yatzy
+DEV_PORT=8002
+DEV_SCRIPTS="evaluate:scripts/evaluate.py"

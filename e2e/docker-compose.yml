@@ -1,9 +1,5 @@
 name: yatzy-e2e
 
-networks:
-  default:
-    name: yatzy-e2e
-
 services:
   yatzy-db:
     image: mysql:8
@@ -11,7 +7,7 @@ services:
       MYSQL_ROOT_PASSWORD: test
       MYSQL_DATABASE: yatzy
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
       interval: 1s
       timeout: 5s
       retries: 30
@@ -23,10 +19,32 @@ services:
       MYSQL_ROOT_HOST: '%'
       MYSQL_DATABASE: yatzy_auth
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
       interval: 1s
       timeout: 5s
       retries: 30
+
+  backend-migrate:
+    image: ghcr.io/amacneil/dbmate
+    volumes:
+      - ../backend/migrations:/db/migrations
+    environment:
+      DATABASE_URL: mysql://root:test@yatzy-db:3306/yatzy
+    command: --no-dump-schema up
+    depends_on:
+      yatzy-db:
+        condition: service_healthy
+
+  auth-migrate:
+    image: ghcr.io/amacneil/dbmate
+    volumes:
+      - ../auth/migrations:/db/migrations
+    environment:
+      DATABASE_URL: mysql://root:test@auth-db:3306/yatzy_auth
+    command: --no-dump-schema up
+    depends_on:
+      auth-db:
+        condition: service_healthy
 
   backend:
     image: backend-prod
@@ -37,9 +55,14 @@ services:
     environment:
       DATABASE_URL: mysql://root:test@yatzy-db:3306/yatzy
       JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health")']
+      interval: 2s
+      timeout: 5s
+      retries: 20
     depends_on:
-      yatzy-db:
-        condition: service_healthy
+      backend-migrate:
+        condition: service_completed_successfully
 
   auth:
     image: auth-prod
@@ -49,15 +72,20 @@ services:
     environment:
       DATABASE_URL: mysql://root:test@auth-db:3306/yatzy_auth
       JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
+    healthcheck:
+      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8001/health")']
+      interval: 2s
+      timeout: 5s
+      retries: 20
     depends_on:
-      auth-db:
-        condition: service_healthy
+      auth-migrate:
+        condition: service_completed_successfully
 
   frontend:
     image: frontend-prod
     build:
       context: ../frontend
-      target: production
+      target: prod
     ports:
       - '80:80'
     environment:
@@ -69,13 +97,16 @@ services:
       timeout: 5s
       retries: 10
     depends_on:
-      - backend
-      - auth
+      backend:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
 
   e2e:
-    image: e2e
+    image: yatzy-e2e-e2e
     build:
       context: .
+      target: prod
     command: npx playwright test
     environment:
       - BASE_URL=http://frontend:80

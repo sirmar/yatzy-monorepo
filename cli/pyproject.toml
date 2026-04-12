@@ -2,6 +2,21 @@
 name = 'yatzy-cli'
 version = '0.1.0'
 requires-python = '>=3.14'
+dependencies = [
+  'httpx>=0.27',
+  'rich>=13',
+  'prompt_toolkit>=3.0,<4',
+]
+
+[project.optional-dependencies]
+dev = [
+  'pytest>=8',
+  'pytest-cov>=5',
+  'respx>=0.21',
+  'ruff>=0.4',
+  'ty>=0.0.1a1',
+  'bandit>=1.7',
+]
 
 [tool.ruff]
 indent-width = 2
@@ -16,14 +31,15 @@ inline-quotes = 'single'
 skips = ['B101', 'B311', 'B113']
 
 [tool.coverage.run]
-source = ['yatzy']
+source = ['src/yatzy']
 
 [tool.coverage.paths]
-source = ['yatzy/', '/app/yatzy/']
+source = ['src/yatzy/', '/workspace/src/yatzy/']
 
 [tool.coverage.report]
-omit = ['yatzy/ui.py']
+omit = ['src/yatzy/ui.py']
 
 [tool.pytest.ini_options]
-testpaths = ['tests']
+testpaths = ['src/tests']
+pythonpath = ['src']
 markers = ['integration: requires dev stack running']

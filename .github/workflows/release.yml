@@ -29,7 +29,9 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:backend-${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:backend-latest
-          cache-from: type=gha,scope=backend-dev
+          cache-from: |
+            type=gha,scope=yatzy-backend-deps
+            type=gha,scope=yatzy-backend-coverage
           cache-to: type=gha,mode=max,scope=backend-prod
 
   auth:
@@ -50,7 +52,9 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:auth-${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:auth-latest
-          cache-from: type=gha,scope=auth-dev
+          cache-from: |
+            type=gha,scope=yatzy-auth-deps
+            type=gha,scope=yatzy-auth-coverage
           cache-to: type=gha,mode=max,scope=auth-prod
 
   frontend:
@@ -71,5 +75,7 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:frontend-${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:frontend-latest
-          cache-from: type=gha,scope=frontend-dev
+          cache-from: |
+            type=gha,scope=yatzy-frontend-deps
+            type=gha,scope=yatzy-frontend-coverage
           cache-to: type=gha,mode=max,scope=frontend-prod

@@ -1,34 +1,34 @@
-name: yatzy-auth
-
-networks:
-  default:
-    name: yatzy-auth
-
 services:
   auth-db:
+    container_name: ${DEV_DB_CONTAINER}
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_ROOT_HOST: '%'
-      MYSQL_DATABASE: yatzy_auth
+      MYSQL_ROOT_PASSWORD: ${DEV_DB_PASSWORD}
+      MYSQL_DATABASE: ${DEV_DB_NAME}
     volumes:
-      - auth_db_data:/var/lib/mysql
+      - db_data:/var/lib/mysql
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-u${DEV_DB_USER}', '-p${DEV_DB_PASSWORD}']
       interval: 1s
       timeout: 5s
       retries: 30
 
   auth:
+    container_name: ${DEV_CONTAINER}
+    image: ${DEV_IMAGE}
     build:
       context: .
-      target: prod
+      dockerfile: Dockerfile
+    volumes:
+      - .:/workspace
     ports:
-      - '8001:8001'
-    env_file: .env
+      - '${DEV_PORT}:8000'
+    environment:
+      DATABASE_URL: mysql://root:root@${DEV_DB_CONTAINER}:3306/yatzy_auth
+      JWT_SECRET: change-me-in-production-use-a-long-secret
     depends_on:
       auth-db:
         condition: service_healthy
 
 volumes:
-  auth_db_data:
+  db_data:

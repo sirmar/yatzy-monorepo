@@ -9,6 +9,8 @@ A Swedish Maxi Yatzy game built with FastAPI + React.
 - [`backend/`](backend/) — REST API (Python / FastAPI / MySQL)
 - [`auth/`](auth/) — Authentication service (Python / FastAPI / MySQL)
 - [`frontend/`](frontend/) — Web client (TypeScript / React / Vite)
+- [`cli/`](cli/) — Interactive terminal client (Python)
+- [`bot/`](bot/) — AI bot service (Python / FastAPI)
 - [`e2e/`](e2e/) — Full-stack Playwright smoke tests
 
 ## Prerequisites
@@ -23,9 +25,16 @@ make migrate                # first time only: run database migrations
 make -C auth seed           # first time only: create a verified dev account (dev@example.com / devpassword123)
 ```
 
+To play via the terminal client (after the stack is running):
+
+```bash
+cd cli && dev run
+```
+
 - Frontend: http://localhost:5173
 - API: http://localhost:8000
 - Auth: http://localhost:8001
+- Bot: http://localhost:8002
 - Swagger docs: http://localhost:8000/docs
 
 ## Development
@@ -57,6 +66,31 @@ Backend only:
 ```bash
 make -C backend db       # open a MySQL shell
 make -C backend migrate  # run backend migrations only
+```
+
+### Bot
+
+The bot uses the `dev` tool. Run commands from `bot/`:
+
+```bash
+dev up            # start the bot service (port 8002)
+dev watch         # start with hot reload
+dev check         # format + lint + types + coverage
+make evaluate-maxi          # offline bot evaluation
+make evaluate-yatzy
+```
+
+### CLI
+
+The CLI uses the `dev` tool. Run commands from `cli/`:
+
+```bash
+dev run           # launch the interactive terminal client (requires stack running)
+dev lint          # lint
+dev types         # type check
+dev unit          # unit tests
+dev e2e           # integration tests (spins up backend + auth automatically)
+dev check         # format + lint + types + coverage
 ```
 
 ## Deployment

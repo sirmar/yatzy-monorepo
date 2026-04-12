@@ -1,18 +1,11 @@
-name: yatzy-bot
-
 services:
   bot:
+    container_name: ${DEV_CONTAINER}
+    image: ${DEV_IMAGE}
     build:
       context: ..
       dockerfile: bot/Dockerfile
-      target: dev
-    environment:
-      - PYTHONPATH=/bot
-      - UV_LINK_MODE=copy
     volumes:
-      - .:/bot
-      - /bot/.venv
-      - ../shared:/shared
+      - .:/workspace
     ports:
-      - '8002:8002'
-    command: ['uv', 'run', 'uvicorn', 'app.main:app', '--host', '0.0.0.0', '--port', '8002', '--reload']
+      - '${DEV_PORT}:8000'

@@ -1,31 +1,31 @@
-name: yatzy-backend
-
-networks:
-  default:
-    name: yatzy-backend
-
 services:
   yatzy-db:
+    container_name: ${DEV_DB_CONTAINER}
     image: mysql:8
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: yatzy
+      MYSQL_ROOT_PASSWORD: ${DEV_DB_PASSWORD}
+      MYSQL_DATABASE: ${DEV_DB_NAME}
     volumes:
       - db_data:/var/lib/mysql
     healthcheck:
-      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-proot']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-u${DEV_DB_USER}', '-p${DEV_DB_PASSWORD}']
       interval: 1s
       timeout: 5s
       retries: 30
 
   backend:
+    container_name: ${DEV_CONTAINER}
+    image: ${DEV_IMAGE}
     build:
       context: ..
       dockerfile: backend/Dockerfile
-      target: prod
+    volumes:
+      - .:/workspace
     ports:
-      - '8000:8000'
-    env_file: .env
+      - '${DEV_PORT}:8000'
+    environment:
+      DATABASE_URL: mysql://root:root@yatzy-db:3306/yatzy
+      JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
     depends_on:
       yatzy-db:
         condition: service_healthy

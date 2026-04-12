@@ -29,9 +29,13 @@ inline-quotes = 'single'
 skips = ['B101', 'B311']
 
 [tool.coverage.paths]
-source = ['app/', '/app/app/']
+source = ['src/app/', '/workspace/src/app/']
+
+[tool.coverage.report]
+fail_under = 90
 
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'
-testpaths = ['tests']
+testpaths = ['src/tests']
+pythonpath = ['src']
 addopts = ''

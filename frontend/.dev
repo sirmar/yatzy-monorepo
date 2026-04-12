@@ -1,0 +1,5 @@
+DEV_NAME=yatzy-frontend
+DEV_REPO_TYPE=service
+DEV_NETWORK=yatzy
+DEV_PORT=5173
+DEV_SCRIPTS="schema:scripts/schema.sh auth-schema:scripts/auth-schema.sh"
