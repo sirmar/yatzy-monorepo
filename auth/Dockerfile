@@ -32,7 +32,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl=8.14.1-2+d
     && chmod +x /usr/local/bin/dbmate
 
 FROM test-base AS e2e
-ENTRYPOINT ["pytest", "-q", "src/tests/e2e/"]
+ENTRYPOINT ["/usr/local/bin/e2e-entrypoint.sh"]
 
 FROM test-base AS coverage
 ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
