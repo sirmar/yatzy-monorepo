@@ -41,7 +41,7 @@
     }
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
+    "@biomejs/biome": "^2.4.12",
     "@playwright/test": "^1.49.1",
     "@tailwindcss/vite": "^4.2.2",
     "@testing-library/jest-dom": "^6.6.3",
