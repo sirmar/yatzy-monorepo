@@ -1,4 +1,4 @@
-FROM ghcr.io/sirmar/dev-python:v0.0.3 AS base
+FROM ghcr.io/sirmar/dev-python:v0.0.4 AS base
 WORKDIR /workspace
 
 FROM base AS deps
@@ -19,7 +19,7 @@ ENTRYPOINT ["uv", "run", "pytest", "-q", "src/tests/"]
 
 FROM deps AS coverage
 COPY src/ src/
-ENTRYPOINT ["uv", "run", "pytest", "-q", "--cov=src/yatzy_rules", "src/tests/"]
+ENTRYPOINT ["sh", "-c", "uv run pytest -q --cov=src/yatzy_rules src/tests/ && uv run coverage report --format=markdown > /workspace/out/coverage.md"]
 
 FROM deps AS types
 COPY src/yatzy_rules/ src/yatzy_rules/

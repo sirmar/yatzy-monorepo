@@ -1,4 +1,4 @@
-FROM ghcr.io/sirmar/dev-typescript:v0.0.3 AS base
+FROM ghcr.io/sirmar/dev-typescript:v0.0.4 AS base
 
 FROM base AS deps
 WORKDIR /workspace
@@ -37,7 +37,7 @@ FROM deps AS builder
 COPY . .
 RUN pnpm build
 
-FROM ghcr.io/sirmar/dev-nginx:v0.0.3 AS prod
+FROM ghcr.io/sirmar/dev-nginx:v0.0.4 AS prod
 COPY --from=builder /workspace/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 EXPOSE 80

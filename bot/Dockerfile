@@ -1,4 +1,4 @@
-FROM ghcr.io/sirmar/dev-python:v0.0.3 AS base
+FROM ghcr.io/sirmar/dev-python:v0.0.4 AS base
 WORKDIR /workspace
 
 FROM base AS base-deps
