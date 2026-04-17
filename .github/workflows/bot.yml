@@ -5,13 +5,13 @@ on:
     branches: ['**']
     paths:
       - 'bot/**'
-      - 'shared/**'
+      - 'yatzy_rules/**'
       - '.github/workflows/bot.yml'
   pull_request:
     branches: ['**']
     paths:
       - 'bot/**'
-      - 'shared/**'
+      - 'yatzy_rules/**'
       - '.github/workflows/bot.yml'
 
 permissions:

@@ -5,13 +5,13 @@ requires-python = '>=3.12'
 dependencies = []
 
 [project.optional-dependencies]
-dev = ['pytest', 'pytest-cov', 'ruff', 'ty']
+dev = ['pytest', 'pytest-cov', 'ruff', 'ty', 'bandit']
 
 [tool.pytest.ini_options]
-testpaths = ['tests']
+testpaths = ['src/tests']
 
 [tool.coverage.paths]
-source = ['yatzy_rules/', '/shared/yatzy_rules/']
+source = ['src/yatzy_rules/', '/workspace/src/yatzy_rules/']
 
 [tool.ruff]
 indent-width = 2
@@ -21,3 +21,4 @@ quote-style = 'single'
 
 [tool.ruff.lint.flake8-quotes]
 inline-quotes = 'single'
+

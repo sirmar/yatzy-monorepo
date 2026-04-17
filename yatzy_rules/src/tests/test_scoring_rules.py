@@ -7,22 +7,30 @@ class TestCalculateBonus:
     self.result: int | None = None
 
   def test_returns_bonus_at_threshold(self):
-    self.GivenUpperScores({'ones': 3, 'twos': 6, 'threes': 9, 'fours': 16, 'fives': 20, 'sixes': 30})
+    self.GivenUpperScores(
+      {'ones': 3, 'twos': 6, 'threes': 9, 'fours': 16, 'fives': 20, 'sixes': 30}
+    )
     self.WhenBonusCalculated()
     self.ThenBonusIs(100)
 
   def test_returns_bonus_above_threshold(self):
-    self.GivenUpperScores({'ones': 6, 'twos': 12, 'threes': 18, 'fours': 24, 'fives': 30, 'sixes': 36})
+    self.GivenUpperScores(
+      {'ones': 6, 'twos': 12, 'threes': 18, 'fours': 24, 'fives': 30, 'sixes': 36}
+    )
     self.WhenBonusCalculated()
     self.ThenBonusIs(100)
 
   def test_returns_zero_one_below_threshold(self):
-    self.GivenUpperScores({'ones': 3, 'twos': 6, 'threes': 9, 'fours': 16, 'fives': 20, 'sixes': 29})
+    self.GivenUpperScores(
+      {'ones': 3, 'twos': 6, 'threes': 9, 'fours': 16, 'fives': 20, 'sixes': 29}
+    )
     self.WhenBonusCalculated()
     self.ThenBonusIs(0)
 
   def test_returns_zero_when_upper_total_is_low(self):
-    self.GivenUpperScores({'ones': 1, 'twos': 2, 'threes': 3, 'fours': 4, 'fives': 5, 'sixes': 6})
+    self.GivenUpperScores(
+      {'ones': 1, 'twos': 2, 'threes': 3, 'fours': 4, 'fives': 5, 'sixes': 6}
+    )
     self.WhenBonusCalculated()
     self.ThenBonusIs(0)
 
@@ -37,12 +45,16 @@ class TestCalculateBonus:
     self.ThenBonusIs(0)
 
   def test_yatzy_returns_50_at_threshold(self):
-    self.GivenUpperScores({'ones': 3, 'twos': 6, 'threes': 9, 'fours': 12, 'fives': 15, 'sixes': 18})
+    self.GivenUpperScores(
+      {'ones': 3, 'twos': 6, 'threes': 9, 'fours': 12, 'fives': 15, 'sixes': 18}
+    )
     self.WhenBonusCalculated(threshold=63, score=50)
     self.ThenBonusIs(50)
 
   def test_yatzy_returns_zero_one_below_threshold(self):
-    self.GivenUpperScores({'ones': 3, 'twos': 6, 'threes': 9, 'fours': 12, 'fives': 15, 'sixes': 17})
+    self.GivenUpperScores(
+      {'ones': 3, 'twos': 6, 'threes': 9, 'fours': 12, 'fives': 15, 'sixes': 17}
+    )
     self.WhenBonusCalculated(threshold=63, score=50)
     self.ThenBonusIs(0)
 

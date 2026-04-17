@@ -2,10 +2,5 @@ services:
   bot:
     container_name: ${DEV_CONTAINER}
     image: ${DEV_IMAGE}
-    build:
-      context: ..
-      dockerfile: bot/Dockerfile
-    volumes:
-      - .:/workspace
     ports:
       - '${DEV_PORT}:8000'

@@ -16,11 +16,6 @@ services:
   backend:
     container_name: ${DEV_CONTAINER}
     image: ${DEV_IMAGE}
-    build:
-      context: ..
-      dockerfile: backend/Dockerfile
-    volumes:
-      - .:/workspace
     ports:
       - '${DEV_PORT}:8000'
     environment:

@@ -3,7 +3,9 @@ import os
 import subprocess
 from urllib.parse import urlparse
 
-TEST_DATABASE_URL = os.environ.get('TEST_DATABASE_URL', 'mysql://root:test@127.0.0.1:3309/yatzy_auth_test')
+TEST_DATABASE_URL = os.environ.get(
+  'TEST_DATABASE_URL', 'mysql://root:test@127.0.0.1:3309/yatzy_auth_test'
+)
 os.environ['DATABASE_URL'] = TEST_DATABASE_URL
 os.environ.setdefault('APP_ENV', 'test')
 
@@ -32,7 +34,7 @@ async def _list_tables(cursor: aiomysql.Cursor) -> list[str]:
   db = _parse_url(TEST_DATABASE_URL)['db']
   await cursor.execute(
     'SELECT table_name FROM information_schema.tables '
-    'WHERE table_schema = %s AND table_type = \'BASE TABLE\'',
+    "WHERE table_schema = %s AND table_type = 'BASE TABLE'",
     (db,),
   )
   return [row[0] for row in await cursor.fetchall()]
@@ -60,7 +62,15 @@ async def migrate():
 
   await asyncio.to_thread(
     subprocess.run,
-    ['dbmate', '--url', TEST_DATABASE_URL, '--migrations-dir', 'migrations', '--no-dump-schema', 'up'],
+    [
+      'dbmate',
+      '--url',
+      TEST_DATABASE_URL,
+      '--migrations-dir',
+      'migrations',
+      '--no-dump-schema',
+      'up',
+    ],
     check=True,
   )
 

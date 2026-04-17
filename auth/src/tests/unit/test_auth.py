@@ -1,5 +1,10 @@
 from app.config import Settings
-from app.users.auth import create_access_token, decode_access_token, hash_password, verify_password
+from app.users.auth import (
+  create_access_token,
+  decode_access_token,
+  hash_password,
+  verify_password,
+)
 
 
 def make_settings(**kwargs) -> Settings:
@@ -59,6 +64,7 @@ class TestCreateAccessToken:
   def ThenDecodeRaises401(self):
     from fastapi import HTTPException
     import pytest
+
     with pytest.raises(HTTPException) as exc:
       decode_access_token(self.token, self.settings)
     assert exc.value.status_code == 401

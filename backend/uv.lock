@@ -1059,17 +1059,18 @@ requires-dist = [
     { name = "pytest-shard", marker = "extra == 'dev'", specifier = ">=0.1.2" },
     { name = "ruff", marker = "extra == 'dev'" },
     { name = "ty", marker = "extra == 'dev'" },
-    { name = "yatzy-rules", directory = "../shared" },
+    { name = "yatzy-rules", directory = "../yatzy_rules" },
 ]
 provides-extras = ["dev"]
 
 [[package]]
 name = "yatzy-rules"
 version = "0.1.0"
-source = { directory = "../shared" }
+source = { directory = "../yatzy_rules" }
 
 [package.metadata]
 requires-dist = [
+    { name = "bandit", marker = "extra == 'dev'" },
     { name = "pytest", marker = "extra == 'dev'" },
     { name = "pytest-cov", marker = "extra == 'dev'" },
     { name = "ruff", marker = "extra == 'dev'" },

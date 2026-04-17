@@ -1,18 +1,16 @@
-name: Backend CI
+name: Yatzy Rules CI
 
 on:
   push:
     branches: ['**']
     paths:
-      - 'backend/**'
       - 'yatzy_rules/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/yatzy_rules.yml'
   pull_request:
     branches: ['**']
     paths:
-      - 'backend/**'
       - 'yatzy_rules/**'
-      - '.github/workflows/backend.yml'
+      - '.github/workflows/yatzy_rules.yml'
 
 permissions:
   contents: read
@@ -22,6 +20,6 @@ jobs:
   ci:
     uses: ./.github/workflows/package-ci.yml
     with:
-      package: backend
-      check_targets: '{"target":["lint-dockerfile","lint","types","security"]}'
+      package: yatzy_rules
+      check_targets: '{"target":["lint","types","security"]}'
     secrets: inherit

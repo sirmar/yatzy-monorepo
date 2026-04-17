@@ -3,7 +3,7 @@ WORKDIR /workspace
 
 FROM base AS base-deps
 COPY bot/pyproject.toml bot/uv.lock ./
-COPY shared/ /shared/
+COPY yatzy_rules/ /yatzy_rules/
 
 FROM base-deps AS deps
 RUN --mount=type=cache,target=/root/.cache/uv \

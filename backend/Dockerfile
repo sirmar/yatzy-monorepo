@@ -3,7 +3,7 @@ FROM ghcr.io/sirmar/dev-python:v0.0.3 AS base
 FROM base AS base-deps
 WORKDIR /workspace
 COPY backend/pyproject.toml backend/uv.lock ./
-COPY shared/ /shared/
+COPY yatzy_rules/ /yatzy_rules/
 
 FROM base-deps AS deps
 RUN --mount=type=cache,target=/root/.cache/uv \
