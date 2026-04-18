@@ -34,17 +34,18 @@ export function GameScreen() {
   const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
   const [scoringOptions, setScoringOptions] = useState<ScoringOption[] | null>(null);
-  const playerNames = usePlayerNames();
+  const [playerNames] = usePlayerNames();
   const [confirmAbort, setConfirmAbort] = useState(false);
 
   const prevPlayerIdRef = useRef<number | null | undefined>(undefined);
+  const pendingRollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isMyTurn = gameState?.current_player_id === player?.id;
   const rollsRemaining = gameState?.rolls_remaining ?? 0;
   const savedRolls = gameState?.saved_rolls ?? 0;
   const showSavedRolls = gameMode === 'maxi' || gameMode === 'maxi_sequential';
   const canRoll = isMyTurn && (rollsRemaining > 0 || savedRolls > 0);
-  const hasRolled = dice.some((d) => d.value !== null);
+  const hasRolled = gameState?.dice?.some((d) => d.value !== null) ?? false;
 
   useEffect(() => {
     if (!gameId) return;
@@ -107,13 +108,34 @@ export function GameScreen() {
     const currentId = data.current_player_id;
     if (prevPlayerIdRef.current !== undefined && currentId !== prevPlayerIdRef.current) {
       setScoringOptions(null);
-      setDice(data.dice ?? []);
+      const newDice = data.dice ?? [];
+      if (newDice.some((d) => d.value !== null)) {
+        setDice(newDice);
+      } else {
+        setDice((prev) => newDice.map((d, i) => ({ ...d, value: prev[i]?.value ?? null })));
+      }
       const { data: board } = await apiClient.GET('/games/{game_id}/scoreboard', {
         params: { path: { game_id: Number(gameId) } },
       });
       if (board) setScoreboard(board);
     } else if (currentId !== player?.id) {
-      setDice(data.dice ?? []);
+      const newDice = data.dice ?? [];
+      const hasValues = newDice.some((d) => d.value !== null);
+      const hasKept = newDice.some((d) => d.kept);
+      if (hasValues && hasKept) {
+        if (pendingRollRef.current) clearTimeout(pendingRollRef.current);
+        setDice((prev) =>
+          newDice.map((d, i) => (d.kept ? d : { ...d, value: prev[i]?.value ?? null }))
+        );
+        pendingRollRef.current = setTimeout(() => {
+          setRollCount((c) => c + 1);
+          setDice(newDice);
+          pendingRollRef.current = null;
+        }, 600);
+      } else {
+        if (hasValues) setRollCount((c) => c + 1);
+        setDice(newDice);
+      }
     }
 
     prevPlayerIdRef.current = currentId;
@@ -192,7 +214,6 @@ export function GameScreen() {
       return;
     }
     setScoringOptions(null);
-    setDice([]);
     const [{ data: newState }, { data: board }] = await Promise.all([
       apiClient.GET('/games/{game_id}/state', {
         params: { path: { game_id: Number(gameId) } },
@@ -204,7 +225,12 @@ export function GameScreen() {
     if (newState) {
       prevPlayerIdRef.current = newState.current_player_id;
       setGameState(newState);
-      setDice(newState.dice ?? []);
+      const newDice = newState.dice ?? [];
+      if (newDice.some((d) => d.value !== null)) {
+        setDice(newDice);
+      } else {
+        setDice((prev) => newDice.map((d, i) => ({ ...d, value: prev[i]?.value ?? null })));
+      }
       if (newState.status === 'finished') {
         navigate(`/games/${gameId}/end`);
       }

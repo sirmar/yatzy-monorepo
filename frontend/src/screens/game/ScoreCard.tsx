@@ -144,7 +144,7 @@ export function ScoreCard({
           {CATEGORY_LABELS[cat]}
         </th>
         {playerIds.map((pid) => (
-          <td key={pid} className="py-1 px-2 text-center">
+          <td key={pid} className="py-1 px-2 text-center border-l border-gray-700">
             {renderCell(pid, cat)}
           </td>
         ))}
@@ -178,7 +178,7 @@ export function ScoreCard({
                 key={pid}
                 scope="col"
                 className={cn(
-                  'py-1 px-2 text-center font-semibold',
+                  'py-1 px-2 text-center font-semibold border-l border-gray-700',
                   pid === currentPlayerId ? 'text-yellow-400' : 'text-white'
                 )}
               >

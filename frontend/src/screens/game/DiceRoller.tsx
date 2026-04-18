@@ -29,7 +29,7 @@ export function DiceRoller({
   onRoll,
   onToggle,
 }: Props) {
-  if (!isMyTurn) return null;
+  if (dice.length === 0) return null;
 
   return (
     <div className="flex items-center gap-4">
@@ -44,13 +44,17 @@ export function DiceRoller({
           />
         ))}
       </div>
-      <Button onClick={onRoll} disabled={!canRoll} style={{ minWidth: '7rem' }}>
-        {rollsRemaining === 0 ? 'Roll saved' : 'Roll'}
-      </Button>
-      <div className="ml-auto text-sm text-gray-300 text-right flex flex-col gap-1">
-        <span>Rolls remaining: {rollsRemaining}</span>
-        {showSavedRolls && <span>Saved rolls: {savedRolls}</span>}
-      </div>
+      {isMyTurn && (
+        <>
+          <Button onClick={onRoll} disabled={!canRoll} style={{ minWidth: '7rem' }}>
+            {rollsRemaining === 0 ? 'Roll saved' : 'Roll'}
+          </Button>
+          <div className="ml-auto text-sm text-gray-300 text-right flex flex-col gap-1">
+            <span>Rolls remaining: {rollsRemaining}</span>
+            {showSavedRolls && <span>Saved rolls: {savedRolls}</span>}
+          </div>
+        </>
+      )}
     </div>
   );
 }

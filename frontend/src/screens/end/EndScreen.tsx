@@ -19,7 +19,7 @@ export function EndScreen() {
   const [finalScores, setFinalScores] = useState<PlayerScore[]>([]);
   const [winnerIds, setWinnerIds] = useState<number[]>([]);
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
-  const playerNames = usePlayerNames();
+  const [playerNames] = usePlayerNames();
 
   useEffect(() => {
     apiClient
