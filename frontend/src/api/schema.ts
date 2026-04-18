@@ -448,6 +448,12 @@ export interface components {
              * @default maxi
              */
             mode: components["schemas"]["GameMode"];
+            /**
+             * Bot Count
+             * @description Number of bot players to add
+             * @default 0
+             */
+            bot_count?: number;
         };
         /** GameJoin */
         GameJoin: {
@@ -578,14 +584,20 @@ export interface components {
             id: number;
             /**
              * Account Id
-             * @description Auth account ID that owns this player
+             * @description Auth account ID that owns this player; null for bot players
              */
-            account_id: string;
+            account_id: string | null;
             /**
              * Name
              * @description Display name of the player
              */
             name: string;
+            /**
+             * Is Bot
+             * @description Whether this is an AI bot player
+             * @default false
+             */
+            is_bot: boolean;
             /**
              * Created At
              * Format: date-time

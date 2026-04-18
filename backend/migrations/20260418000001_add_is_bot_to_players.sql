@@ -1,0 +1,7 @@
+-- migrate:up
+ALTER TABLE players MODIFY COLUMN account_id VARCHAR(255) NULL;
+ALTER TABLE players ADD COLUMN is_bot BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- migrate:down
+ALTER TABLE players DROP COLUMN is_bot;
+ALTER TABLE players MODIFY COLUMN account_id VARCHAR(255) NOT NULL;

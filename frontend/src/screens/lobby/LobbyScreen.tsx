@@ -18,7 +18,8 @@ export function LobbyScreen() {
   const [games, setGames] = useState<Game[]>([]);
   const [creating, setCreating] = useState(false);
   const [mode, setMode] = useState<GameMode>('maxi');
-  const playerNames = usePlayerNames();
+  const [botCount, setBotCount] = useState(0);
+  const [playerNames, refetchPlayerNames] = usePlayerNames();
   const { player } = usePlayer();
   const navigate = useNavigate();
   const errorToast = useErrorToast();
@@ -53,7 +54,9 @@ export function LobbyScreen() {
     if (!player) return;
     setCreating(true);
     try {
-      const { error } = await apiClient.POST('/games', { body: { creator_id: player.id, mode } });
+      const { error } = await apiClient.POST('/games', {
+        body: { creator_id: player.id, mode, bot_count: botCount },
+      });
       if (error) throw error;
     } catch {
       errorToast('Failed to create game');
@@ -61,6 +64,7 @@ export function LobbyScreen() {
     } finally {
       setCreating(false);
     }
+    refetchPlayerNames();
     await fetchGames();
   }
 
@@ -126,6 +130,23 @@ export function LobbyScreen() {
                 <option value="maxi_sequential">Maxi Yatzy Sequential</option>
                 <option value="yatzy">Yatzy</option>
                 <option value="yatzy_sequential">Yatzy Sequential</option>
+              </select>
+              <label htmlFor="bot-count" className="sr-only">
+                Bots
+              </label>
+              <select
+                id="bot-count"
+                aria-label="Bots"
+                value={botCount}
+                onChange={(e) => setBotCount(Number(e.target.value))}
+                className="bg-gray-800 text-white text-sm rounded px-2 py-1.5 border border-gray-600 focus:outline-none focus:ring-1 focus:ring-gray-500"
+              >
+                <option value={0}>No bots</option>
+                <option value={1}>1 bot</option>
+                <option value={2}>2 bots</option>
+                <option value={3}>3 bots</option>
+                <option value={4}>4 bots</option>
+                <option value={5}>5 bots</option>
               </select>
               <CreateGameButton onCreate={handleCreate} loading={creating} />
             </div>

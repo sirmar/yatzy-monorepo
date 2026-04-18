@@ -1,5 +1,5 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 import aiomysql
 from app.auth import make_get_current_user
 from app.config import Settings
@@ -33,6 +33,7 @@ from app.scoring.games_played_repository import GamesPlayedRepository
 from app.scoring.high_score import HighScore
 from app.scoring.high_scores_repository import HighScoresRepository
 from app.scoring.scorecard_repository import ScorecardRepository
+from app.bot_service import play_bot_turn
 
 
 def create_scorecard_router(
@@ -77,6 +78,7 @@ def create_scorecard_router(
     body: ScoreRequest,
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
     current_user: Annotated[dict, Depends(get_current_user)],
+    background_tasks: BackgroundTasks,
   ) -> Scorecard:
     """Score a category with the current dice. Ends the player's turn and advances to the next player. Ends the game when all categories are filled."""
     assert_player_exists_and_owns(
@@ -124,6 +126,11 @@ def create_scorecard_router(
         game_id, next_player_id, turn_number + 1, variant.dice_count
       )
       await game_repo.set_current_turn(game_id, new_turn_id)
+      next_player = await PlayerRepository(conn).get_by_id(next_player_id)
+      if next_player and next_player.is_bot:
+        background_tasks.add_task(
+          play_bot_turn, game_id, next_player_id, database, settings, event_bus
+        )
 
     event_bus.publish_game(game_id)
     if game_ended:

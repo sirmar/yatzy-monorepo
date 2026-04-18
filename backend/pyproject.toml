@@ -2,7 +2,7 @@
 name = 'yatzy-backend'
 version = '0.1.0'
 requires-python = '>=3.14'
-dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings', 'cryptography', 'PyJWT', 'yatzy-rules']
+dependencies = ['fastapi[standard]', 'aiomysql', 'pydantic-settings', 'cryptography', 'PyJWT', 'yatzy-rules', 'httpx']
 
 [tool.uv.sources]
 yatzy-rules = {path = '../yatzy_rules'}
@@ -11,7 +11,6 @@ yatzy-rules = {path = '../yatzy_rules'}
 dev = [
     'pytest',
     'pytest-asyncio',
-    'httpx',
     'ruff',
     'ty',
     'pytest-cov',

@@ -18,6 +18,9 @@ class PlayerUpdate(PlayerBase):
 
 class Player(BaseModel):
   id: int = Field(description='Unique player identifier')
-  account_id: str = Field(description='Auth account ID that owns this player')
+  account_id: str | None = Field(
+    description='Auth account ID that owns this player; null for bot players'
+  )
   name: str = Field(description='Display name of the player')
+  is_bot: bool = Field(default=False, description='Whether this is an AI bot player')
   created_at: datetime = Field(description='When the player was created')

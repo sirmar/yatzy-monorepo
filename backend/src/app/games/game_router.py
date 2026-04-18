@@ -77,10 +77,18 @@ def create_game_router(
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
     """Create a new game. The requesting player becomes the creator."""
+    player_repo = PlayerRepository(conn)
     assert_player_exists_and_owns(
-      await PlayerRepository(conn).get_by_id(body.creator_id), current_user['sub']
+      await player_repo.get_by_id(body.creator_id), current_user['sub']
     )
     game = await GameRepository(conn).create(body.creator_id, body.mode)
+    if body.bot_count > 0:
+      gp_repo = GamePlayerRepository(conn)
+      for i in range(body.bot_count):
+        name = f'Bot #{i + 1}'
+        bot = await player_repo.create_bot(name)
+        await gp_repo.add(game.id, bot.id, len(game.player_ids) + 1 + i)
+      game = (await GameRepository(conn).get_by_id(game.id)) or game
     event_bus.publish_lobby()
     return game
 

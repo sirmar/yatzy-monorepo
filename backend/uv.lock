@@ -1027,6 +1027,7 @@ dependencies = [
     { name = "aiomysql" },
     { name = "cryptography" },
     { name = "fastapi", extra = ["standard"] },
+    { name = "httpx" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "yatzy-rules" },
@@ -1035,7 +1036,6 @@ dependencies = [
 [package.optional-dependencies]
 dev = [
     { name = "bandit" },
-    { name = "httpx" },
     { name = "pytest" },
     { name = "pytest-asyncio" },
     { name = "pytest-cov" },
@@ -1050,7 +1050,7 @@ requires-dist = [
     { name = "bandit", marker = "extra == 'dev'" },
     { name = "cryptography" },
     { name = "fastapi", extras = ["standard"] },
-    { name = "httpx", marker = "extra == 'dev'" },
+    { name = "httpx" },
     { name = "pydantic-settings" },
     { name = "pyjwt" },
     { name = "pytest", marker = "extra == 'dev'" },
