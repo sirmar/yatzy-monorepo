@@ -47,7 +47,7 @@ export function DiceRoller({
       {isMyTurn && (
         <>
           <Button onClick={onRoll} disabled={!canRoll} style={{ minWidth: '7rem' }}>
-            {rollsRemaining === 0 ? 'Roll saved' : 'Roll'}
+            {rollsRemaining === 0 && savedRolls > 0 ? 'Roll saved' : 'Roll'}
           </Button>
           <div className="ml-auto text-sm text-gray-300 text-right flex flex-col gap-1">
             <span>Rolls remaining: {rollsRemaining}</span>
