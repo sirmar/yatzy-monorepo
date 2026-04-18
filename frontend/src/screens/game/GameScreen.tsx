@@ -187,9 +187,9 @@ export function GameScreen() {
     setGameState((prev) => {
       if (!prev) return prev;
       if ((prev.rolls_remaining ?? 0) > 0) {
-        return { ...prev, rolls_remaining: (prev.rolls_remaining ?? 0) - 1 };
+        return { ...prev, dice: data.dice, rolls_remaining: (prev.rolls_remaining ?? 0) - 1 };
       }
-      return { ...prev, saved_rolls: (prev.saved_rolls ?? 0) - 1 };
+      return { ...prev, dice: data.dice, saved_rolls: (prev.saved_rolls ?? 0) - 1 };
     });
     const { data: options } = await apiClient.GET(
       '/games/{game_id}/players/{player_id}/scoring-options',
