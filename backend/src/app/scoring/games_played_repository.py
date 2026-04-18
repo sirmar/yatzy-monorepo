@@ -27,7 +27,7 @@ class GamesPlayedRepository:
         'FROM games g '
         'JOIN game_players gp ON gp.game_id = g.id AND gp.deleted_at IS NULL '
         'JOIN players p ON p.id = gp.player_id AND p.deleted_at IS NULL '
-        "WHERE g.status = 'finished' AND g.deleted_at IS NULL "
+        "WHERE g.status = 'finished' AND g.deleted_at IS NULL AND p.is_bot = FALSE "
         'GROUP BY p.id, p.name '
         + ORDER_BY_CLAUSE[sort_by]  # nosec B608
         + ' LIMIT 10'

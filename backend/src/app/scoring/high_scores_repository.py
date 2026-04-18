@@ -19,7 +19,7 @@ class HighScoresRepository:
         'JOIN players p ON p.id = gp.player_id AND p.deleted_at IS NULL '
         'LEFT JOIN scorecard_entries se '
         '  ON se.game_id = g.id AND se.player_id = p.id AND se.deleted_at IS NULL '
-        "WHERE g.status = 'finished' AND g.deleted_at IS NULL"
+        "WHERE g.status = 'finished' AND g.deleted_at IS NULL AND p.is_bot = FALSE"
       )
       rows = await cursor.fetchall()
 
