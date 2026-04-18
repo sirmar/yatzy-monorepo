@@ -40,5 +40,5 @@ ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
 FROM base AS prod
 COPY src/app/ src/app/
 COPY migrations/ migrations/
-EXPOSE 8001
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
+EXPOSE 8000
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

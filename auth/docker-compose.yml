@@ -20,7 +20,7 @@ services:
       - '${DEV_PORT}:8000'
     environment:
       DATABASE_URL: mysql://root:root@${DEV_DB_CONTAINER}:3306/yatzy_auth
-      JWT_SECRET: change-me-in-production-use-a-long-secret
+      JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
     depends_on:
       auth-db:
         condition: service_healthy
