@@ -19,7 +19,7 @@ ENTRYPOINT ["uv", "run", "pytest", "-q", "src/tests/"]
 
 FROM deps AS coverage
 COPY src/ src/
-ENTRYPOINT ["sh", "-c", "uv run pytest -q --cov=src/yatzy_rules src/tests/ && uv run coverage report --format=markdown > /workspace/out/coverage.md"]
+ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
 
 FROM deps AS types
 COPY src/yatzy_rules/ src/yatzy_rules/

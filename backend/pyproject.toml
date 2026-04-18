@@ -31,6 +31,9 @@ inline-quotes = 'single'
 [tool.bandit]
 skips = ['B101', 'B311']
 
+[tool.coverage.run]
+source = ['app']
+
 [tool.coverage.paths]
 source = ['src/app/', '/workspace/backend/src/app/']
 

@@ -40,24 +40,13 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: coverage
-          path: cli/.coverage
-          include-hidden-files: true
+          path: cli/out/coverage.md
 
   coverage-report:
     needs: coverage
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.14'
-      - run: pip install coverage
       - uses: actions/download-artifact@v4
         with:
           name: coverage
-          path: cli
-      - run: cd cli && coverage report --show-missing --fail-under=60
-      - name: Write coverage summary
-        run: |
-          echo '## Coverage' >> $GITHUB_STEP_SUMMARY
-          cd cli && coverage report --format=markdown >> $GITHUB_STEP_SUMMARY
+      - run: echo '## Coverage' >> $GITHUB_STEP_SUMMARY && cat coverage.md >> $GITHUB_STEP_SUMMARY

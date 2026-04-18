@@ -22,7 +22,7 @@ FROM deps AS security
 ENTRYPOINT ["bandit", "-q", "-r", "src/yatzy/", "src/main.py", "-c", "pyproject.toml"]
 
 FROM deps AS coverage
-ENTRYPOINT ["pytest", "-q", "--cov=src/yatzy", "src/tests/"]
+ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
 
 FROM base AS prod
 ENV PYTHONPATH=/workspace/src

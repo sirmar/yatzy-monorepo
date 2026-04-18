@@ -10,6 +10,9 @@ dev = ['pytest', 'pytest-cov', 'ruff', 'ty', 'bandit']
 [tool.pytest.ini_options]
 testpaths = ['src/tests']
 
+[tool.coverage.run]
+source = ['yatzy_rules']
+
 [tool.coverage.paths]
 source = ['src/yatzy_rules/', '/workspace/src/yatzy_rules/']
 
