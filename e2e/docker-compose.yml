@@ -47,7 +47,7 @@ services:
         condition: service_healthy
 
   backend:
-    image: backend-prod
+    image: yatzy-backend
     build:
       context: ..
       dockerfile: backend/Dockerfile
@@ -65,7 +65,7 @@ services:
         condition: service_completed_successfully
 
   auth:
-    image: auth-prod
+    image: yatzy-auth
     build:
       context: ../auth
       target: prod
@@ -82,7 +82,7 @@ services:
         condition: service_completed_successfully
 
   frontend:
-    image: frontend-prod
+    image: yatzy-frontend
     build:
       context: ../frontend
       target: prod
