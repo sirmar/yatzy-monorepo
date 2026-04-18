@@ -4,21 +4,12 @@ Full-stack smoke tests using Playwright. Tests run against a live stack (fronten
 
 ## Running
 
-From the repo root:
+From `e2e/`:
 
 ```bash
-make e2e
+dev e2e
 ```
 
 This starts all services, runs the tests, and shuts them down.
-
-## Development
-
-Run from `e2e/` (or `make -C e2e <target>` from the repo root).
-
-```bash
-make lint      # check formatting and lint
-make format    # auto-fix formatting and lint issues
-```
 
 Tests run in Chromium only. `BASE_URL` defaults to `http://localhost:80`.

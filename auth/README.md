@@ -27,24 +27,6 @@ Runs on port **8001**. Interactive docs at `http://localhost:8001/docs`.
 - **Refresh token** — opaque token stored as SHA-256 hash in DB, rotated on each use (30 days)
 - Email verification and password reset tokens are also stored hashed with expiry
 
-## Dev setup
-
-```bash
-dev up           # start service + DB
-dev watch        # start with hot reload
-dev db-migrate   # run pending migrations
-dev shell        # bash shell inside running container
-```
-
-## Testing
-
-```bash
-dev unit         # unit tests
-dev e2e          # end-to-end tests (spins up test DB)
-dev coverage     # unit + e2e with coverage report
-dev check        # format + lint + types + coverage
-```
-
 ## Configuration
 
 Environment variables (`.env` file or Docker env):

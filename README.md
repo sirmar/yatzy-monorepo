@@ -20,9 +20,9 @@ A Swedish Maxi Yatzy game built with FastAPI + React.
 ## Getting started
 
 ```bash
-make dev
-make migrate                # first time only: run database migrations
-make -C auth seed           # first time only: create a verified dev account (dev@example.com / devpassword123)
+mdev up                  # start full stack with hot reload
+mdev db-migrate          # first time only: run database migrations
+sh auth/scripts/seed.sh  # first time only: create a verified dev account (dev@example.com / devpassword123)
 ```
 
 To play via the terminal client (after the stack is running):
@@ -39,58 +39,27 @@ cd cli && dev run
 
 ## Development
 
-Run commands from the repo root or from within a package directory.
+Run `mdev` commands from the repo root, `dev` commands from within a package directory.
 
 ```bash
-make dev          # start full stack with hot reload
-make stop         # stop all services
-make clean        # stop and remove containers and volumes
-make migrate      # run database migrations (explicit — not run automatically)
-make check        # lint + types + security + tests for all packages + e2e
-make e2e          # run full-stack Playwright tests only
-```
-
-Per-package commands (run from package directory or repo root with `make -C <pkg>`):
-
-```bash
-make lint         # lint
-make types        # type check
-make unit         # unit tests
-make e2e          # integration tests against test database
-make check        # all of the above
-make shell        # open a shell in the container
-make build        # build dev image
-```
-
-Backend only:
-```bash
-make -C backend db       # open a MySQL shell
-make -C backend migrate  # run backend migrations only
+mdev up       # start full stack with hot reload
+mdev down     # stop all services
+mdev check    # lint + types + tests for all packages
+dev e2e       # run full-stack Playwright tests (from e2e/)
 ```
 
 ### Bot
 
-The bot uses the `dev` tool. Run commands from `bot/`:
+Offline evaluation (from `bot/`):
 
 ```bash
-dev up            # start the bot service (port 8002)
-dev watch         # start with hot reload
-dev check         # format + lint + types + coverage
-make evaluate-maxi          # offline bot evaluation
-make evaluate-yatzy
+dev exec evaluate -- --bot <maxi|yatzy|maxi-sequential|yatzy-sequential>
 ```
 
 ### CLI
 
-The CLI uses the `dev` tool. Run commands from `cli/`:
-
 ```bash
-dev run           # launch the interactive terminal client (requires stack running)
-dev lint          # lint
-dev types         # type check
-dev unit          # unit tests
-dev e2e           # integration tests (spins up backend + auth automatically)
-dev check         # format + lint + types + coverage
+cd cli && dev run   # launch the interactive terminal client (requires stack running)
 ```
 
 ## Deployment
@@ -110,12 +79,16 @@ docker context create prod --docker "host=ssh://user@yourserver"
 ### Deploy
 
 ```bash
-make prod-migrate   # run on first deploy and after schema changes
-make prod-up        # pull latest images and start/recreate services
+docker context use prod
+mdev db-migrate   # run on first deploy and after schema changes
+mdev up           # pull latest images and start/recreate services
+docker context use default
 ```
 
 ### Other prod commands
 
 ```bash
-make prod-down      # stop and remove prod containers
+docker context use prod
+mdev down
+docker context use default
 ```
