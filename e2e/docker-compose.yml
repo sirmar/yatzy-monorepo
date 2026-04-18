@@ -103,7 +103,7 @@ services:
         condition: service_healthy
 
   e2e:
-    image: yatzy-e2e-e2e
+    image: yatzy-e2e
     build:
       context: .
       target: prod

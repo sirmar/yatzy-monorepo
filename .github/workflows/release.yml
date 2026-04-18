@@ -29,10 +29,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:backend-${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:backend-latest
-          cache-from: |
-            type=gha,scope=yatzy-backend-deps
-            type=gha,scope=yatzy-backend-coverage
-          cache-to: type=gha,mode=max,scope=backend-prod
+          cache-from: type=gha,scope=yatzy-backend-prod
+          cache-to: type=gha,mode=max,scope=yatzy-backend-prod
 
   auth:
     runs-on: ubuntu-latest
@@ -52,10 +50,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}:auth-${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:auth-latest
-          cache-from: |
-            type=gha,scope=yatzy-auth-deps
-            type=gha,scope=yatzy-auth-coverage
-          cache-to: type=gha,mode=max,scope=auth-prod
+          cache-from: type=gha,scope=yatzy-auth-prod
+          cache-to: type=gha,mode=max,scope=yatzy-auth-prod
 
   frontend:
     runs-on: ubuntu-latest
@@ -70,12 +66,10 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: frontend
-          target: production
+          target: prod
           push: true
           tags: |
             ghcr.io/${{ github.repository }}:frontend-${{ github.ref_name }}
             ghcr.io/${{ github.repository }}:frontend-latest
-          cache-from: |
-            type=gha,scope=yatzy-frontend-deps
-            type=gha,scope=yatzy-frontend-coverage
-          cache-to: type=gha,mode=max,scope=frontend-prod
+          cache-from: type=gha,scope=yatzy-frontend-prod
+          cache-to: type=gha,mode=max,scope=yatzy-frontend-prod

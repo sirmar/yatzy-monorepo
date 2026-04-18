@@ -4,10 +4,10 @@ WORKDIR /workspace
 FROM base AS base-deps
 COPY bot/pyproject.toml bot/uv.lock ./
 COPY yatzy_rules/ /yatzy_rules/
+RUN uv sync --no-dev
 
 FROM base-deps AS deps
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra dev
+RUN uv sync --extra dev
 
 FROM deps AS lint
 ENTRYPOINT ["/usr/local/bin/lint-entrypoint.sh"]
@@ -32,8 +32,6 @@ FROM deps AS scripts
 ENTRYPOINT ["uv", "run", "python"]
 
 FROM base-deps AS prod
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev
 COPY bot/src/app/ src/app/
 EXPOSE 8000
 CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

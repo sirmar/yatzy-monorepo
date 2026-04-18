@@ -1,10 +1,10 @@
 FROM ghcr.io/sirmar/dev-python:v0.0.4 AS base
 WORKDIR /workspace
+COPY pyproject.toml uv.lock ./
+RUN uv sync --no-dev
 
 FROM base AS deps
-COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra dev
+RUN uv sync --extra dev
 
 FROM deps AS lint
 ENTRYPOINT ["/usr/local/bin/lint-entrypoint.sh"]
@@ -38,9 +38,6 @@ FROM test-base AS coverage
 ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
 
 FROM base AS prod
-COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev
 COPY src/app/ src/app/
 COPY migrations/ migrations/
 EXPOSE 8001

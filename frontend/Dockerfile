@@ -3,8 +3,7 @@ FROM ghcr.io/sirmar/dev-typescript:v0.0.4 AS base
 FROM base AS deps
 WORKDIR /workspace
 COPY package.json pnpm-lock.yaml biome.json tsconfig.json tsconfig.node.json vite.config.ts index.html ./
-RUN --mount=type=cache,target=/root/.local/share/pnpm/store \
-    pnpm install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS lint
 ENTRYPOINT ["/usr/local/bin/lint-entrypoint.sh"]

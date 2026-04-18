@@ -4,10 +4,10 @@ FROM base AS base-deps
 WORKDIR /workspace
 COPY backend/pyproject.toml backend/uv.lock ./
 COPY yatzy_rules/ /yatzy_rules/
+RUN uv sync --no-dev
 
 FROM base-deps AS deps
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --extra dev
+RUN uv sync --extra dev
 
 FROM deps AS app
 ENTRYPOINT ["uv", "run"]
@@ -45,8 +45,6 @@ FROM test-base AS coverage
 ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
 
 FROM base-deps AS prod
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --no-dev
 COPY backend/src/app/ src/app/
 COPY backend/migrations/ migrations/
 EXPOSE 8000
