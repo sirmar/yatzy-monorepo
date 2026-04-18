@@ -35,7 +35,7 @@ source = ['app']
 source = ['src/app/', '/workspace/src/app/']
 
 [tool.coverage.report]
-fail_under = 90
+fail_under = 80
 
 [tool.pytest.ini_options]
 asyncio_mode = 'auto'

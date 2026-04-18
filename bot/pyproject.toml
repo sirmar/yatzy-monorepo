@@ -32,5 +32,8 @@ testpaths = ['src/tests']
 addopts = ''
 pythonpath = ['src']
 
+[tool.coverage.report]
+fail_under = 80
+
 [tool.coverage.paths]
 source = ['src/app/', '/workspace/src/app/']

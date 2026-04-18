@@ -37,6 +37,7 @@ source = ['src/yatzy']
 source = ['src/yatzy/', '/workspace/src/yatzy/']
 
 [tool.coverage.report]
+fail_under = 80
 omit = ['src/yatzy/ui.py']
 
 [tool.pytest.ini_options]

@@ -13,6 +13,9 @@ testpaths = ['src/tests']
 [tool.coverage.run]
 source = ['yatzy_rules']
 
+[tool.coverage.report]
+fail_under = 80
+
 [tool.coverage.paths]
 source = ['src/yatzy_rules/', '/workspace/src/yatzy_rules/']
 
