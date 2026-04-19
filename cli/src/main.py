@@ -343,10 +343,10 @@ def main_menu(api: ApiClient, player_id: int) -> None:
 
 
 def create_game_flow(api: ApiClient, player_id: int) -> int | None:
-  result_holder: list[int | None] = [None]
-  done = threading.Event()
+  mode_holder: list[str] = ['']
+  mode_done = threading.Event()
 
-  def get_content() -> str:
+  def get_mode_content() -> str:
     def _render() -> None:
       display.info('Choose game mode:\n')
       for i, (_, name) in enumerate(MODES, start=1):
@@ -357,25 +357,62 @@ def create_game_flow(api: ApiClient, player_id: int) -> int | None:
 
   def make_mode_handler(mode_key: str) -> Callable[[], None]:
     def handler() -> None:
-      try:
-        game = api.create_game(player_id, mode_key)
-        result_holder[0] = int(game['id'])
-      except Exception:
-        result_holder[0] = None
-      done.set()
+      mode_holder[0] = mode_key
+      mode_done.set()
 
     return handler
 
   def handle_cancel() -> None:
-    done.set()
+    mode_done.set()
 
   key_bindings: dict[str, Callable[[], None]] = {'q': handle_cancel}
   for i, (mode_key, _) in enumerate(MODES, start=1):
     key_bindings[str(i)] = make_mode_handler(mode_key)
 
-  app.set_screen(get_content, key_bindings)
-  done.wait()
-  return result_holder[0]
+  app.set_screen(get_mode_content, key_bindings)
+  mode_done.wait()
+
+  if not mode_holder[0]:
+    return None
+
+  bot_count_holder: list[int] = [-1]
+  bot_done = threading.Event()
+
+  def get_bot_content() -> str:
+    def _render() -> None:
+      display.info('Add bot players?\n')
+      display.info('  0. No bots')
+      for n in range(1, 6):
+        display.info(f'  {n}. {n} bot{"s" if n > 1 else ""}')
+      display.info('\n  q. Cancel')
+
+    return render_to_ansi(_render)
+
+  def make_bot_handler(n: int) -> Callable[[], None]:
+    def handler() -> None:
+      bot_count_holder[0] = n
+      bot_done.set()
+
+    return handler
+
+  def handle_bot_cancel() -> None:
+    bot_done.set()
+
+  bot_bindings: dict[str, Callable[[], None]] = {'q': handle_bot_cancel}
+  for n in range(6):
+    bot_bindings[str(n)] = make_bot_handler(n)
+
+  app.set_screen(get_bot_content, bot_bindings)
+  bot_done.wait()
+
+  if bot_count_holder[0] == -1:
+    return None
+
+  try:
+    game = api.create_game(player_id, mode_holder[0], bot_count_holder[0])
+    return int(game['id'])
+  except Exception:
+    return None
 
 
 def run_game(api: ApiClient, game_id: int, player_id: int) -> None:

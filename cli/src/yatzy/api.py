@@ -58,9 +58,13 @@ class ApiClient:
     params: dict[str, str] = {'status': status} if status else {}
     return self._request('GET', '/games', params=params).json()
 
-  def create_game(self, creator_id: int, mode: str) -> dict[str, Any]:
+  def create_game(
+    self, creator_id: int, mode: str, bot_count: int = 0
+  ) -> dict[str, Any]:
     return self._request(
-      'POST', '/games', json={'creator_id': creator_id, 'mode': mode}
+      'POST',
+      '/games',
+      json={'creator_id': creator_id, 'mode': mode, 'bot_count': bot_count},
     ).json()
 
   def get_game(self, game_id: int) -> dict[str, Any]:
