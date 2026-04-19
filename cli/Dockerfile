@@ -26,6 +26,7 @@ ENTRYPOINT ["/usr/local/bin/coverage-entrypoint.sh"]
 
 FROM base AS prod
 ENV PYTHONPATH=/workspace/src
+ENV YATZY_CREDENTIALS=/workspace/out/credentials.json
 COPY pyproject.toml uv.lock ./
 RUN uv sync --no-dev
 COPY src/yatzy/ src/yatzy/
