@@ -223,7 +223,10 @@ def render_all_scorecards(
       sc_entry = next((e for e in sc['entries'] if e['category'] == cat), None)
       score = sc_entry.get('score') if sc_entry else None
       if score is not None:
-        cells.append(str(score))
+        if sc_entry and sc_entry.get('last_scored'):
+          cells.append(Text(str(score), style='bold green'))
+        else:
+          cells.append(str(score))
       elif pid == my_player_id and hints is not None and cat in hints:
         hint_val = hints[cat]
         cells.append(str(hint_val))

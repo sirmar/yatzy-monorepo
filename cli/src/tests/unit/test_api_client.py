@@ -373,3 +373,83 @@ class TestTokenRefresh:
     with pytest.raises(ApiError) as exc:
       self.client.get_my_player()
     assert exc.value.status_code == 401
+
+
+class TestApiClientMisc:
+  def setup_method(self) -> None:
+    self.client, _ = make_client()
+
+  def test_sse_game_url_contains_game_id(self) -> None:
+    url = self.client.sse_game_url(42)
+    assert '42' in url
+    assert url.endswith('/events')
+
+  def test_sse_lobby_url_contains_lobby(self) -> None:
+    url = self.client.sse_lobby_url()
+    assert 'lobby' in url
+
+  def test_current_token_returns_access_token(self) -> None:
+    assert self.client.current_token() == 'token'
+
+  def test_close_does_not_raise(self) -> None:
+    self.client.close()
+
+
+class TestSseListener:
+  def test_start_and_stop(self) -> None:
+    from yatzy.api import SseListener
+
+    called: list[int] = []
+    listener = SseListener(
+      'http://test/events', lambda: 'tok', lambda: called.append(1)
+    )
+    listener.start()
+    listener.stop()
+    assert listener._stop.is_set()
+
+  def test_on_event_called_for_each_sse_data_line(self) -> None:
+    import threading
+    from yatzy.api import SseListener
+
+    called: list[int] = []
+    done = threading.Event()
+
+    def on_event() -> None:
+      called.append(1)
+      if len(called) >= 2:
+        done.set()
+
+    with respx.mock:
+      respx.get('http://test/events').mock(
+        return_value=httpx.Response(
+          200,
+          text='data: {}\ndata: {}\n',
+          headers={'content-type': 'text/event-stream'},
+        )
+      )
+      listener = SseListener('http://test/events', lambda: 'tok', on_event)
+      listener.start()
+      done.wait(timeout=2)
+      listener.stop()
+
+    assert len(called) >= 2
+
+  def test_on_event_called_on_exception(self) -> None:
+    import threading
+    from yatzy.api import SseListener
+
+    called: list[int] = []
+    done = threading.Event()
+
+    def on_event() -> None:
+      called.append(1)
+      done.set()
+
+    with respx.mock:
+      respx.get('http://test/events').mock(side_effect=Exception('connection error'))
+      listener = SseListener('http://test/events', lambda: 'tok', on_event)
+      listener.start()
+      done.wait(timeout=2)
+      listener.stop()
+
+    assert len(called) == 1

@@ -702,6 +702,11 @@ export interface components {
              * @description Points scored; null if not yet filled
              */
             score?: number | null;
+            /**
+             * Last Scored
+             * @description True if this was the most recently scored category for this player
+             */
+            last_scored?: boolean;
         };
         /** ScoreRequest */
         ScoreRequest: {

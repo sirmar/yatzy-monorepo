@@ -87,7 +87,9 @@ export function ScoreCard({
     const entry = getEntry(playerId, category);
 
     if (entry?.score !== null && entry?.score !== undefined) {
-      return <span>{entry.score}</span>;
+      return (
+        <span className={cn(entry.last_scored && 'text-green-400 font-bold')}>{entry.score}</span>
+      );
     }
 
     if (playerId === myPlayerId && isMyTurn && hasRolled) {

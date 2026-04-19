@@ -9,10 +9,15 @@ class ScorecardRepository:
   def __init__(self, conn: aiomysql.Connection) -> None:
     self._conn = conn
 
-  def _build_scorecard(self, rows: list[tuple], variant: GameVariant) -> Scorecard:
+  def _build_scorecard(
+    self, rows: list[tuple], variant: GameVariant, last_category: str | None = None
+  ) -> Scorecard:
     scores = {row[0]: row[1] for row in rows}
     entries = [
-      ScoreEntry(category=cat, score=scores.get(cat)) for cat in variant.categories
+      ScoreEntry(
+        category=cat, score=scores.get(cat), last_scored=(cat == last_category)
+      )
+      for cat in variant.categories
     ]
     bonus_value = calculate_bonus(scores, variant.bonus_threshold, variant.bonus_score)
     bonus = bonus_value if bonus_value > 0 else None
@@ -83,18 +88,22 @@ class ScorecardRepository:
       if not player_ids:
         return []
       await cursor.execute(
-        'SELECT player_id, category, score FROM scorecard_entries '
+        'SELECT player_id, category, score, id FROM scorecard_entries '
         'WHERE game_id = %s AND deleted_at IS NULL',
         (game_id,),
       )
       entry_rows = await cursor.fetchall()
       entries_by_player: dict[int, list[tuple]] = {pid: [] for pid in player_ids}
-      for pid, cat, score in entry_rows:
+      last_id_by_player: dict[int, tuple[int, str]] = {}
+      for pid, cat, score, row_id in entry_rows:
         if pid in entries_by_player:
           entries_by_player[pid].append((cat, score))
+          if pid not in last_id_by_player or row_id > last_id_by_player[pid][0]:
+            last_id_by_player[pid] = (row_id, cat)
       result = []
       for pid in player_ids:
-        sc = self._build_scorecard(entries_by_player[pid], variant)
+        last_cat = last_id_by_player[pid][1] if pid in last_id_by_player else None
+        sc = self._build_scorecard(entries_by_player[pid], variant, last_cat)
         result.append(
           PlayerScorecard(
             player_id=pid, entries=sc.entries, bonus=sc.bonus, total=sc.total
@@ -120,9 +129,10 @@ class ScorecardRepository:
       if await cursor.fetchone() is None:
         return None
       await cursor.execute(
-        'SELECT category, score FROM scorecard_entries '
+        'SELECT category, score, id FROM scorecard_entries '
         'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
         (game_id, player_id),
       )
       rows = await cursor.fetchall()
-      return self._build_scorecard(rows, variant)
+      last_cat = max(rows, key=lambda r: r[2])[0] if rows else None
+      return self._build_scorecard([(r[0], r[1]) for r in rows], variant, last_cat)

@@ -7,6 +7,10 @@ class ScoreEntry(BaseModel):
   score: int | None = Field(
     default=None, description='Points scored; null if not yet filled'
   )
+  last_scored: bool = Field(
+    default=False,
+    description='True if this was the most recently scored category for this player',
+  )
 
 
 class Scorecard(BaseModel):
