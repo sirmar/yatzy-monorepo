@@ -29,3 +29,6 @@ services:
     <<: *test-base
     container_name: ${DEV_COVERAGE_CONTAINER}
     image: ${DEV_COVERAGE_IMAGE}
+    volumes:
+      - ..:/workspace
+      - ./out:/workspace/out
