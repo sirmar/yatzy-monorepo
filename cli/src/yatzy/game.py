@@ -243,6 +243,7 @@ class GameSession:
     scorecards_holder: list[list[dict[str, Any]]] = [
       self._fetch_all_scorecards(player_ids)
     ]
+    display_dice_holder: list[list[dict[str, Any]]] = [state.get('dice') or []]
     done = threading.Event()
     quit_flag: list[bool] = [False]
     lock = threading.Lock()
@@ -251,13 +252,13 @@ class GameSession:
       with lock:
         current_state = state_holder[0]
         scorecards = scorecards_holder[0]
+        dice = display_dice_holder[0]
       current_pid: int | None = current_state.get('current_player_id')
       current_name = (
         player_names.get(current_pid, f'Player {current_pid}')
         if current_pid
         else 'unknown'
       )
-      dice: list[dict[str, Any]] = current_state.get('dice') or []
       rolls_remaining: int = current_state.get('rolls_remaining') or 0
       saved_rolls: int = current_state.get('saved_rolls') or 0
 
@@ -280,10 +281,48 @@ class GameSession:
         new_scorecards = self._fetch_all_scorecards(player_ids)
       except ApiError:
         return
+
+      new_dice: list[dict[str, Any]] = new_state.get('dice') or []
+      with lock:
+        old_dice = display_dice_holder[0]
+
+      old_vals = {d['index']: d.get('value') for d in old_dice}
+      new_vals = {d['index']: d.get('value') for d in new_dice}
+      dice_rolled = (
+        any(d.get('value') is not None for d in new_dice) and new_vals != old_vals
+      )
+
       with lock:
         state_holder[0] = new_state
         scorecards_holder[0] = new_scorecards
+
+      if dice_rolled:
+        kept = {d['index'] for d in new_dice if d.get('kept')}
+        # Show old dice values with new kept selections so the "choice" is visible
+        pre_roll = [
+          {**d, 'kept': d['index'] in kept}
+          for d in old_dice
+          if any(nd['index'] == d['index'] for nd in new_dice)
+        ]
+        with lock:
+          display_dice_holder[0] = pre_roll
+        app.invalidate()
+        time.sleep(0.6)
+        deadline = time.monotonic() + 0.5
+        while time.monotonic() < deadline:
+          anim_dice = [
+            {**d, 'value': random.randint(1, 6)} if d['index'] not in kept else d
+            for d in new_dice
+          ]
+          with lock:
+            display_dice_holder[0] = anim_dice
+          app.invalidate()
+          time.sleep(0.07)
+
+      with lock:
+        display_dice_holder[0] = new_dice
       app.invalidate()
+
       if (
         new_state.get('current_player_id') == self._player_id
         or new_state.get('status') != 'active'
