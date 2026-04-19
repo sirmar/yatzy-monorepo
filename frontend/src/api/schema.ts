@@ -120,6 +120,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/games/lobby/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Lobby Events
+         * @description SSE stream: fires when any lobby-visible game changes.
+         */
+        get: operations["lobby_events_games_lobby_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/active/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Active Game Events
+         * @description SSE stream: fires when a game the authenticated player participates in changes status.
+         */
+        get: operations["active_game_events_games_active_events_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games/{game_id}": {
         parameters: {
             query?: never;
@@ -253,9 +293,29 @@ export interface paths {
         };
         /**
          * Get Game State
-         * @description Get the current game state for polling. Returns dice, current player and scores when the game has ended.
+         * @description Get the current game state. Returns dice, current player and scores when the game has ended.
          */
         get: operations["get_game_state_games__game_id__state_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/games/{game_id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Game Events
+         * @description SSE stream: fires when in-game state changes (roll, score, abort).
+         */
+        get: operations["game_events_games__game_id__events_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -368,6 +428,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health */
+        get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -453,7 +530,7 @@ export interface components {
              * @description Number of bot players to add
              * @default 0
              */
-            bot_count?: number;
+            bot_count: number;
         };
         /** GameJoin */
         GameJoin: {
@@ -705,8 +782,9 @@ export interface components {
             /**
              * Last Scored
              * @description True if this was the most recently scored category for this player
+             * @default false
              */
-            last_scored?: boolean;
+            last_scored: boolean;
         };
         /** ScoreRequest */
         ScoreRequest: {
@@ -1110,6 +1188,57 @@ export interface operations {
             };
         };
     };
+    lobby_events_games_lobby_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    active_game_events_games_active_events_get: {
+        parameters: {
+            query: {
+                player_id: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_game_games__game_id__get: {
         parameters: {
             query?: never;
@@ -1474,6 +1603,37 @@ export interface operations {
             };
         };
     };
+    game_events_games__game_id__events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                game_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_scorecard_games__game_id__players__player_id__scorecard_get: {
         parameters: {
             query?: never;
@@ -1694,6 +1854,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    health_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
                 };
             };
         };

@@ -30,6 +30,7 @@ EXPOSE 5173
 ENTRYPOINT ["/usr/local/bin/watch-entrypoint.sh"]
 
 FROM deps AS scripts
+COPY scripts ./scripts
 ENTRYPOINT ["sh"]
 
 FROM deps AS builder
