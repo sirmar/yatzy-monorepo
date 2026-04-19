@@ -1,5 +1,10 @@
 name: yatzy-e2e
 
+x-healthcheck: &healthcheck
+  interval: 1s
+  timeout: 5s
+  retries: 30
+
 services:
   yatzy-db:
     image: mysql:8
@@ -7,10 +12,8 @@ services:
       MYSQL_ROOT_PASSWORD: test
       MYSQL_DATABASE: yatzy
     healthcheck:
+      <<: *healthcheck
       test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
-      interval: 1s
-      timeout: 5s
-      retries: 30
 
   auth-db:
     image: mysql:8
@@ -19,10 +22,8 @@ services:
       MYSQL_ROOT_HOST: '%'
       MYSQL_DATABASE: yatzy_auth
     healthcheck:
+      <<: *healthcheck
       test: ['CMD', 'mysqladmin', 'ping', '-h', '127.0.0.1', '-uroot', '-ptest']
-      interval: 1s
-      timeout: 5s
-      retries: 30
 
   backend-migrate:
     image: ghcr.io/amacneil/dbmate
@@ -56,10 +57,8 @@ services:
       DATABASE_URL: mysql://root:test@yatzy-db:3306/yatzy
       JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8000/health")']
-      interval: 2s
-      timeout: 5s
-      retries: 20
+      <<: *healthcheck
+      test: ['CMD', 'healthcheck.sh']
     depends_on:
       backend-migrate:
         condition: service_completed_successfully
@@ -73,10 +72,8 @@ services:
       DATABASE_URL: mysql://root:test@auth-db:3306/yatzy_auth
       JWT_SECRET: change-me-in-production-must-be-at-least-32-bytes
     healthcheck:
-      test: ['CMD', 'python', '-c', 'import urllib.request; urllib.request.urlopen("http://127.0.0.1:8001/health")']
-      interval: 2s
-      timeout: 5s
-      retries: 20
+      <<: *healthcheck
+      test: ['CMD', 'healthcheck.sh']
     depends_on:
       auth-migrate:
         condition: service_completed_successfully
@@ -92,10 +89,8 @@ services:
       - BACKEND_HOST=backend
       - AUTH_HOST=auth
     healthcheck:
+      <<: *healthcheck
       test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80']
-      interval: 5s
-      timeout: 5s
-      retries: 10
     depends_on:
       backend:
         condition: service_healthy
