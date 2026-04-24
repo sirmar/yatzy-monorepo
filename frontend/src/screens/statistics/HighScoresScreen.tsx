@@ -1,74 +1,35 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
-import { ModeSelector } from '@/components/ModeSelector';
+import { Avatar } from '@/components/Avatar';
 import { PageLayout } from '@/components/PageLayout';
-import { RANK_TROPHY } from '@/lib/constants';
-import { formatDate } from '@/lib/format';
 
 type HighScore = components['schemas']['HighScore'];
 type GameMode = components['schemas']['GameMode'];
 
-const MODES: { label: string; value: GameMode }[] = [
+const TABS: { label: string; value: GameMode }[] = [
   { label: 'Maxi Yatzy', value: 'maxi' },
-  { label: 'Maxi Yatzy Sequential', value: 'maxi_sequential' },
+  { label: 'Maxi Seq.', value: 'maxi_sequential' },
   { label: 'Yatzy', value: 'yatzy' },
-  { label: 'Yatzy Sequential', value: 'yatzy_sequential' },
+  { label: 'Yatzy Seq.', value: 'yatzy_sequential' },
 ];
 
-function HighScoresTable({ scores }: { scores: HighScore[] }) {
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full table-fixed text-sm text-white">
-        <thead>
-          <tr className="text-gray-400 text-left border-b border-gray-800">
-            <th className="pb-2 w-8">#</th>
-            <th className="pb-2">Player</th>
-            <th className="pb-2 w-20 text-right">Score</th>
-            <th className="pb-2 w-16 text-right">Game</th>
-            <th className="pb-2 w-28 text-right">Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {scores.map((score, index) => (
-            <tr key={`${score.game_id}-${score.player_id}`} className="border-b border-gray-800/50">
-              <td className="py-2 text-gray-400">{RANK_TROPHY[index + 1] ?? index + 1}</td>
-              <td className="py-2">{score.player_name}</td>
-              <td className="py-2 text-right font-semibold">{score.total_score}</td>
-              <td className="py-2 text-right text-gray-400">#{score.game_id}</td>
-              <td className="py-2 text-right text-gray-400">{formatDate(score.finished_at)}</td>
-            </tr>
-          ))}
-          {scores.length === 0 && (
-            <tr>
-              <td colSpan={5} className="py-4 text-center text-gray-400">
-                No high scores yet
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+const RANK_COLORS = [
+  'text-[var(--amber)]',
+  'text-[rgba(180,180,200,0.9)]',
+  'text-[rgba(180,140,80,0.9)]',
+];
 
 export function HighScoresScreen() {
   const [scores, setScores] = useState<HighScore[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selectedMode, setSelectedMode] = useState<GameMode>('maxi');
+  const [mode, setMode] = useState<GameMode>('maxi');
 
   useEffect(() => {
     const controller = new AbortController();
     apiClient
       .GET('/high-scores', { signal: controller.signal })
-      .then(({ data, error }) => {
-        if (error) {
-          setError('Failed to load high scores');
-        } else if (data) {
-          setScores(data);
-        }
-        setIsLoading(false);
+      .then(({ data }) => {
+        if (data) setScores(data);
       })
       .catch((e: unknown) => {
         if ((e as { name?: string })?.name !== 'AbortError') throw e;
@@ -76,17 +37,83 @@ export function HighScoresScreen() {
     return () => controller.abort();
   }, []);
 
+  const filtered = scores.filter((s) => s.mode === mode);
+
   return (
     <PageLayout>
-      <h1 className="text-white text-xl font-semibold mb-6">High Scores</h1>
-      <div className="mb-6">
-        <ModeSelector options={MODES} selected={selectedMode} onChange={setSelectedMode} />
+      <div className="flex flex-col gap-4">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
+          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-foreground">
+            High Scores
+          </span>
+          <div className="flex items-center gap-1 bg-[var(--surface-2)] rounded-full p-[3px]">
+            {TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setMode(tab.value)}
+                className={`h-[26px] px-3 rounded-full text-[12px] font-medium cursor-pointer border-none transition-colors ${
+                  mode === tab.value
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-transparent text-[var(--text-muted)] hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-[14px]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="pb-2 px-2 w-7 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
+                  #
+                </th>
+                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
+                  Player
+                </th>
+                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-right">
+                  Score
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((score, idx) => (
+                <tr
+                  key={`${score.game_id}-${score.player_id}`}
+                  className="border-b border-[var(--border)] last:border-b-0"
+                >
+                  <td
+                    className={`py-[10px] px-2 text-[12px] font-bold w-7 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
+                  >
+                    {idx + 1}
+                  </td>
+                  <td className="py-[10px] px-2">
+                    <div className="flex items-center gap-[10px]">
+                      <Avatar name={score.player_name} index={idx} size="sm" />
+                      <span className="text-[13px] font-medium text-foreground">
+                        {score.player_name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-[10px] px-2 text-[14px] font-bold text-right text-foreground">
+                    {score.total_score}
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="py-6 text-center text-[13px] text-[var(--text-muted)]">
+                    No scores yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-      {!isLoading && !error && (
-        <HighScoresTable scores={scores.filter((s) => s.mode === selectedMode)} />
-      )}
     </PageLayout>
   );
 }

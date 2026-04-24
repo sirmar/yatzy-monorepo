@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
-import { ModeBadge } from '@/components/ModeBadge';
-import { PageHeader } from '@/components/PageHeader';
 import { PageLayout } from '@/components/PageLayout';
-import { Button } from '@/components/ui/button';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { useEventSource } from '@/hooks/useEventSource';
@@ -28,15 +24,12 @@ export function GameScreen() {
   const errorToast = useErrorToast();
 
   const [gameState, setGameState] = useState<GameState | null>(null);
-  const [creatorId, setCreatorId] = useState<number | null>(null);
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
   const [dice, setDice] = useState<Die[]>([]);
   const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
   const [scoringOptions, setScoringOptions] = useState<ScoringOption[] | null>(null);
   const [playerNames] = usePlayerNames();
-  const [confirmAbort, setConfirmAbort] = useState(false);
-
   const prevPlayerIdRef = useRef<number | null | undefined>(undefined);
   const pendingRollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -67,7 +60,6 @@ export function GameScreen() {
       }),
     ]).then(([{ data: game }, { data: state }, { data: board }]) => {
       if (game) {
-        setCreatorId(game.creator_id);
         setGameMode(game.mode);
       }
       if (state) {
@@ -154,23 +146,6 @@ export function GameScreen() {
     fetchGameState
   );
 
-  function handleConfirmAbort() {
-    setConfirmAbort(false);
-    handleAbort();
-  }
-
-  async function handleAbort() {
-    if (!gameId) return;
-    const { error } = await apiClient.POST('/games/{game_id}/abort', {
-      params: { path: { game_id: Number(gameId) } },
-    });
-    if (error) {
-      errorToast('Failed to abort game');
-      return;
-    }
-    navigate('/lobby');
-  }
-
   async function handleRoll() {
     if (!player || !gameId) return;
     const keptIndices = dice.filter((d) => d.kept).map((d) => d.index);
@@ -241,44 +216,9 @@ export function GameScreen() {
     if (board) setScoreboard(board);
   }
 
-  const currentPlayerName =
-    gameState?.current_player_id != null ? playerNames[gameState.current_player_id] : null;
-
   return (
     <PageLayout>
-      <div className="flex flex-col gap-6">
-        <PageHeader
-          title={
-            <div className="flex items-center gap-2">
-              <span>Game #{gameId}</span>
-              {gameMode != null && <ModeBadge mode={gameMode} />}
-            </div>
-          }
-          action={
-            player?.id === creatorId && gameState?.status === 'active' ? (
-              <>
-                <ConfirmDialog
-                  open={confirmAbort}
-                  title="Abort game"
-                  description="Are you sure you want to abort this game? This cannot be undone."
-                  confirmLabel="Abort"
-                  onConfirm={handleConfirmAbort}
-                  onCancel={() => setConfirmAbort(false)}
-                />
-                <Button
-                  variant="ghost"
-                  className="text-gray-500 hover:text-red-400 hover:bg-red-400/10"
-                  onClick={() => setConfirmAbort(true)}
-                >
-                  Abort Game
-                </Button>
-              </>
-            ) : undefined
-          }
-        />
-        {currentPlayerName && (
-          <p className="text-white text-lg font-semibold">{currentPlayerName}'s turn</p>
-        )}
+      <div className="flex flex-col gap-4">
         <DiceRoller
           dice={dice}
           rollCount={rollCount}

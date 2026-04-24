@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthScreenLayout } from '@/components/AuthScreenLayout';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/AuthContext';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { validatePassword } from '@/lib/utils';
+
+function AuthLink({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      className="text-foreground underline cursor-pointer bg-none border-none font-inherit"
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function LoginScreen() {
   const { user, isLoading, login, register } = useAuth();
@@ -51,26 +60,22 @@ export function LoginScreen() {
   if (registered) {
     return (
       <AuthScreenLayout>
-        <div className="flex flex-col gap-3">
-          <p className="text-center text-gray-300">
+        <div className="p-7 flex flex-col gap-4">
+          <p className="text-[13px] text-center text-foreground/70 leading-relaxed">
             Check your email to verify your account, then{' '}
-            <button
-              type="button"
-              className="text-white underline"
+            <AuthLink
               onClick={() => {
                 setRegistered(false);
                 setMode('login');
               }}
             >
               sign in
-            </button>
+            </AuthLink>
             .
           </p>
-          <p className="text-center text-sm text-gray-400">
+          <p className="text-center text-[12px] text-[var(--text-muted)]">
             Wrong email?{' '}
-            <button
-              type="button"
-              className="text-white underline"
+            <AuthLink
               onClick={() => {
                 setRegistered(false);
                 setMode('register');
@@ -79,7 +84,7 @@ export function LoginScreen() {
               }}
             >
               Register again
-            </button>
+            </AuthLink>
           </p>
         </div>
       </AuthScreenLayout>
@@ -88,92 +93,92 @@ export function LoginScreen() {
 
   return (
     <AuthScreenLayout>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Tabs */}
+      <div className="flex border-b border-[var(--border-2)]">
+        {(['login', 'register'] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => {
+              setMode(tab);
+              setError('');
+            }}
+            className={[
+              'flex-1 py-2 text-[12px] font-semibold border-b-2 -mb-px transition-colors duration-150',
+              mode === tab
+                ? 'text-[var(--accent)] border-[var(--accent)]'
+                : 'text-[var(--text-muted)] border-transparent',
+            ].join(' ')}
+          >
+            {tab === 'login' ? 'Sign in' : 'Register'}
+          </button>
+        ))}
+      </div>
+
+      <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="email" className="text-gray-400">
+          <label htmlFor="email" className="text-[12px] font-medium text-[var(--text-muted)]">
             Email
-          </Label>
-          <Input
+          </label>
+          <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             autoComplete="email"
+            className="h-9 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
           />
         </div>
         <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password" className="text-gray-400">
+          <label htmlFor="password" className="text-[12px] font-medium text-[var(--text-muted)]">
             Password
-          </Label>
-          <Input
+          </label>
+          <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            className="h-9 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
           />
         </div>
-        {error && <p className="text-red-400 text-sm">{error}</p>}
-        {emailNotVerified && (
-          <p className="text-yellow-400 text-sm">
-            Email not verified. Check your inbox, or{' '}
-            <button
-              type="button"
-              className="underline"
-              onClick={() => {
-                setEmailNotVerified(false);
-                setMode('register');
-              }}
-            >
-              re-register
-            </button>{' '}
-            to get a new link.
+
+        <div className="h-9 text-[12px] leading-relaxed">
+          {error && <span className="text-[var(--red)]">{error}</span>}
+          {emailNotVerified && (
+            <span className="text-[var(--amber)]">
+              Email not verified. Check your inbox, or{' '}
+              <AuthLink
+                onClick={() => {
+                  setEmailNotVerified(false);
+                  setMode('register');
+                }}
+              >
+                re-register
+              </AuthLink>{' '}
+              to get a new link.
+            </span>
+          )}
+        </div>
+
+        <button
+          type="submit"
+          disabled={submitting}
+          className="h-9 bg-[var(--accent)] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(124,158,248,0.35)] active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {mode === 'login' ? 'Sign in' : 'Create account'}
+        </button>
+
+        {mode === 'login' && (
+          <p className="text-center text-[12px] text-[var(--text-muted)]">
+            <Link to="/forgot-password" className="text-foreground underline">
+              Forgot password?
+            </Link>
           </p>
         )}
-        <Button type="submit" disabled={submitting}>
-          {mode === 'login' ? 'Sign in' : 'Create account'}
-        </Button>
       </form>
-      {mode === 'login' && (
-        <p className="mt-2 text-center text-sm text-gray-400">
-          <Link to="/forgot-password" className="text-white underline">
-            Forgot password?
-          </Link>
-        </p>
-      )}
-      <p className="mt-4 text-center text-sm text-gray-400">
-        {mode === 'login' ? (
-          <>
-            No account?{' '}
-            <button
-              type="button"
-              className="text-white underline"
-              onClick={() => {
-                setMode('register');
-                setError('');
-              }}
-            >
-              Register
-            </button>
-          </>
-        ) : (
-          <>
-            Already have an account?{' '}
-            <button
-              type="button"
-              className="text-white underline"
-              onClick={() => {
-                setMode('login');
-                setError('');
-              }}
-            >
-              Sign in
-            </button>
-          </>
-        )}
-      </p>
     </AuthScreenLayout>
   );
 }

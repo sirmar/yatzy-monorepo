@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AuthScreenLayout } from '@/components/AuthScreenLayout';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { CreatePlayerForm } from './CreatePlayerForm';
@@ -35,20 +35,16 @@ export function PlayerScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-gray-900 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-center text-white">Yatzy</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <div>
-            <h2 className="text-sm font-medium text-gray-400 mb-3 uppercase tracking-wider">
-              Create player
-            </h2>
-            <CreatePlayerForm onCreated={handleCreate} />
+    <AuthScreenLayout>
+      <div className="p-6 flex flex-col gap-4">
+        <div className="flex flex-col gap-0.5">
+          <div className="text-[15px] font-semibold text-foreground">Set up your profile</div>
+          <div className="text-[12px] text-[var(--text-muted)]">
+            Choose a display name to get started.
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+        <CreatePlayerForm onCreated={handleCreate} />
+      </div>
+    </AuthScreenLayout>
   );
 }

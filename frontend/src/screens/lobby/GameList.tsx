@@ -24,12 +24,14 @@ export function GameList({
 }: Props) {
   if (games.length === 0) {
     return (
-      <p className="text-center text-gray-500 py-8">No open games — create one to get started!</p>
+      <p className="text-center text-[13px] text-[var(--text-muted)] py-6">
+        No open games — create one to get started!
+      </p>
     );
   }
 
   return (
-    <ul className="flex flex-col gap-3">
+    <ul className="flex flex-col divide-y divide-[var(--border)]">
       {games.map((game) => (
         <li key={game.id}>
           <GameCard

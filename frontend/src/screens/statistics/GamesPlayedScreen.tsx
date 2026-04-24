@@ -1,25 +1,27 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
-import { ModeSelector } from '@/components/ModeSelector';
+import { Avatar } from '@/components/Avatar';
 import { PageLayout } from '@/components/PageLayout';
-import { RANK_TROPHY } from '@/lib/constants';
 
 type GamesPlayed = components['schemas']['GamesPlayed'];
 type SortBy = components['schemas']['GamesPlayedSortBy'];
 
-const SECTIONS: { label: string; value: SortBy }[] = [
+const TABS: { label: string; value: SortBy }[] = [
   { label: 'Total', value: 'total' },
   { label: 'Maxi Yatzy', value: 'maxi' },
-  { label: 'Maxi Yatzy Sequential', value: 'maxi_sequential' },
+  { label: 'Maxi Seq.', value: 'maxi_sequential' },
   { label: 'Yatzy', value: 'yatzy' },
-  { label: 'Yatzy Sequential', value: 'yatzy_sequential' },
+  { label: 'Yatzy Seq.', value: 'yatzy_sequential' },
 ];
 
-const SORT_BY_KEY: Record<
-  SortBy,
-  keyof Pick<GamesPlayed, 'total' | 'maxi' | 'maxi_sequential' | 'yatzy' | 'yatzy_sequential'>
-> = {
+const RANK_COLORS = [
+  'text-[var(--amber)]',
+  'text-[rgba(180,180,200,0.9)]',
+  'text-[rgba(180,140,80,0.9)]',
+];
+
+const COUNT_KEY: Record<SortBy, keyof GamesPlayed> = {
   total: 'total',
   maxi: 'maxi',
   maxi_sequential: 'maxi_sequential',
@@ -27,77 +29,101 @@ const SORT_BY_KEY: Record<
   yatzy_sequential: 'yatzy_sequential',
 };
 
-function GamesPlayedTable({ entries, sortBy }: { entries: GamesPlayed[]; sortBy: SortBy }) {
-  const countKey = SORT_BY_KEY[sortBy];
-  return (
-    <div className="overflow-x-auto">
-      <table className="w-full table-fixed text-sm text-white">
-        <thead>
-          <tr className="text-gray-400 text-left border-b border-gray-800">
-            <th className="pb-2 w-8">#</th>
-            <th className="pb-2">Player</th>
-            <th className="pb-2 w-20 text-right">Games</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((entry, index) => (
-            <tr key={entry.player_id} className="border-b border-gray-800/50">
-              <td className="py-2 text-gray-400">{RANK_TROPHY[index + 1] ?? index + 1}</td>
-              <td className="py-2">{entry.player_name}</td>
-              <td className="py-2 text-right font-semibold">{entry[countKey]}</td>
-            </tr>
-          ))}
-          {entries.length === 0 && (
-            <tr>
-              <td colSpan={3} className="py-4 text-center text-gray-400">
-                No games played yet
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-    </div>
-  );
-}
-
 export function GamesPlayedScreen() {
-  const [selectedSortBy, setSelectedSortBy] = useState<SortBy>('total');
   const [entries, setEntries] = useState<GamesPlayed[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<SortBy>('total');
 
   useEffect(() => {
     const controller = new AbortController();
-    setIsLoading(true);
-    setError(null);
     apiClient
       .GET('/games-played-leaderboard', {
-        params: { query: { sort_by: selectedSortBy } },
+        params: { query: { sort_by: sortBy } },
         signal: controller.signal,
       })
-      .then(({ data, error }) => {
-        if (error) {
-          setError('Failed to load games played');
-        } else {
-          setEntries(data ?? []);
-        }
-        setIsLoading(false);
+      .then(({ data }) => {
+        if (data) setEntries(data);
       })
       .catch((e: unknown) => {
         if ((e as { name?: string })?.name !== 'AbortError') throw e;
       });
     return () => controller.abort();
-  }, [selectedSortBy]);
+  }, [sortBy]);
+
+  const countKey = COUNT_KEY[sortBy];
 
   return (
     <PageLayout>
-      <h1 className="text-white text-xl font-semibold mb-6">Games Played</h1>
-      <div className="mb-6">
-        <ModeSelector options={SECTIONS} selected={selectedSortBy} onChange={setSelectedSortBy} />
+      <div className="flex flex-col gap-4">
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
+          <span className="text-[13px] font-semibold text-foreground">Most Games Played</span>
+          <div className="flex items-center gap-1 bg-[var(--surface-2)] rounded-full p-[3px]">
+            {TABS.map((tab) => (
+              <button
+                key={tab.value}
+                type="button"
+                onClick={() => setSortBy(tab.value)}
+                className={`h-[26px] px-3 rounded-full text-[12px] font-medium cursor-pointer border-none transition-colors ${
+                  sortBy === tab.value
+                    ? 'bg-[var(--accent)] text-white'
+                    : 'bg-transparent text-[var(--text-muted)] hover:text-foreground'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-[14px]">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-[var(--border)]">
+                <th className="pb-2 px-2 w-7 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
+                  #
+                </th>
+                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
+                  Player
+                </th>
+                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-right">
+                  Games
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {entries.map((entry, idx) => (
+                <tr
+                  key={entry.player_id}
+                  className="border-b border-[var(--border)] last:border-b-0"
+                >
+                  <td
+                    className={`py-[10px] px-2 text-[12px] font-bold w-7 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
+                  >
+                    {idx + 1}
+                  </td>
+                  <td className="py-[10px] px-2">
+                    <div className="flex items-center gap-[10px]">
+                      <Avatar name={entry.player_name} index={idx} size="sm" />
+                      <span className="text-[13px] font-medium text-foreground">
+                        {entry.player_name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-[10px] px-2 text-[14px] font-bold text-right text-foreground">
+                    {entry[countKey] as number}
+                  </td>
+                </tr>
+              ))}
+              {entries.length === 0 && (
+                <tr>
+                  <td colSpan={3} className="py-6 text-center text-[13px] text-[var(--text-muted)]">
+                    No games played yet
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
-      {isLoading && <p className="text-gray-400 text-sm">Loading...</p>}
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-      {!isLoading && !error && <GamesPlayedTable entries={entries} sortBy={selectedSortBy} />}
     </PageLayout>
   );
 }

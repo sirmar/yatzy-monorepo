@@ -1,7 +1,7 @@
 export function PageLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-gray-950">
-      <div className="max-w-4xl mx-auto px-4 py-6">{children}</div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-[860px] mx-auto px-4 pt-1 pb-16 flex flex-col gap-4">{children}</div>
     </div>
   );
 }

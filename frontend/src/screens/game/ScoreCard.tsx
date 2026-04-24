@@ -1,4 +1,5 @@
 import type { components } from '@/api';
+import { Avatar } from '@/components/Avatar';
 import { cn } from '@/lib/utils';
 
 type PlayerScorecard = components['schemas']['PlayerScorecard'];
@@ -39,6 +40,13 @@ const CATEGORY_LABELS: Record<ScoreCategory, string> = {
   yatzy: 'Yatzy',
 };
 
+const BONUS_THRESHOLD: Partial<Record<GameMode, number>> = {
+  maxi: 84,
+  maxi_sequential: 84,
+  yatzy: 63,
+  yatzy_sequential: 63,
+};
+
 interface Props {
   scoreboard: PlayerScorecard[];
   playerNames: Record<number, string>;
@@ -66,6 +74,7 @@ export function ScoreCard({
   const allCategories: ScoreCategory[] = scoreboard[0]?.entries.map((e) => e.category) ?? [];
   const upperCategories = allCategories.filter((c) => UPPER_CATEGORIES.has(c));
   const lowerCategories = allCategories.filter((c) => !UPPER_CATEGORIES.has(c));
+  const bonusThreshold = mode ? (BONUS_THRESHOLD[mode] ?? null) : null;
 
   function getEntry(playerId: number, category: ScoreCategory) {
     return scoreboard
@@ -83,77 +92,6 @@ export function ScoreCard({
     return true;
   }
 
-  function renderCell(playerId: number, category: ScoreCategory) {
-    const entry = getEntry(playerId, category);
-
-    if (entry?.score !== null && entry?.score !== undefined) {
-      return (
-        <span className={cn(entry.last_scored && 'text-green-400 font-bold')}>{entry.score}</span>
-      );
-    }
-
-    if (playerId === myPlayerId && isMyTurn && hasRolled) {
-      const option = scoringOptions?.find((o) => o.category === category);
-      if (option) {
-        return (
-          <span className="relative inline-block text-yellow-300 font-semibold">
-            {option.score}
-            <span
-              aria-hidden="true"
-              className="absolute left-full pl-1 opacity-0 group-hover/row:opacity-100 text-white"
-            >
-              ✓
-            </span>
-          </span>
-        );
-      }
-      if (mode === 'maxi_sequential' || mode === 'yatzy_sequential') return null;
-      return (
-        <span className="relative inline-block text-gray-500">
-          ×
-          <span
-            aria-hidden="true"
-            className="absolute left-full pl-1 opacity-0 group-hover/row:opacity-100 text-white"
-          >
-            ✓
-          </span>
-        </span>
-      );
-    }
-
-    return null;
-  }
-
-  function renderCategoryRow(cat: ScoreCategory) {
-    const clickable = isClickable(cat);
-    return (
-      <tr
-        key={cat}
-        className={cn(
-          'border-b border-gray-800',
-          clickable && 'group/row hover:bg-white/5 cursor-pointer'
-        )}
-        onClick={clickable ? () => onScore(cat) : undefined}
-        onKeyDown={
-          clickable
-            ? (e) => {
-                if (e.key === 'Enter' || e.key === ' ') onScore(cat);
-              }
-            : undefined
-        }
-      >
-        <th scope="row" className="text-left py-1 px-2 text-gray-400 font-normal">
-          {CATEGORY_LABELS[cat]}
-        </th>
-        {playerIds.map((pid) => (
-          <td key={pid} className="py-1 px-2 text-center border-l border-gray-700">
-            {renderCell(pid, cat)}
-          </td>
-        ))}
-      </tr>
-    );
-  }
-
   function upperSubtotal(playerId: number) {
     return upperCategories.reduce((sum, cat) => {
       const entry = getEntry(playerId, cat);
@@ -169,61 +107,292 @@ export function ScoreCard({
     return scoreboard.find((s) => s.player_id === playerId)?.total ?? 0;
   }
 
+  function renderCell(playerId: number, category: ScoreCategory) {
+    const entry = getEntry(playerId, category);
+    const isActive = playerId === currentPlayerId;
+
+    if (entry?.score !== null && entry?.score !== undefined) {
+      return (
+        <td
+          key={playerId}
+          className={cn(
+            'py-[6px] px-[14px] text-[13px] text-right',
+            entry.last_scored ? 'text-[var(--green)] font-semibold' : 'text-foreground font-medium',
+            isActive && 'relative'
+          )}
+        >
+          {isActive && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+            />
+          )}
+          {entry.score}
+        </td>
+      );
+    }
+
+    if (playerId === myPlayerId && isMyTurn && hasRolled) {
+      const option = scoringOptions?.find((o) => o.category === category);
+      if (option) {
+        return (
+          <td
+            key={playerId}
+            className={cn(
+              'py-[6px] px-[14px] text-[13px] text-right text-[var(--amber)] font-semibold',
+              isActive && 'relative'
+            )}
+          >
+            {isActive && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+              />
+            )}
+            {option.score} ↑
+          </td>
+        );
+      }
+      if (mode === 'maxi_sequential' || mode === 'yatzy_sequential') {
+        return (
+          <td
+            key={playerId}
+            className={cn('py-[6px] px-[14px] text-[13px] text-right', isActive && 'relative')}
+          >
+            {isActive && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+              />
+            )}
+          </td>
+        );
+      }
+      return (
+        <td
+          key={playerId}
+          className={cn(
+            'py-[6px] px-[14px] text-[13px] text-right text-[var(--text-dim)]',
+            isActive && 'relative'
+          )}
+        >
+          {isActive && (
+            <span
+              aria-hidden="true"
+              className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+            />
+          )}
+          —
+        </td>
+      );
+    }
+
+    return (
+      <td
+        key={playerId}
+        className={cn(
+          'py-[6px] px-[14px] text-[13px] text-right text-[var(--text-muted)]',
+          isActive && 'relative'
+        )}
+      >
+        {isActive && (
+          <span
+            aria-hidden="true"
+            className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+          />
+        )}
+      </td>
+    );
+  }
+
+  function renderCategoryRow(cat: ScoreCategory) {
+    const clickable = isClickable(cat);
+    return (
+      <tr
+        key={cat}
+        className={cn(
+          'border-b border-[var(--border)] cursor-default',
+          clickable && 'scorable hover:bg-[var(--surface-2)] cursor-pointer'
+        )}
+        onClick={clickable ? () => onScore(cat) : undefined}
+        onKeyDown={
+          clickable
+            ? (e) => {
+                if (e.key === 'Enter' || e.key === ' ') onScore(cat);
+              }
+            : undefined
+        }
+      >
+        <td className="py-[6px] px-[14px] pl-5 text-[13px] font-medium text-foreground text-left">
+          {CATEGORY_LABELS[cat]}
+        </td>
+        {playerIds.map((pid) => renderCell(pid, cat))}
+      </tr>
+    );
+  }
+
   return (
-    <div className="overflow-x-auto">
-      <table className="text-sm text-white border-collapse">
-        <thead>
-          <tr className="border-b border-gray-700">
-            <th className="text-left py-1 px-2 text-gray-400 font-normal w-36" />
-            {playerIds.map((pid) => (
-              <th
-                key={pid}
-                scope="col"
-                className={cn(
-                  'py-1 px-2 text-center font-semibold border-l border-gray-700',
-                  pid === currentPlayerId ? 'text-yellow-400' : 'text-white'
-                )}
-              >
-                {playerNames[pid] ?? `Player ${pid}`}
+    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse min-w-[480px]">
+          <thead>
+            <tr className="border-b border-[var(--border-2)]">
+              <th className="py-2 px-[14px] pl-5 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)] text-left align-middle">
+                Category
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {upperCategories.map(renderCategoryRow)}
-          <tr className="border-b border-gray-700 bg-gray-800/50">
-            <th scope="row" className="text-left py-1 px-2 text-gray-400 font-normal text-xs">
-              Subtotal
-            </th>
-            {playerIds.map((pid) => (
-              <td key={pid} className="py-1 px-2 text-center text-gray-300 text-xs">
-                {upperSubtotal(pid)}
+              {playerIds.map((pid, idx) => {
+                const isActive = pid === currentPlayerId;
+                const name = playerNames[pid] ?? `Player ${pid}`;
+                return (
+                  <th
+                    key={pid}
+                    className={cn(
+                      'py-2 px-[14px] text-[12px] font-semibold uppercase tracking-[0.06em] text-right align-middle',
+                      isActive ? 'text-foreground' : 'text-[var(--text-muted)]'
+                    )}
+                  >
+                    <span className="inline-flex items-center justify-end gap-1.5">
+                      {isActive && (
+                        <span
+                          aria-hidden="true"
+                          className="inline-block w-[6px] h-[6px] rounded-full bg-[var(--green)] shadow-[0_0_6px_var(--green)] animate-pulse flex-shrink-0"
+                        />
+                      )}
+                      <Avatar name={name} index={idx} size="sm" />
+                      {name}
+                    </span>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="bg-[var(--surface-2)] border-b border-[var(--border)]">
+              <td
+                colSpan={playerIds.length + 1}
+                className="py-[5px] px-[14px] pl-5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-dim)]"
+              >
+                Upper section
               </td>
-            ))}
-          </tr>
-          <tr className="border-b border-gray-700 bg-gray-800/50">
-            <th scope="row" className="text-left py-1 px-2 text-gray-400 font-normal text-xs">
-              Bonus
-            </th>
-            {playerIds.map((pid) => (
-              <td key={pid} className="py-1 px-2 text-center text-gray-300 text-xs">
-                {getBonus(pid) ?? '—'}
+            </tr>
+            {upperCategories.map(renderCategoryRow)}
+            <tr className="bg-[var(--surface-2)] border-b border-[var(--border)]">
+              <td
+                colSpan={playerIds.length + 1}
+                className="py-[5px] px-[14px] pl-5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-dim)]"
+              >
+                Subtotal
               </td>
-            ))}
-          </tr>
-          {lowerCategories.map(renderCategoryRow)}
-          <tr className="border-t border-gray-600">
-            <th scope="row" className="text-left py-1 px-2 text-white font-semibold">
-              Total
-            </th>
-            {playerIds.map((pid) => (
-              <td key={pid} className="py-1 px-2 text-center font-semibold text-white">
-                {getTotal(pid)}
+            </tr>
+            <tr className="border-b border-[var(--border)]">
+              <td className="py-[6px] px-[14px] pl-5 text-[13px] font-medium text-foreground text-left">
+                Sum
               </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+              {playerIds.map((pid) => {
+                const sub = upperSubtotal(pid);
+                const isActive = pid === currentPlayerId;
+                return (
+                  <td
+                    key={pid}
+                    className={cn(
+                      'py-[6px] px-[14px] text-[13px] text-right text-foreground font-medium',
+                      isActive && 'relative'
+                    )}
+                  >
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+                      />
+                    )}
+                    {bonusThreshold != null ? `${sub} / ${bonusThreshold}` : sub}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="border-b border-[var(--border)]">
+              <td className="py-[6px] px-[14px] pl-5 text-[13px] font-medium text-foreground text-left">
+                Bonus
+              </td>
+              {playerIds.map((pid) => {
+                const bonus = getBonus(pid);
+                const sub = upperSubtotal(pid);
+                const isActive = pid === currentPlayerId;
+                let content: string;
+                let colorCls: string;
+                if (bonus !== null) {
+                  content = String(bonus);
+                  colorCls = 'text-[var(--green)]';
+                } else if (bonusThreshold != null) {
+                  const needed = bonusThreshold - sub;
+                  if (needed <= 0) {
+                    content = '—';
+                    colorCls = 'text-[var(--text-dim)]';
+                  } else {
+                    content = `+${needed} needed`;
+                    colorCls = 'text-[var(--amber)]';
+                  }
+                } else {
+                  content = '—';
+                  colorCls = 'text-[var(--text-dim)]';
+                }
+                return (
+                  <td
+                    key={pid}
+                    className={cn(
+                      'py-[6px] px-[14px] text-[13px] text-right font-medium',
+                      colorCls,
+                      isActive && 'relative'
+                    )}
+                  >
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+                      />
+                    )}
+                    {content}
+                  </td>
+                );
+              })}
+            </tr>
+            <tr className="bg-[var(--surface-2)] border-b border-[var(--border)]">
+              <td
+                colSpan={playerIds.length + 1}
+                className="py-[5px] px-[14px] pl-5 text-[10px] font-bold uppercase tracking-[0.1em] text-[var(--text-dim)]"
+              >
+                Lower section
+              </td>
+            </tr>
+            {lowerCategories.map(renderCategoryRow)}
+            <tr className="bg-[var(--surface-2)]">
+              <td className="py-2 px-[14px] pl-5 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-muted)] text-left">
+                Total
+              </td>
+              {playerIds.map((pid) => {
+                const isActive = pid === currentPlayerId;
+                return (
+                  <td
+                    key={pid}
+                    className={cn(
+                      'py-2 px-[14px] text-[14px] font-bold text-foreground text-right',
+                      isActive && 'relative'
+                    )}
+                  >
+                    {isActive && (
+                      <span
+                        aria-hidden="true"
+                        className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
+                      />
+                    )}
+                    {getTotal(pid)}
+                  </td>
+                );
+              })}
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

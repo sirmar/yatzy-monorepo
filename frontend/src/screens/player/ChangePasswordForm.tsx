@@ -1,12 +1,16 @@
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/hooks/AuthContext';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
-import { INPUT_CLASS } from '@/lib/styles';
 import { validatePassword, validatePasswordsMatch } from '@/lib/utils';
 
-export function ChangePasswordForm() {
+interface Props {
+  onDone?: () => void;
+}
+
+const inputCls =
+  'h-9 bg-[var(--surface)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)] w-full';
+
+export function ChangePasswordForm({ onDone }: Props) {
   const { changePassword } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -31,58 +35,79 @@ export function ChangePasswordForm() {
     });
   }
 
+  if (success) {
+    return <p className="text-[12px] text-[var(--green)]">Password changed successfully.</p>;
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-        Change Password
-      </h2>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="current-password" className="text-sm text-gray-400">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2.5">
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="current-password"
+          className="text-[11px] font-medium text-[var(--text-muted)]"
+        >
           Current password
         </label>
-        <Input
+        <input
           id="current-password"
           type="password"
           value={currentPassword}
           onChange={(e) => setCurrentPassword(e.target.value)}
           required
           autoComplete="current-password"
-          className={INPUT_CLASS}
+          className={inputCls}
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="new-password" className="text-sm text-gray-400">
+      <div className="flex flex-col gap-1.5">
+        <label htmlFor="new-password" className="text-[11px] font-medium text-[var(--text-muted)]">
           New password
         </label>
-        <Input
+        <input
           id="new-password"
           type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className={INPUT_CLASS}
+          className={inputCls}
         />
       </div>
-      <div className="flex flex-col gap-1">
-        <label htmlFor="confirm-password" className="text-sm text-gray-400">
+      <div className="flex flex-col gap-1.5">
+        <label
+          htmlFor="confirm-new-password"
+          className="text-[11px] font-medium text-[var(--text-muted)]"
+        >
           Confirm new password
         </label>
-        <Input
-          id="confirm-password"
+        <input
+          id="confirm-new-password"
           type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
           autoComplete="new-password"
-          className={INPUT_CLASS}
+          className={inputCls}
         />
       </div>
-      {error && <p className="text-red-400 text-sm">{error}</p>}
-      {success && <p className="text-green-400 text-sm">Password changed successfully.</p>}
-      <Button type="submit" className="w-40" disabled={submitting}>
-        Change password
-      </Button>
+      {error && <p className="text-[12px] text-[var(--red)]">{error}</p>}
+      <div className="flex justify-end gap-2">
+        {onDone && (
+          <button
+            type="button"
+            onClick={onDone}
+            className="h-8 px-3 text-[12px] font-medium text-[var(--text-muted)] bg-none border border-[var(--border-2)] rounded-lg cursor-pointer hover:bg-[var(--surface-2)] hover:text-foreground transition-colors"
+          >
+            Cancel
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={submitting}
+          className="h-8 px-3 bg-[var(--accent)] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+        >
+          Update password
+        </button>
+      </div>
     </form>
   );
 }
