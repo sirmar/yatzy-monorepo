@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
 import { Avatar } from '@/components/Avatar';
+import { Card } from '@/components/Card';
+import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
 
 type GamesPlayed = components['schemas']['GamesPlayed'];
@@ -54,27 +56,12 @@ export function GamesPlayedScreen() {
   return (
     <PageLayout>
       <div className="flex flex-col gap-4">
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
+        <Card className="px-4 py-3 flex items-center gap-3 flex-wrap">
           <span className="text-[13px] font-semibold text-foreground">Most Games Played</span>
-          <div className="flex items-center gap-1 bg-[var(--surface-2)] rounded-full p-[3px]">
-            {TABS.map((tab) => (
-              <button
-                key={tab.value}
-                type="button"
-                onClick={() => setSortBy(tab.value)}
-                className={`h-[26px] px-3 rounded-full text-[12px] font-medium cursor-pointer border-none transition-colors ${
-                  sortBy === tab.value
-                    ? 'bg-[var(--accent)] text-white'
-                    : 'bg-transparent text-[var(--text-muted)] hover:text-foreground'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
+          <ModeSelector options={TABS} selected={sortBy} onChange={setSortBy} />
+        </Card>
 
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-[14px]">
+        <Card className="px-4 py-[14px]">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-[var(--border)]">
@@ -122,7 +109,7 @@ export function GamesPlayedScreen() {
               )}
             </tbody>
           </table>
-        </div>
+        </Card>
       </div>
     </PageLayout>
   );

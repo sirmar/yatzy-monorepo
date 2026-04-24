@@ -11,14 +11,16 @@ interface Props<T> {
 
 export function ModeSelector<T extends string>({ options, selected, onChange }: Props<T>) {
   return (
-    <div className="flex gap-2">
+    <div className="flex items-center gap-1 bg-[var(--surface-2)] rounded-full p-[3px]">
       {options.map(({ label, value }) => (
         <button
           key={value}
           type="button"
           onClick={() => onChange(value)}
-          className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-            selected === value ? 'bg-yellow-400 text-gray-900' : 'text-gray-400 hover:text-white'
+          className={`h-[26px] px-3 rounded-full text-[12px] font-medium cursor-pointer border-none transition-colors ${
+            selected === value
+              ? 'bg-[var(--accent)] text-white'
+              : 'bg-transparent text-[var(--text-muted)] hover:text-foreground'
           }`}
         >
           {label}

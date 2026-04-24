@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
+import { Card } from '@/components/Card';
+import { FilterPill } from '@/components/FilterPill';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
@@ -28,31 +30,6 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
     document.addEventListener('mousedown', listener);
     return () => document.removeEventListener('mousedown', listener);
   }, [ref, handler]);
-}
-
-function FilterPill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        'text-[11px] font-semibold px-2.5 py-1 rounded-full border cursor-pointer transition-colors',
-        active
-          ? 'bg-[var(--accent-dim)] border-[var(--accent)] text-[var(--accent)]'
-          : 'bg-transparent border-[var(--border-2)] text-[var(--text-muted)] hover:text-foreground hover:border-white/20',
-      ].join(' ')}
-    >
-      {children}
-    </button>
-  );
 }
 
 function NewGamePanel({
@@ -272,7 +249,7 @@ export function LobbyScreen() {
 
   return (
     <PageLayout>
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3 flex items-center gap-3 flex-wrap">
+      <Card className="px-4 py-3 flex items-center gap-3 flex-wrap">
         <span className="text-[13px] font-semibold text-foreground">Games</span>
         <div className="flex items-center gap-1.5 flex-wrap">
           <div className="flex items-center gap-1">
@@ -300,9 +277,9 @@ export function LobbyScreen() {
             onCreate={handleCreate}
           />
         </div>
-      </div>
+      </Card>
 
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3">
+      <Card className="px-4 py-3">
         <GameList
           games={visible}
           currentPlayerId={player?.id ?? 0}
@@ -320,7 +297,7 @@ export function LobbyScreen() {
             {available.length} {available.length === 1 ? 'game' : 'games'}
           </span>
         </div>
-      </div>
+      </Card>
     </PageLayout>
   );
 }

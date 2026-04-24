@@ -1,5 +1,6 @@
 import type { components } from '@/api';
 import { Avatar } from '@/components/Avatar';
+import { Card } from '@/components/Card';
 import { cn } from '@/lib/utils';
 
 type PlayerScorecard = components['schemas']['PlayerScorecard'];
@@ -232,7 +233,7 @@ export function ScoreCard({
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] overflow-hidden">
+    <Card className="overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse min-w-[480px]">
           <thead>
@@ -393,6 +394,6 @@ export function ScoreCard({
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }

@@ -1,4 +1,5 @@
 import type { components } from '@/api';
+import { Card } from '@/components/Card';
 import { Die } from './Die';
 
 type DieType = components['schemas']['Die'];
@@ -31,7 +32,7 @@ export function DiceRoller({
   if (dice.length === 0) return null;
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] h-[78px] px-4 flex items-center">
+    <Card className="h-[78px] px-4 flex items-center">
       <div className="flex items-center gap-[14px] w-full">
         <div className="flex items-center gap-[10px] flex-1">
           {dice.map((die) => (
@@ -81,6 +82,6 @@ export function DiceRoller({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

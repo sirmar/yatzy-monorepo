@@ -8,7 +8,9 @@ class GameRepository:
   def __init__(self, conn: aiomysql.Connection) -> None:
     self._conn = conn
 
-  def _to_game(self, row: tuple, player_ids: list[int]) -> Game:
+  def _to_game(
+    self, row: tuple, player_ids: list[int], current_player_id: int | None = None
+  ) -> Game:
     return Game(
       id=row[0],
       status=row[1],
@@ -18,24 +20,28 @@ class GameRepository:
       started_at=row[5],
       ended_at=row[6],
       player_ids=player_ids,
+      current_player_id=current_player_id,
     )
 
   async def _fetch_game(self, cursor: aiomysql.Cursor, game_id: int) -> Game:
     await cursor.execute(
-      'SELECT id, status, mode, creator_id, created_at, started_at, ended_at '
-      'FROM games WHERE id = %s AND deleted_at IS NULL',
+      'SELECT g.id, g.status, g.mode, g.creator_id, g.created_at, g.started_at, g.ended_at, '
+      't.player_id '
+      'FROM games g LEFT JOIN turns t ON t.id = g.current_turn AND t.deleted_at IS NULL '
+      'WHERE g.id = %s AND g.deleted_at IS NULL',
       (game_id,),
     )
     row = await cursor.fetchone()
     if row is None:
       raise RuntimeError(f'Expected game {game_id} to exist in _fetch_game')
+    current_player_id = row[7]
     await cursor.execute(
       'SELECT player_id FROM game_players '
       'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
       (game_id,),
     )
     player_rows = await cursor.fetchall()
-    return self._to_game(row, [r[0] for r in player_rows])
+    return self._to_game(row, [r[0] for r in player_rows], current_player_id)
 
   async def create(self, creator_id: int, mode: GameMode = GameMode.MAXI) -> Game:
     async with await self._conn.cursor() as cursor:
@@ -109,17 +115,24 @@ class GameRepository:
         (turn_id, game_id),
       )
 
-  async def list_all(self, status: GameStatus | None = None) -> list[Game]:
+  async def list_all(
+    self, status: GameStatus | None = None, player_id: int | None = None
+  ) -> list[Game]:
     async with await self._conn.cursor() as cursor:
       query = (
-        'SELECT id, status, mode, creator_id, created_at, started_at, ended_at '
-        'FROM games WHERE deleted_at IS NULL'
+        'SELECT g.id, g.status, g.mode, g.creator_id, g.created_at, g.started_at, g.ended_at, '
+        't.player_id '
+        'FROM games g LEFT JOIN turns t ON t.id = g.current_turn AND t.deleted_at IS NULL '
+        'WHERE g.deleted_at IS NULL'
       )
       params: tuple = ()
       if status is not None:
-        query += ' AND status = %s'
-        params = (status,)
-      query += ' ORDER BY id'
+        query += ' AND g.status = %s'
+        params += (status,)
+      if player_id is not None:
+        query += ' AND EXISTS (SELECT 1 FROM game_players WHERE game_id = g.id AND player_id = %s AND deleted_at IS NULL)'
+        params += (player_id,)
+      query += ' ORDER BY g.id'
       await cursor.execute(query, params)
       game_rows = await cursor.fetchall()
       if not game_rows:
@@ -137,4 +150,4 @@ class GameRepository:
       players_by_game: dict[int, list[int]] = {row[0]: [] for row in game_rows}
       for game_id, player_id in player_rows:
         players_by_game[game_id].append(player_id)
-      return [self._to_game(row, players_by_game[row[0]]) for row in game_rows]
+      return [self._to_game(row, players_by_game[row[0]], row[7]) for row in game_rows]

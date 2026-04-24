@@ -1,21 +1,18 @@
+import { Clock, List, LogOut, Trophy, User } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
+import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { Avatar, AvatarStack } from '@/components/Avatar';
+import { ModePill } from '@/components/ModePill';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { useEventSource } from '@/hooks/useEventSource';
 import { cn } from '@/lib/utils';
 
-interface ActiveGame {
-  id: number;
-  player_ids: number[];
-  current_player_id?: number | null;
-  creator_id: number;
-  mode: string;
-}
+type ActiveGame = components['schemas']['Game'];
 
 function useActiveGames(): ActiveGame[] {
   const { player } = usePlayer();
@@ -25,7 +22,7 @@ function useActiveGames(): ActiveGame[] {
     if (!player) return;
     const { data } = await apiClient.GET('/games', { params: { query: { status: 'active' } } });
     if (!data) return;
-    setGames(data.filter((g) => g.player_ids.includes(player.id)) as ActiveGame[]);
+    setGames(data.filter((g) => g.player_ids.includes(player.id)));
   }, [player]);
 
   useEffect(() => {
@@ -35,7 +32,7 @@ function useActiveGames(): ActiveGame[] {
       .GET('/games', { params: { query: { status: 'active' } }, signal: controller.signal })
       .then(({ data }) => {
         if (!data) return;
-        setGames(data.filter((g) => g.player_ids.includes(player.id)) as ActiveGame[]);
+        setGames(data.filter((g) => g.player_ids.includes(player.id)));
       });
     return () => controller.abort();
   }, [player]);
@@ -84,7 +81,7 @@ function DropdownShell({
       {open && (
         <div
           className={cn(
-            'absolute top-[calc(100%+6px)] min-w-[180px] bg-[var(--surface-2)] border border-[var(--border-2)] rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-50 overflow-hidden p-1.5',
+            'absolute top-[calc(100%+6px)] min-w-[260px] bg-[var(--surface-2)] border border-[var(--border-2)] rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-50 overflow-hidden p-1.5',
             align === 'right' ? 'right-0' : 'left-0'
           )}
           role="menu"
@@ -141,16 +138,6 @@ function DropdownLabel({ children }: { children: React.ReactNode }) {
   );
 }
 
-function modeLabel(mode: string) {
-  const map: Record<string, string> = {
-    maxi: 'Maxi Yatzy',
-    maxi_sequential: 'Maxi Sequential',
-    yatzy: 'Yatzy',
-    yatzy_sequential: 'Yatzy Sequential',
-  };
-  return map[mode] ?? mode;
-}
-
 export function NavBar() {
   const { player, setPlayer } = usePlayer();
   const { logout } = useAuth();
@@ -193,11 +180,7 @@ export function NavBar() {
               ) : (
                 <span className="text-[var(--text-muted)]">Games</span>
               )}
-              {firstGame && (
-                <span className="text-[10px] font-semibold uppercase tracking-[0.06em] bg-[var(--accent-dim)] text-[var(--accent)] rounded-full px-2 py-0.5">
-                  {modeLabel(firstGame.mode)}
-                </span>
-              )}
+              {firstGame && <ModePill mode={firstGame.mode} />}
               <span className="text-[11px] text-[var(--text-muted)]">▾</span>
             </>
           }
@@ -221,9 +204,7 @@ export function NavBar() {
                     <div className="flex flex-col gap-[2px]">
                       <AvatarStack names={g.player_ids.map((id) => String(id))} size="sm" />
                       <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.06em] bg-[var(--accent-dim)] text-[var(--accent)] rounded-full px-2 py-0.5">
-                          {modeLabel(g.mode)}
-                        </span>
+                        <ModePill mode={g.mode} />
                         {isMyTurn && (
                           <span className="text-[11px] text-[var(--text-muted)]">Your turn</span>
                         )}
@@ -237,6 +218,7 @@ export function NavBar() {
                               type="button"
                               onClick={(e) => {
                                 e.preventDefault();
+                                e.stopPropagation();
                                 setConfirmAbortId(null);
                               }}
                               className="text-[11px] font-medium text-[var(--text-muted)] px-1.5 py-0.5 rounded cursor-pointer hover:text-foreground"
@@ -247,6 +229,7 @@ export function NavBar() {
                               type="button"
                               onClick={(e) => {
                                 e.preventDefault();
+                                e.stopPropagation();
                                 handleAbort(g.id);
                               }}
                               className="text-[11px] font-medium text-[var(--red)] px-1.5 py-0.5 rounded cursor-pointer hover:bg-[rgba(240,101,96,0.1)]"
@@ -259,6 +242,7 @@ export function NavBar() {
                             type="button"
                             onClick={(e) => {
                               e.preventDefault();
+                              e.stopPropagation();
                               setConfirmAbortId(g.id);
                             }}
                             className="text-[11px] font-medium text-[var(--text-dim)] px-1 py-0.5 rounded cursor-pointer hover:text-[var(--red)] hover:bg-[rgba(240,101,96,0.1)] transition-colors"
@@ -293,73 +277,24 @@ export function NavBar() {
             align="right"
             trigger={
               <>
-                <svg
+                <Trophy
                   aria-hidden="true"
                   width="15"
                   height="15"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  viewBox="0 0 24 24"
                   className="text-[var(--text-muted)]"
-                >
-                  <path d="M6 9H4a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2" />
-                  <path d="M18 9h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2" />
-                  <path d="M6 9V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4" />
-                  <path d="M6 15v1a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3v-1" />
-                </svg>
+                />
                 <span>Leaderboard</span>
                 <span className="text-[11px] text-[var(--text-muted)]">▾</span>
               </>
             }
           >
             <DropdownItem href="/statistics/high-scores">
-              <svg
-                aria-hidden="true"
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M6 9H4a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h2" />
-                <path d="M18 9h2a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2h-2" />
-                <path d="M6 9V5a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v4" />
-                <path d="M6 15v1a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3v-1" />
-              </svg>
+              <Trophy aria-hidden="true" width="14" height="14" />
               High scores
             </DropdownItem>
             <DropdownItem href="/statistics/games-played">
-              <svg
-                aria-hidden="true"
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-              </svg>
+              <List aria-hidden="true" width="14" height="14" />
               Most games played
-            </DropdownItem>
-            <DropdownItem href="/history">
-              <svg
-                aria-hidden="true"
-                width="14"
-                height="14"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 8v4l3 3" />
-                <circle cx="12" cy="12" r="9" />
-              </svg>
-              History
             </DropdownItem>
           </DropdownShell>
         </div>
@@ -376,35 +311,16 @@ export function NavBar() {
           }
         >
           <DropdownItem href="/profile">
-            <svg
-              aria-hidden="true"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M3 18v-1a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v1" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            <User aria-hidden="true" width="14" height="14" />
             Profile
+          </DropdownItem>
+          <DropdownItem href="/history">
+            <Clock aria-hidden="true" width="14" height="14" />
+            History
           </DropdownItem>
           <DropdownDivider />
           <DropdownItem danger onClick={handleLogout}>
-            <svg
-              aria-hidden="true"
-              width="14"
-              height="14"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-              <polyline points="16 17 21 12 16 7" />
-              <line x1="21" y1="12" x2="9" y2="12" />
-            </svg>
+            <LogOut aria-hidden="true" width="14" height="14" />
             Sign out
           </DropdownItem>
         </DropdownShell>

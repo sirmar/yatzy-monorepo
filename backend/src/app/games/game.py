@@ -18,6 +18,9 @@ class Game(BaseModel):
   mode: GameMode = Field(description='Game mode')
   creator_id: int = Field(description='ID of the player who created the game')
   player_ids: list[int] = Field(description='IDs of all players who have joined')
+  current_player_id: int | None = Field(
+    default=None, description='ID of the player whose turn it currently is'
+  )
   created_at: datetime = Field(description='When the game was created')
   started_at: datetime | None = Field(
     default=None, description='When the game was started'

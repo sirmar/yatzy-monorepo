@@ -96,9 +96,10 @@ def create_game_router(
   async def list_games(
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
     status: Annotated[GameStatus | None, Query()] = None,
+    player_id: Annotated[int | None, Query()] = None,
   ) -> list[Game]:
-    """List all games, optionally filtered by status."""
-    return await GameRepository(conn).list_all(status)
+    """List all games, optionally filtered by status and/or player."""
+    return await GameRepository(conn).list_all(status, player_id)
 
   @router.get('/games/lobby/events')
   async def lobby_events(

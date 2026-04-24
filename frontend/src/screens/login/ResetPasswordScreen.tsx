@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { authClient } from '@/auth/authClient';
 import { AuthScreenLayout } from '@/components/AuthScreenLayout';
+import { Button } from '@/components/Button';
+import { ErrorMessage } from '@/components/ErrorMessage';
+import { FormField } from '@/components/FormField';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { validatePassword, validatePasswordsMatch } from '@/lib/utils';
 
@@ -48,45 +51,28 @@ export function ResetPasswordScreen() {
   return (
     <AuthScreenLayout>
       <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-[12px] font-medium text-[var(--text-muted)]">
-            New password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            className="h-9 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label
-            htmlFor="confirm-password"
-            className="text-[12px] font-medium text-[var(--text-muted)]"
-          >
-            Confirm new password
-          </label>
-          <input
-            id="confirm-password"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            autoComplete="new-password"
-            className="h-9 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
-          />
-        </div>
-        {error && <p className="text-[12px] text-[var(--red)]">{error}</p>}
-        <button
-          type="submit"
-          disabled={submitting}
-          className="h-9 bg-[var(--accent)] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(124,158,248,0.35)] active:scale-[0.97] disabled:opacity-50"
-        >
+        <FormField
+          id="password"
+          label="New password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+        />
+        <FormField
+          id="confirm-password"
+          label="Confirm new password"
+          type="password"
+          value={confirmPassword}
+          onChange={(e) => setConfirmPassword(e.target.value)}
+          required
+          autoComplete="new-password"
+        />
+        <ErrorMessage error={error} />
+        <Button type="submit" disabled={submitting}>
           Reset password
-        </button>
+        </Button>
       </form>
     </AuthScreenLayout>
   );

@@ -3,19 +3,14 @@ import { useNavigate, useParams } from 'react-router-dom';
 import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { Avatar } from '@/components/Avatar';
+import { Card } from '@/components/Card';
+import { ModePill } from '@/components/ModePill';
 import { PageLayout } from '@/components/PageLayout';
 import { useErrorToast } from '@/hooks/use-toast';
 import { usePlayerNames } from '@/hooks/usePlayerNames';
 
 type PlayerScore = components['schemas']['PlayerScore'];
 type GameMode = components['schemas']['GameMode'];
-
-const MODE_LABELS: Record<string, string> = {
-  maxi: 'Maxi Yatzy',
-  maxi_sequential: 'Maxi Sequential',
-  yatzy: 'Yatzy',
-  yatzy_sequential: 'Yatzy Sequential',
-};
 
 export function EndScreen() {
   const { gameId } = useParams<{ gameId: string }>();
@@ -77,27 +72,23 @@ export function EndScreen() {
     <PageLayout>
       <div className="flex flex-col gap-4">
         {winnerName && winnerScore && (
-          <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] flex items-center gap-4 h-[78px] px-4">
+          <Card className="flex items-center gap-4 h-[78px] px-4">
             <div className="w-11 h-11 rounded-full flex items-center justify-center text-[17px] font-bold flex-shrink-0 bg-[rgba(240,180,41,0.2)] border-2 border-[rgba(240,180,41,0.5)] text-[var(--amber)]">
               {winnerName[0]?.toUpperCase()}
             </div>
             <div className="flex flex-col gap-0.5 flex-1">
               <div className="text-[17px] font-bold text-foreground">{winnerAnnouncement}</div>
               <div className="text-[12px] text-[var(--text-muted)]">
-                {gameMode != null && (
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] border border-[var(--border-2)] bg-[var(--surface-2)] text-[var(--text-muted)] rounded-full px-2 py-0.5">
-                    {MODE_LABELS[gameMode] ?? gameMode}
-                  </span>
-                )}
+                {gameMode != null && <ModePill mode={gameMode} />}
               </div>
             </div>
             <div className="text-[28px] font-bold text-[var(--amber)] flex-shrink-0">
               {winnerScore.total}
             </div>
-          </div>
+          </Card>
         )}
 
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-[14px]">
+        <Card className="px-4 py-[14px]">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b border-[var(--border)]">
@@ -147,7 +138,7 @@ export function EndScreen() {
               })}
             </tbody>
           </table>
-        </div>
+        </Card>
 
         <div className="flex items-center justify-end">
           <button

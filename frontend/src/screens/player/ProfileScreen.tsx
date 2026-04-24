@@ -1,8 +1,9 @@
+import { Pencil } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
 import { Avatar } from '@/components/Avatar';
+import { Card } from '@/components/Card';
 import { PageLayout } from '@/components/PageLayout';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
@@ -66,7 +67,7 @@ function IdentityPanel({
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] flex items-center gap-4 h-[78px] px-4">
+    <Card className="flex items-center gap-4 h-[78px] px-4">
       <Avatar
         name={name}
         index={0}
@@ -88,18 +89,7 @@ function IdentityPanel({
           }}
           className="flex items-center gap-1.5 h-[30px] px-3 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg text-[12px] font-medium text-[var(--text-muted)] cursor-pointer transition-colors hover:text-foreground hover:border-white/20"
         >
-          <svg
-            aria-hidden="true"
-            width="12"
-            height="12"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            viewBox="0 0 24 24"
-          >
-            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-          </svg>
+          <Pencil aria-hidden="true" width="12" height="12" />
           Edit
         </button>
         {open && (
@@ -133,7 +123,7 @@ function IdentityPanel({
           </form>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -230,7 +220,7 @@ function AccountPanel({ email }: { email: string }) {
   }
 
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3">
+    <Card className="px-4 py-3">
       <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] mb-1">
         Account
       </div>
@@ -284,7 +274,7 @@ function AccountPanel({ email }: { email: string }) {
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -331,22 +321,10 @@ export function ProfileScreen() {
       />
 
       {stats && (
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] p-4">
+        <Card className="p-4">
           <StatsGrid stats={stats} />
-        </div>
+        </Card>
       )}
-
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-[14px] px-4 py-3 flex items-center justify-between">
-        <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-foreground">
-          Game history
-        </div>
-        <Link
-          to="/history"
-          className="text-[12px] text-[var(--text-muted)] hover:text-foreground transition-colors"
-        >
-          See all →
-        </Link>
-      </div>
 
       <AccountPanel email={user?.email ?? ''} />
     </PageLayout>

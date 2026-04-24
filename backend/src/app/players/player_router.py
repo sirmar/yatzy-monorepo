@@ -9,6 +9,8 @@ from app.players.player import Player, PlayerCreate, PlayerUpdate
 from app.players.player_repository import PlayerRepository
 from app.players.player_stats import PlayerStats
 from app.players.player_stats_repository import PlayerStatsRepository
+from app.players.game_history import GameHistory
+from app.players.game_history_repository import GameHistoryRepository
 
 
 def create_player_router(database: Database, settings: Settings) -> APIRouter:
@@ -79,6 +81,14 @@ def create_player_router(database: Database, settings: Settings) -> APIRouter:
     if stats is None:
       raise HTTPException(status_code=404, detail='Player not found')
     return stats
+
+  @router.get('/players/{player_id}/game-history', response_model=list[GameHistory])
+  async def get_game_history(
+    player_id: int,
+    conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
+  ) -> list[GameHistory]:
+    """Get finished game history for a player, sorted by most recent first."""
+    return await GameHistoryRepository(conn).list_for_player(player_id)
 
   @router.get(
     '/players/{player_id}',

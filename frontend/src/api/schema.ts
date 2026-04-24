@@ -68,6 +68,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/{player_id}/game-history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Game History
+         * @description Get finished game history for a player, sorted by most recent first.
+         */
+        get: operations["get_game_history_players__player_id__game_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/players/{player_id}": {
         parameters: {
             query?: never;
@@ -105,7 +125,7 @@ export interface paths {
         };
         /**
          * List Games
-         * @description List all games, optionally filtered by status.
+         * @description List all games, optionally filtered by status and/or player.
          */
         get: operations["list_games_games_get"];
         put?: never;
@@ -497,6 +517,11 @@ export interface components {
              */
             player_ids: number[];
             /**
+             * Current Player Id
+             * @description ID of the player whose turn it currently is
+             */
+            current_player_id?: number | null;
+            /**
              * Created At
              * Format: date-time
              * @description When the game was created
@@ -531,6 +556,32 @@ export interface components {
              * @default 0
              */
             bot_count: number;
+        };
+        /** GameHistory */
+        GameHistory: {
+            /** Game Id */
+            game_id: number;
+            mode: components["schemas"]["GameMode"];
+            /**
+             * Finished At
+             * Format: date-time
+             */
+            finished_at: string;
+            /** Score */
+            score: number;
+            /** Rank */
+            rank: number;
+            /** Players */
+            players: components["schemas"]["GameHistoryPlayer"][];
+        };
+        /** GameHistoryPlayer */
+        GameHistoryPlayer: {
+            /** Player Id */
+            player_id: number;
+            /** Player Name */
+            player_name: string;
+            /** Score */
+            score: number;
         };
         /** GameJoin */
         GameJoin: {
@@ -980,6 +1031,37 @@ export interface operations {
             };
         };
     };
+    get_game_history_players__player_id__game_history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GameHistory"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_player_players__player_id__get: {
         parameters: {
             query?: never;
@@ -1128,6 +1210,7 @@ export interface operations {
         parameters: {
             query?: {
                 status?: components["schemas"]["GameStatus"] | null;
+                player_id?: number | null;
             };
             header?: never;
             path?: never;

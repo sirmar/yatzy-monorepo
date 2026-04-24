@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { AuthScreenLayout } from '@/components/AuthScreenLayout';
+import { Button } from '@/components/Button';
+import { ErrorMessage } from '@/components/ErrorMessage';
+import { FormField } from '@/components/FormField';
 import { useAuth } from '@/hooks/AuthContext';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { validatePassword } from '@/lib/utils';
@@ -116,37 +119,27 @@ export function LoginScreen() {
       </div>
 
       <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="email" className="text-[12px] font-medium text-[var(--text-muted)]">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="h-9 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
-          />
-        </div>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor="password" className="text-[12px] font-medium text-[var(--text-muted)]">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-            className="h-9 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
-          />
-        </div>
+        <FormField
+          id="email"
+          label="Email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          autoComplete="email"
+        />
+        <FormField
+          id="password"
+          label="Password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+        />
 
         <div className="h-9 text-[12px] leading-relaxed">
-          {error && <span className="text-[var(--red)]">{error}</span>}
+          <ErrorMessage error={error} />
           {emailNotVerified && (
             <span className="text-[var(--amber)]">
               Email not verified. Check your inbox, or{' '}
@@ -163,13 +156,9 @@ export function LoginScreen() {
           )}
         </div>
 
-        <button
-          type="submit"
-          disabled={submitting}
-          className="h-9 bg-[var(--accent)] text-white border-none rounded-lg text-[13px] font-semibold cursor-pointer transition-all hover:scale-[1.03] hover:shadow-[0_0_18px_rgba(124,158,248,0.35)] active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
-        >
+        <Button type="submit" disabled={submitting}>
           {mode === 'login' ? 'Sign in' : 'Create account'}
-        </button>
+        </Button>
 
         {mode === 'login' && (
           <p className="text-center text-[12px] text-[var(--text-muted)]">

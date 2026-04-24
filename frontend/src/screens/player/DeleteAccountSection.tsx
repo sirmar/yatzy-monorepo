@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/Button';
+import { ErrorMessage } from '@/components/ErrorMessage';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
@@ -31,21 +33,13 @@ export function DeleteAccountSection({ onCancel }: Props) {
         </p>
         <div className="flex justify-end gap-2">
           {onCancel && (
-            <button
-              type="button"
-              onClick={onCancel}
-              className="h-8 px-3 text-[12px] font-medium text-[var(--text-muted)] bg-none border border-[var(--border-2)] rounded-lg cursor-pointer hover:bg-[var(--surface-2)] hover:text-foreground transition-colors"
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
               Cancel
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={() => setConfirmed(true)}
-            className="h-8 px-3 text-[12px] font-semibold text-[var(--red)] bg-none border border-[var(--border-2)] rounded-lg cursor-pointer transition-colors hover:bg-[rgba(240,101,96,0.08)] hover:border-transparent"
-          >
+          <Button type="button" variant="danger" size="sm" onClick={() => setConfirmed(true)}>
             Delete account
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -56,24 +50,26 @@ export function DeleteAccountSection({ onCancel }: Props) {
       <p className="text-[12px] text-[var(--red)] font-medium">
         Are you sure? This cannot be undone.
       </p>
-      {error && <p className="text-[12px] text-[var(--red)]">{error}</p>}
+      <ErrorMessage error={error} />
       <div className="flex justify-end gap-2">
-        <button
+        <Button
           type="button"
-          onClick={() => setConfirmed(false)}
+          variant="ghost"
+          size="sm"
           disabled={deleting}
-          className="h-8 px-3 text-[12px] font-medium text-[var(--text-muted)] bg-none border border-[var(--border-2)] rounded-lg cursor-pointer hover:bg-[var(--surface-2)] hover:text-foreground transition-colors disabled:opacity-50"
+          onClick={() => setConfirmed(false)}
         >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
-          onClick={handleConfirm}
+          size="sm"
           disabled={deleting}
-          className="h-8 px-3 bg-[var(--red)] text-white border-none rounded-lg text-[12px] font-semibold cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+          onClick={handleConfirm}
+          className="bg-[var(--red)] hover:shadow-[0_0_18px_rgba(240,101,96,0.35)]"
         >
           {deleting ? 'Deleting…' : 'Yes, delete'}
-        </button>
+        </Button>
       </div>
     </div>
   );
