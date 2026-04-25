@@ -9,7 +9,7 @@ type Player = components['schemas']['Player'];
 
 interface Props {
   player: Player;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   onSuccess: (updated: Player) => void;
 }

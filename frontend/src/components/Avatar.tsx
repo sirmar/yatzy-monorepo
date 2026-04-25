@@ -12,7 +12,7 @@ const avatarColors = [
 interface AvatarProps {
   name: string;
   index?: number;
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
   playerId?: number;
   hasPicture?: boolean;
@@ -29,7 +29,11 @@ export function Avatar({
   const [imgError, setImgError] = useState(false);
 
   const sizeClass =
-    size === 'sm' ? 'w-[22px] h-[22px] text-[9px]' : 'w-[26px] h-[26px] text-[10px]';
+    size === 'sm'
+      ? 'w-[22px] h-[22px] text-[9px]'
+      : size === 'lg'
+        ? 'w-[36px] h-[36px] text-[13px]'
+        : 'w-[26px] h-[26px] text-[10px]';
 
   if (playerId && hasPicture && !imgError) {
     return (
@@ -59,7 +63,7 @@ export function Avatar({
 
 interface AvatarStackProps {
   playerIds: number[];
-  size?: 'sm' | 'md';
+  size?: 'sm' | 'md' | 'lg';
   className?: string;
 }
 
@@ -77,7 +81,7 @@ export function AvatarStack({ playerIds, size = 'md', className }: AvatarStackPr
           hasPicture={pictures[id] ?? false}
           className={cn(
             'border-[1.5px] border-[var(--surface)]',
-            i > 0 ? (size === 'md' ? '-ml-2' : '-ml-1.5') : ''
+            i > 0 ? (size === 'lg' ? '-ml-2.5' : size === 'md' ? '-ml-2' : '-ml-1.5') : ''
           )}
         />
       ))}

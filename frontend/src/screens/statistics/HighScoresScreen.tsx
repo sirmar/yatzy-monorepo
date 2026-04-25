@@ -5,6 +5,7 @@ import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
+import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 
 type HighScore = components['schemas']['HighScore'];
 type GameMode = components['schemas']['GameMode'];
@@ -25,6 +26,7 @@ const RANK_COLORS = [
 export function HighScoresScreen() {
   const [scores, setScores] = useState<HighScore[]>([]);
   const [mode, setMode] = useState<GameMode>('maxi');
+  const { pictures } = usePlayerNames();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -52,10 +54,10 @@ export function HighScoresScreen() {
         </Card>
 
         <Card className="px-4 py-[14px]">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="pb-2 px-2 w-7 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
+                <th className="pb-2 px-2 w-8 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
                   #
                 </th>
                 <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
@@ -73,13 +75,19 @@ export function HighScoresScreen() {
                   className="border-b border-[var(--border)] last:border-b-0"
                 >
                   <td
-                    className={`py-[10px] px-2 text-[12px] font-bold w-7 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
+                    className={`py-[10px] px-2 text-[12px] font-bold w-8 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
                   >
                     {idx + 1}
                   </td>
                   <td className="py-[10px] px-2">
                     <div className="flex items-center gap-[10px]">
-                      <Avatar name={score.player_name} index={idx} size="sm" />
+                      <Avatar
+                        name={score.player_name}
+                        index={idx}
+                        size="lg"
+                        playerId={score.player_id}
+                        hasPicture={pictures[score.player_id] ?? false}
+                      />
                       <span className="text-[13px] font-medium text-foreground">
                         {score.player_name}
                       </span>

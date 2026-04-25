@@ -391,23 +391,31 @@ describe('GameScreen', () => {
   });
 
   describe('scoreboard rows', () => {
-    it('shows upper subtotal as X / threshold for maxi mode', async () => {
+    it('shows upper subtotal for maxi mode', async () => {
       givenScoreboard([makeScorecard(ALICE.id, { ones: 3, twos: 6 }), makeScorecard(BOB.id)]);
       whenRendered();
-      await thenTextIsVisible('9 / 84');
+      const cells = await screen.findAllByText('9');
+      expect(cells.length).toBeGreaterThan(0);
     });
 
-    it('shows upper subtotal as X / 63 for yatzy mode', async () => {
+    it('shows bonus threshold in bonus row label for maxi mode', async () => {
+      givenScoreboard([makeScorecard(ALICE.id, { ones: 3, twos: 6 }), makeScorecard(BOB.id)]);
+      whenRendered();
+      await thenTextIsVisible('(84)');
+    });
+
+    it('shows bonus threshold in bonus row label for yatzy mode', async () => {
       givenGame({ id: 42, creator_id: ALICE.id, mode: 'yatzy' });
       givenScoreboard([makeScorecard(ALICE.id, { ones: 3, twos: 6 }), makeScorecard(BOB.id)]);
       whenRendered();
-      await thenTextIsVisible('9 / 63');
+      await thenTextIsVisible('(63)');
     });
 
-    it('shows bonus needed when below threshold', async () => {
+    it('shows zero when bonus not yet earned', async () => {
       givenScoreboard([makeScorecard(ALICE.id, { ones: 3 }), makeScorecard(BOB.id)]);
       whenRendered();
-      await thenTextIsVisible('+81 needed');
+      const cells = await screen.findAllByText('0');
+      expect(cells.length).toBeGreaterThan(0);
     });
 
     it('shows earned bonus', async () => {
@@ -420,7 +428,8 @@ describe('GameScreen', () => {
     it('shows total score', async () => {
       givenScoreboard([makeScorecard(ALICE.id, { ones: 5, twos: 10 }), makeScorecard(BOB.id)]);
       whenRendered();
-      await thenTextIsVisible('15');
+      const cells = await screen.findAllByText('15');
+      expect(cells.length).toBeGreaterThan(0);
     });
   });
 

@@ -195,7 +195,7 @@ export function NavBar() {
           trigger={
             <>
               {firstGame ? (
-                <AvatarStack playerIds={firstGame.player_ids} size="sm" />
+                <AvatarStack playerIds={firstGame.player_ids} size="md" />
               ) : (
                 <span className="text-[var(--text-muted)]">Games</span>
               )}
@@ -222,7 +222,7 @@ export function NavBar() {
                   >
                     <div className="flex flex-col gap-[2px] min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <AvatarStack playerIds={g.player_ids} size="sm" />
+                        <AvatarStack playerIds={g.player_ids} size="md" />
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           {isCreator &&
                             (confirmAbortId === g.id ? (
@@ -287,7 +287,7 @@ export function NavBar() {
             </>
           )}
           <DropdownItem href="/lobby">
-            <span className="text-[var(--accent)] text-base leading-none">＋</span>
+            <List aria-hidden="true" width="14" height="14" className="text-[var(--accent)]" />
             Available games
           </DropdownItem>
         </DropdownShell>

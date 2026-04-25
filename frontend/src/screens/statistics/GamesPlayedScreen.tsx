@@ -5,6 +5,7 @@ import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
+import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 
 type GamesPlayed = components['schemas']['GamesPlayed'];
 type SortBy = components['schemas']['GamesPlayedSortBy'];
@@ -34,6 +35,7 @@ const COUNT_KEY: Record<SortBy, keyof GamesPlayed> = {
 export function GamesPlayedScreen() {
   const [entries, setEntries] = useState<GamesPlayed[]>([]);
   const [sortBy, setSortBy] = useState<SortBy>('total');
+  const { pictures } = usePlayerNames();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -62,10 +64,10 @@ export function GamesPlayedScreen() {
         </Card>
 
         <Card className="px-4 py-[14px]">
-          <table className="w-full border-collapse">
+          <table className="w-full border-collapse table-fixed">
             <thead>
               <tr className="border-b border-[var(--border)]">
-                <th className="pb-2 px-2 w-7 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
+                <th className="pb-2 px-2 w-8 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
                   #
                 </th>
                 <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
@@ -83,13 +85,19 @@ export function GamesPlayedScreen() {
                   className="border-b border-[var(--border)] last:border-b-0"
                 >
                   <td
-                    className={`py-[10px] px-2 text-[12px] font-bold w-7 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
+                    className={`py-[10px] px-2 text-[12px] font-bold w-8 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
                   >
                     {idx + 1}
                   </td>
                   <td className="py-[10px] px-2">
                     <div className="flex items-center gap-[10px]">
-                      <Avatar name={entry.player_name} index={idx} size="sm" />
+                      <Avatar
+                        name={entry.player_name}
+                        index={idx}
+                        size="lg"
+                        playerId={entry.player_id}
+                        hasPicture={pictures[entry.player_id] ?? false}
+                      />
                       <span className="text-[13px] font-medium text-foreground">
                         {entry.player_name}
                       </span>

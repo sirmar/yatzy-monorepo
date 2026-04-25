@@ -208,6 +208,9 @@ export function ScoreCard({
 
   function renderCategoryRow(cat: ScoreCategory) {
     const clickable = isClickable(cat);
+    const activeId = currentPlayerId ?? myPlayerId;
+    const activeEntry = getEntry(activeId, cat);
+    const isScored = activeEntry?.score !== null && activeEntry?.score !== undefined;
     return (
       <tr
         key={cat}
@@ -224,7 +227,12 @@ export function ScoreCard({
             : undefined
         }
       >
-        <td className="py-[6px] px-[14px] pl-5 text-[13px] font-medium text-foreground text-left">
+        <td
+          className={cn(
+            'py-[6px] px-[14px] pl-5 text-[13px] font-medium text-left',
+            isScored ? 'text-[var(--text-muted)]' : 'text-foreground'
+          )}
+        >
           {CATEGORY_LABELS[cat]}
         </td>
         {playerIds.map((pid) => renderCell(pid, cat))}
@@ -248,11 +256,13 @@ export function ScoreCard({
                   <th
                     key={pid}
                     className={cn(
-                      'py-2 px-[14px] text-[12px] font-semibold uppercase tracking-[0.06em] text-right align-middle',
-                      isActive ? 'text-foreground' : 'text-[var(--text-muted)]'
+                      'py-2 px-[14px] text-[12px] font-semibold text-left align-middle relative',
+                      isActive
+                        ? 'text-foreground bg-[rgba(124,158,248,0.05)]'
+                        : 'text-[var(--text-muted)]'
                     )}
                   >
-                    <span className="inline-flex items-center justify-end gap-1.5">
+                    <span className="inline-flex items-center justify-start gap-1.5">
                       <span
                         aria-hidden="true"
                         className={cn(
@@ -267,9 +277,11 @@ export function ScoreCard({
                         index={idx}
                         playerId={pid}
                         hasPicture={playerPictures[pid] ?? false}
-                        size="sm"
+                        size="lg"
                       />
-                      {name}
+                      <span className="max-w-[80px] break-words leading-tight text-left">
+                        {name}
+                      </span>
                     </span>
                   </th>
                 );
@@ -315,36 +327,32 @@ export function ScoreCard({
                         className="absolute inset-0 bg-[rgba(124,158,248,0.05)] pointer-events-none"
                       />
                     )}
-                    {bonusThreshold != null ? `${sub} / ${bonusThreshold}` : sub}
+                    {sub}
                   </td>
                 );
               })}
             </tr>
             <tr className="border-b border-[var(--border)]">
               <td className="py-[6px] px-[14px] pl-5 text-[13px] font-medium text-foreground text-left">
-                Bonus
+                {bonusThreshold != null ? (
+                  <>
+                    Bonus <span className="text-[var(--text-muted)]">({bonusThreshold})</span>
+                  </>
+                ) : (
+                  'Bonus'
+                )}
               </td>
               {playerIds.map((pid) => {
                 const bonus = getBonus(pid);
-                const sub = upperSubtotal(pid);
                 const isActive = pid === currentPlayerId;
                 let content: string;
                 let colorCls: string;
                 if (bonus !== null) {
                   content = String(bonus);
                   colorCls = 'text-[var(--green)]';
-                } else if (bonusThreshold != null) {
-                  const needed = bonusThreshold - sub;
-                  if (needed <= 0) {
-                    content = '—';
-                    colorCls = 'text-[var(--text-dim)]';
-                  } else {
-                    content = `+${needed} needed`;
-                    colorCls = 'text-[var(--amber)]';
-                  }
                 } else {
-                  content = '—';
-                  colorCls = 'text-[var(--text-dim)]';
+                  content = '0';
+                  colorCls = 'text-foreground';
                 }
                 return (
                   <td

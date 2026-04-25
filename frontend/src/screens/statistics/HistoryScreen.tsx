@@ -103,7 +103,9 @@ export function HistoryScreen() {
             {filtered.map((row) => (
               <li key={row.game_id} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center gap-3">
-                  <AvatarStack playerIds={row.players.map((p) => p.player_id)} size="lg" />
+                  <div className="w-[140px] flex-shrink-0">
+                    <AvatarStack playerIds={row.players.map((p) => p.player_id)} size="lg" />
+                  </div>
                   <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <ModePill mode={row.mode} />
@@ -113,16 +115,20 @@ export function HistoryScreen() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span
-                      className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                        row.rank === 1
-                          ? 'bg-[rgba(94,203,138,0.15)] text-[var(--green)]'
-                          : 'bg-[rgba(240,101,96,0.12)] text-[var(--red)]'
-                      }`}
-                    >
-                      {ordinal(row.rank)}
+                    <span className="w-9 flex justify-center">
+                      <span
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                          row.rank === 1
+                            ? 'bg-[rgba(94,203,138,0.15)] text-[var(--green)]'
+                            : 'bg-[rgba(240,101,96,0.12)] text-[var(--red)]'
+                        }`}
+                      >
+                        {ordinal(row.rank)}
+                      </span>
                     </span>
-                    <span className="text-[14px] font-bold text-foreground">{row.score}</span>
+                    <span className="text-[14px] font-bold text-foreground w-10 text-right">
+                      {row.score}
+                    </span>
                     <span className="text-[11px] text-[var(--text-dim)] w-16 text-right">
                       {formatGameDate(row.finished_at)}
                     </span>

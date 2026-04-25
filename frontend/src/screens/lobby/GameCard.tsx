@@ -33,8 +33,8 @@ export function GameCard({
   return (
     <div className="py-2 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 min-w-0">
-        <div className="w-20 flex-shrink-0">
-          <AvatarStack playerIds={game.player_ids} size="md" />
+        <div className="flex-shrink-0">
+          <AvatarStack playerIds={game.player_ids} size="lg" />
         </div>
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-1.5">
