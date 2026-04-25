@@ -41,11 +41,10 @@ afterEach(() => {
 afterAll(() => server.close());
 
 describe('DeleteAccountSection', () => {
-  it('shows a delete button that opens a confirmation dialog', async () => {
+  it('shows a delete button that opens a confirmation message', async () => {
     whenRendered();
     await whenDeleteButtonClicked();
-    expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/cannot be undone/i)).toBeInTheDocument();
+    thenConfirmTextIsVisible();
   });
 
   it('does not delete if user cancels', async () => {
@@ -85,8 +84,10 @@ describe('DeleteAccountSection', () => {
   }
 
   async function whenConfirmClicked() {
-    const buttons = screen.getAllByRole('button', { name: /delete account/i });
-    const confirmButton = buttons[buttons.length - 1];
-    await userEvent.click(confirmButton);
+    await userEvent.click(screen.getByRole('button', { name: /yes, delete/i }));
+  }
+
+  function thenConfirmTextIsVisible() {
+    screen.getByText(/cannot be undone/i);
   }
 });

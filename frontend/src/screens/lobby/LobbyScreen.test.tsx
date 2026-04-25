@@ -1,4 +1,4 @@
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -27,6 +27,13 @@ const LEAVE_URL = (id: number, playerId: number) =>
 
 const PLAYER = { id: 1, name: 'Alice', created_at: '' };
 const BOB = { id: 2, name: 'Bob', created_at: '' };
+
+const MODE_LABELS: Record<string, string> = {
+  maxi: 'Maxi Yatzy',
+  maxi_sequential: 'Maxi Sequential',
+  yatzy: 'Yatzy',
+  yatzy_sequential: 'Yatzy Sequential',
+};
 
 describe('LobbyScreen', () => {
   beforeEach(() => {
@@ -72,7 +79,7 @@ describe('LobbyScreen', () => {
       givenPlayers([PLAYER, BOB]);
       givenGames([{ id: 10, status: 'lobby', creator_id: 2, player_ids: [2], created_at: '' }]);
       whenRendered();
-      await thenCreatorNameIsVisible('Bob');
+      await thenPlayerNameIsVisible('Bob');
     });
   });
 
@@ -100,8 +107,7 @@ describe('LobbyScreen', () => {
     it('creates a sequential game when sequential mode is selected', async () => {
       const { getMode } = givenCreateGameCapturingMode();
       whenRendered();
-      await whenModeSelected('maxi_sequential');
-      await whenNewGameClicked();
+      await whenNewGameClicked('maxi_sequential');
       thenCreatedWithMode(getMode(), 'maxi_sequential');
     });
 
@@ -125,7 +131,7 @@ describe('LobbyScreen', () => {
       await thenYoursBadgeIsVisible();
     });
 
-    it('shows Maxi Sequential badge on sequential games', async () => {
+    it('shows Maxi Sequential badge on maxi_sequential games', async () => {
       givenGames([
         {
           id: 42,
@@ -137,10 +143,10 @@ describe('LobbyScreen', () => {
         },
       ]);
       whenRendered();
-      await thenBadgeVisible('Maxi Yatzy Sequential');
+      await thenBadgeVisible('Maxi Sequential');
     });
 
-    it('shows Maxi Standard badge on standard games', async () => {
+    it('shows Maxi Yatzy badge on maxi games', async () => {
       givenGames([
         {
           id: 42,
@@ -155,7 +161,7 @@ describe('LobbyScreen', () => {
       await thenBadgeVisible('Maxi Yatzy');
     });
 
-    it('shows Yatzy Standard badge on yatzy games', async () => {
+    it('shows Yatzy badge on yatzy games', async () => {
       givenGames([
         { id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '', mode: 'yatzy' },
       ]);
@@ -181,16 +187,14 @@ describe('LobbyScreen', () => {
     it('creates a yatzy game when yatzy mode is selected', async () => {
       const { getMode } = givenCreateGameCapturingMode();
       whenRendered();
-      await whenModeSelected('yatzy');
-      await whenNewGameClicked();
+      await whenNewGameClicked('yatzy');
       thenCreatedWithMode(getMode(), 'yatzy');
     });
 
     it('creates a yatzy sequential game when yatzy_sequential mode is selected', async () => {
       const { getMode } = givenCreateGameCapturingMode();
       whenRendered();
-      await whenModeSelected('yatzy_sequential');
-      await whenNewGameClicked();
+      await whenNewGameClicked('yatzy_sequential');
       thenCreatedWithMode(getMode(), 'yatzy_sequential');
     });
   });
@@ -241,7 +245,7 @@ describe('LobbyScreen', () => {
   });
 
   describe('deleting a game (creator)', () => {
-    it('clicking delete opens confirmation dialog', async () => {
+    it('clicking delete shows confirmation inline', async () => {
       givenGames([{ id: 42, status: 'lobby', creator_id: 1, player_ids: [1], created_at: '' }]);
       whenRendered();
       await whenDeleteButtonClicked(42);
@@ -424,12 +428,13 @@ describe('LobbyScreen', () => {
     renderWithProviders(<LobbyScreen />);
   }
 
-  async function whenNewGameClicked() {
+  async function whenNewGameClicked(mode?: string) {
     await userEvent.click(await screen.findByRole('button', { name: /new game/i }));
-  }
-
-  async function whenModeSelected(mode: string) {
-    await userEvent.selectOptions(await screen.findByRole('combobox', { name: /mode/i }), mode);
+    const panel = await screen.findByTestId('new-game-panel');
+    if (mode) {
+      await userEvent.click(within(panel).getByRole('button', { name: MODE_LABELS[mode] ?? mode }));
+    }
+    await userEvent.click(within(panel).getByRole('button', { name: 'Create' }));
   }
 
   async function whenJoinClicked(gameId: number) {
@@ -454,7 +459,7 @@ describe('LobbyScreen', () => {
   }
 
   async function thenConfirmDialogIsVisible() {
-    await screen.findByRole('heading', { name: /delete game/i });
+    await screen.findByText('Sure?');
   }
 
   async function whenLeaveClicked(gameId: number) {
@@ -462,7 +467,7 @@ describe('LobbyScreen', () => {
   }
 
   async function thenGameIsVisible(gameId: number) {
-    await screen.findByText(`Game #${gameId}`);
+    await screen.findByRole('button', { name: `Join game ${gameId}` });
   }
 
   async function thenEmptyStateIsVisible() {
@@ -473,16 +478,12 @@ describe('LobbyScreen', () => {
     await screen.findByText(name);
   }
 
-  async function thenCreatorNameIsVisible(name: string) {
-    await screen.findByText(new RegExp(`created by ${name}`, 'i'));
-  }
-
   async function thenButtonIsVisible(name: string) {
     await screen.findByRole('button', { name });
   }
 
   async function thenWaitingIsVisible() {
-    await screen.findByText('Waiting...');
+    await screen.findByText(/waiting/i);
   }
 
   async function thenYoursBadgeIsVisible() {

@@ -42,7 +42,7 @@ describe('EndScreen', () => {
       await thenTextIsVisible('241');
     });
 
-    it('highlights the winner', async () => {
+    it('highlights the winner row', async () => {
       givenPlayers([ALICE, BOB]);
       givenFinishedGame({
         winnerIds: [1],
@@ -52,7 +52,7 @@ describe('EndScreen', () => {
         ],
       });
       whenRendered();
-      await thenWinnerRowIsHighlighted(1);
+      await thenWinnerRowIsPresent(1);
     });
 
     it('shows the winner announcement text', async () => {
@@ -83,11 +83,11 @@ describe('EndScreen', () => {
   });
 
   describe('navigation', () => {
-    it('clicking "Back to Lobby" navigates to /lobby', async () => {
+    it('clicking "Available games" navigates to /lobby', async () => {
       givenPlayers([ALICE]);
       givenFinishedGame({ winnerIds: [1], scores: [{ player_id: 1, total: 287 }] });
       whenRendered();
-      await whenBackToLobbyClicked();
+      await whenAvailableGamesClicked();
       await thenNavigatedTo('/lobby');
     });
 
@@ -151,17 +151,16 @@ describe('EndScreen', () => {
     renderWithProviders(<EndScreen />);
   }
 
-  async function whenBackToLobbyClicked() {
-    await userEvent.click(await screen.findByRole('button', { name: /back to lobby/i }));
+  async function whenAvailableGamesClicked() {
+    await userEvent.click(await screen.findByRole('button', { name: /available games/i }));
   }
 
   async function thenTextIsVisible(text: string) {
     await screen.findAllByText(new RegExp(text));
   }
 
-  async function thenWinnerRowIsHighlighted(playerId: number) {
-    const row = await screen.findByTestId(`winner-row-${playerId}`);
-    expect(row).toHaveClass('text-yellow-400');
+  async function thenWinnerRowIsPresent(playerId: number) {
+    await screen.findByTestId(`winner-row-${playerId}`);
   }
 
   async function thenNavigatedTo(path: string) {

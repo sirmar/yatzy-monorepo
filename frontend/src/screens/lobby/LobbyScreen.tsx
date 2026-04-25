@@ -70,7 +70,10 @@ function NewGamePanel({
       </button>
 
       {open && (
-        <div className="absolute top-[calc(100%+6px)] right-0 w-60 flex flex-col gap-2.5 p-3 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-10">
+        <div
+          data-testid="new-game-panel"
+          className="absolute top-[calc(100%+6px)] right-0 w-60 flex flex-col gap-2.5 p-3 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-[12px] shadow-[0_8px_32px_rgba(0,0,0,0.4)] z-10"
+        >
           <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)]">
             Game mode
           </div>

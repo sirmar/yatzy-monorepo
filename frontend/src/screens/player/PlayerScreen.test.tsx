@@ -49,15 +49,17 @@ describe('PlayerScreen', () => {
       givenNoMyPlayer();
       givenCreatePlayerSucceeds({ id: 3, account_id: ACCOUNT_ID, name: 'Carol', created_at: '' });
       whenRendered({ accountId: ACCOUNT_ID });
-      await whenPlayerCreated('Carol');
-      thenNavigatedTo('/lobby');
+      await whenPlayerNameEntered('Carol');
+      await whenContinueClicked();
+      await thenNavigatedTo('/lobby');
     });
 
     it('shows error when player creation fails', async () => {
       givenNoMyPlayer();
       givenCreatePlayerFails();
       whenRendered({ accountId: ACCOUNT_ID });
-      await whenPlayerCreated('Carol');
+      await whenPlayerNameEntered('Carol');
+      await whenContinueClicked();
       await thenErrorIsVisible();
     });
   });
@@ -104,17 +106,20 @@ describe('PlayerScreen', () => {
     renderWithProviders(<PlayerScreen />);
   }
 
-  async function whenPlayerCreated(name: string) {
+  async function whenPlayerNameEntered(name: string) {
     await userEvent.type(await screen.findByRole('textbox'), name);
-    await userEvent.click(screen.getByRole('button', { name: /create/i }));
+  }
+
+  async function whenContinueClicked() {
+    await userEvent.click(screen.getByRole('button', { name: /continue/i }));
   }
 
   async function thenCreateFormIsVisible() {
-    await screen.findByPlaceholderText(/enter your name/i);
+    await screen.findByLabelText(/display name/i);
   }
 
   async function thenErrorIsVisible() {
-    await screen.findByText(/failed to create/i);
+    await screen.findByText(/something went wrong/i);
   }
 
   async function thenNavigatedTo(path: string) {

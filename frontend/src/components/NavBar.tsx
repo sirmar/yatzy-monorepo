@@ -60,10 +60,12 @@ function DropdownShell({
   trigger,
   children,
   align = 'left',
+  label,
 }: {
   trigger: React.ReactNode;
   children: React.ReactNode;
   align?: 'left' | 'right';
+  label?: string;
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -73,6 +75,7 @@ function DropdownShell({
     <div ref={ref} className="relative">
       <button
         type="button"
+        aria-label={label}
         onClick={() => setOpen((v) => !v)}
         className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border-2)] rounded-[10px] px-3 h-9 cursor-pointer text-foreground text-[13px] font-medium transition-all hover:bg-[var(--surface-2)] hover:border-white/20 hover:scale-[1.04] active:scale-[0.97]"
       >
@@ -173,6 +176,7 @@ export function NavBar() {
       <div className="max-w-[860px] mx-auto px-4 flex items-center gap-3">
         {/* Games switcher */}
         <DropdownShell
+          label="Games"
           trigger={
             <>
               {firstGame ? (

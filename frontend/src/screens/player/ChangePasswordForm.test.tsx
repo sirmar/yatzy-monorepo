@@ -2,7 +2,7 @@ import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
 import { renderWithProviders } from '@/test/helpers';
 import { ChangePasswordForm } from './ChangePasswordForm';
 
@@ -36,10 +36,10 @@ afterAll(() => server.close());
 describe('ChangePasswordForm', () => {
   it('shows current password, new password and confirm fields and submit button', () => {
     whenRendered();
-    expect(screen.getByLabelText(/current password/i)).toBeInTheDocument();
-    expect(screen.getByLabelText('New password')).toBeInTheDocument();
-    expect(screen.getByLabelText('Confirm new password')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /change password/i })).toBeInTheDocument();
+    thenFieldIsVisible(/current password/i);
+    thenFieldIsVisible('New password');
+    thenFieldIsVisible('Confirm new password');
+    thenButtonIsVisible(/update password/i);
   });
 
   it('shows success message on 204', async () => {
@@ -89,6 +89,14 @@ describe('ChangePasswordForm', () => {
     renderWithProviders(<ChangePasswordForm />);
   }
 
+  function thenFieldIsVisible(label: string | RegExp) {
+    screen.getByLabelText(label);
+  }
+
+  function thenButtonIsVisible(name: string | RegExp) {
+    screen.getByRole('button', { name });
+  }
+
   async function whenCurrentPasswordEntered(password: string) {
     await userEvent.type(screen.getByLabelText(/current password/i), password);
   }
@@ -102,6 +110,6 @@ describe('ChangePasswordForm', () => {
   }
 
   async function whenFormSubmitted() {
-    await userEvent.click(screen.getByRole('button', { name: /change password/i }));
+    await userEvent.click(screen.getByRole('button', { name: /update password/i }));
   }
 });

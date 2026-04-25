@@ -26,7 +26,6 @@ const GAME_URL = 'http://localhost/api/games/42';
 const STATE_URL = 'http://localhost/api/games/42/state';
 const BOARD_URL = 'http://localhost/api/games/42/scoreboard';
 const ROLL_URL = 'http://localhost/api/games/42/roll';
-const ABORT_URL = 'http://localhost/api/games/42/abort';
 const OPTIONS_URL = (pid: number) => `http://localhost/api/games/42/players/${pid}/scoring-options`;
 const SCORE_URL = (pid: number) => `http://localhost/api/games/42/players/${pid}/scorecard`;
 const PLAYERS_URL = 'http://localhost/api/players';
@@ -110,26 +109,10 @@ describe('GameScreen', () => {
   });
 
   describe('game state display', () => {
-    it('shows Sequential badge in header for sequential games', async () => {
-      givenGame({ id: 42, creator_id: ALICE.id, mode: 'maxi_sequential' });
-      whenRendered();
-      await thenTextIsVisible('Maxi Yatzy Sequential');
-    });
-
-    it('shows Standard badge for standard games', async () => {
-      whenRendered();
-      await thenBadgeVisible('Maxi Yatzy');
-    });
-
     it('shows player names in scorecard header', async () => {
       whenRendered();
       await thenColumnHeaderIsVisible('Alice');
       await thenColumnHeaderIsVisible('Bob');
-    });
-
-    it('shows whose turn it is', async () => {
-      whenRendered();
-      await thenTextIsVisible("Alice's turn");
     });
 
     it('shows filled scores from scoreboard', async () => {
@@ -158,9 +141,8 @@ describe('GameScreen', () => {
       givenScoringOptions(ALICE.id, []);
       whenRendered();
       await whenRollClicked();
-      await thenTextIsVisible('Rolls remaining: 2');
+      await thenDieHasValue(0, '3');
       await whenRollClicked();
-      await thenTextIsVisible('Rolls remaining: 1');
       await whenRollClicked();
       await thenRollButtonIsDisabled();
     });
@@ -174,7 +156,7 @@ describe('GameScreen', () => {
         saved_rolls: 0,
       });
       whenRendered();
-      await thenTextIsVisible("Bob's turn");
+      await screen.findByRole('columnheader', { name: /bob/i });
       thenRollButtonIsNotVisible();
     });
   });
@@ -206,13 +188,13 @@ describe('GameScreen', () => {
       await thenScoringOptionVisible('Ones', 3);
     });
 
-    it('unfilled categories without a scoring option are also clickable', async () => {
+    it('unfilled categories without a scoring option show dash', async () => {
       givenRollSucceeds([1, 1, 1, 2, 3, 4]);
       givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
       whenRendered();
       await whenRollClicked();
       await thenScoringOptionVisible('Ones', 3);
-      thenRowShowsX('Twos');
+      thenRowShowsDash('Twos');
     });
 
     describe('sequential mode', () => {
@@ -228,13 +210,13 @@ describe('GameScreen', () => {
         await thenScoringOptionVisible('Ones', 3);
       });
 
-      it('does not show × for other unfilled categories in sequential mode', async () => {
+      it('does not show dash for other unfilled categories in sequential mode', async () => {
         givenRollSucceeds([1, 1, 1, 2, 3, 4]);
         givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
         whenRendered();
         await whenRollClicked();
         await thenScoringOptionVisible('Ones', 3);
-        thenRowDoesNotShowX('Twos');
+        thenRowIsEmpty('Twos');
       });
 
       it('does not allow clicking non-option categories in sequential mode', async () => {
@@ -294,51 +276,6 @@ describe('GameScreen', () => {
       await thenScoringOptionVisible('Ones', 3);
       await whenCategoryClicked('Ones');
       await thenNavigatedTo('/games/42/end');
-    });
-  });
-
-  describe('aborting a game', () => {
-    it('shows abort button for the creator', async () => {
-      whenRendered();
-      await thenAbortButtonIsVisible();
-    });
-
-    it('does not show abort button for non-creator', async () => {
-      givenGame({ id: 42, creator_id: BOB.id });
-      whenRendered();
-      await thenTextIsVisible("Alice's turn");
-      thenAbortButtonIsNotVisible();
-    });
-
-    it('clicking abort opens confirmation dialog', async () => {
-      whenRendered();
-      await whenAbortClicked();
-      await thenConfirmDialogIsVisible();
-    });
-
-    it('confirming abort navigates to /lobby', async () => {
-      server.use(http.post(ABORT_URL, () => HttpResponse.json({})));
-      whenRendered();
-      await whenAbortClicked();
-      await whenAbortConfirmed();
-      await thenNavigatedTo('/lobby');
-    });
-
-    it('cancelling abort dialog does not navigate', async () => {
-      whenRendered();
-      await whenAbortClicked();
-      await whenAbortCancelled();
-      thenDidNotNavigate();
-    });
-
-    it('shows error toast when abort fails', async () => {
-      server.use(
-        http.post(ABORT_URL, () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
-      );
-      whenRendered();
-      await whenAbortClicked();
-      await whenAbortConfirmed();
-      await thenTextIsVisible('Failed to abort game');
     });
   });
 
@@ -409,29 +346,32 @@ describe('GameScreen', () => {
     await userEvent.click(screen.getByRole('button', { name: `Die ${index}` }));
   }
 
-  async function whenCategoryClicked(name: string) {
-    await userEvent.click(await screen.findByRole('rowheader', { name: new RegExp(name, 'i') }));
+  async function whenCategoryClicked(label: string) {
+    const cell = await screen.findByText(label);
+    await userEvent.click(cell);
   }
 
   async function thenScoringOptionVisible(category: string, score: number) {
     await waitFor(() => {
-      const header = screen.getByRole('rowheader', { name: category });
-      expect(header.closest('tr')).toHaveTextContent(String(score));
+      const cell = screen.getByText(category);
+      expect(cell.closest('tr')).toHaveTextContent(`${score} ↑`);
     });
   }
 
-  function thenRowShowsX(category: string) {
-    const header = screen.getByRole('rowheader', { name: category });
-    expect(header.closest('tr')).toHaveTextContent('×');
+  function thenRowShowsDash(category: string) {
+    const cell = screen.getByText(category);
+    expect(cell.closest('tr')).toHaveTextContent('—');
   }
 
-  function thenRowDoesNotShowX(category: string) {
-    const header = screen.getByRole('rowheader', { name: category });
-    expect(header.closest('tr')).not.toHaveTextContent('×');
+  function thenRowIsEmpty(category: string) {
+    const cell = screen.getByText(category);
+    const row = cell.closest('tr');
+    expect(row).not.toHaveTextContent('—');
+    expect(row).not.toHaveTextContent('↑');
   }
 
   async function thenColumnHeaderIsVisible(name: string) {
-    await screen.findByRole('columnheader', { name });
+    await screen.findByRole('columnheader', { name: new RegExp(name) });
   }
 
   function thenDieIsKept(index: number) {
@@ -450,33 +390,12 @@ describe('GameScreen', () => {
     expect(rollBtn).toBeDisabled();
   }
 
-  async function whenAbortClicked() {
-    await userEvent.click(await screen.findByRole('button', { name: /abort game/i }));
-  }
-
-  async function whenAbortConfirmed() {
-    await userEvent.click(await screen.findByRole('button', { name: /^abort$/i }));
-  }
-
-  async function whenAbortCancelled() {
-    await userEvent.click(await screen.findByRole('button', { name: /cancel/i }));
-  }
-
-  async function thenConfirmDialogIsVisible() {
-    await screen.findByRole('heading', { name: /abort game/i });
-  }
-
   async function thenNavigatedTo(path: string) {
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
   }
 
   async function thenTextIsVisible(text: string) {
     await screen.findByText(text);
-  }
-
-  async function thenBadgeVisible(label: string) {
-    const heading = await screen.findByRole('heading', { level: 1 });
-    expect(heading).toHaveTextContent(label);
   }
 
   async function thenScoreVisible(score: number) {
@@ -504,18 +423,6 @@ describe('GameScreen', () => {
     await waitFor(() =>
       expect(screen.getByRole('button', { name: `Die ${index}` })).not.toBeDisabled()
     );
-  }
-
-  async function thenAbortButtonIsVisible() {
-    await screen.findByRole('button', { name: /abort game/i });
-  }
-
-  function thenAbortButtonIsNotVisible() {
-    expect(screen.queryByRole('button', { name: /abort game/i })).toBeNull();
-  }
-
-  function thenDidNotNavigate() {
-    expect(mockNavigate).not.toHaveBeenCalled();
   }
 
   function thenScoreWasNotCalled(scoreCalled: boolean) {

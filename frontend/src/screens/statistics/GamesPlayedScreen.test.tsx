@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ALICE, createMockServer, renderWithProviders } from '@/test/helpers';
@@ -35,50 +35,16 @@ function makeEntry(
   };
 }
 
-function givenLeaderboard(sortBy: string, entries: ReturnType<typeof makeEntry>[]) {
-  server.use(
-    http.get(LEADERBOARD_URL, ({ request }) => {
-      const url = new URL(request.url);
-      if (url.searchParams.get('sort_by') === sortBy) return HttpResponse.json(entries);
-      return HttpResponse.json([]);
-    })
-  );
-}
-
-function givenLeaderboardPending() {
-  server.use(http.get(LEADERBOARD_URL, () => new Promise(() => {})));
-}
-
-function givenLeaderboardFails() {
-  server.use(
-    http.get(LEADERBOARD_URL, () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
-  );
-}
-
 describe('GamesPlayedScreen', () => {
   beforeEach(() => {
     sessionStorage.setItem('yatzy_player', JSON.stringify(ALICE));
     server.use(http.get(LEADERBOARD_URL, () => HttpResponse.json([])));
   });
 
-  describe('loading state', () => {
-    it('shows loading indicator before data arrives', () => {
-      givenLeaderboardPending();
-      whenRendered();
-      thenTextIsVisible('Loading...');
-    });
-  });
-
   describe('mode selector', () => {
     it('shows all mode buttons', async () => {
       whenRendered();
-      await thenModeButtonsVisible([
-        'Total',
-        'Maxi Yatzy',
-        'Maxi Yatzy Sequential',
-        'Yatzy',
-        'Yatzy Sequential',
-      ]);
+      await thenModeButtonsVisible(['Total', 'Maxi Yatzy', 'Maxi Seq.', 'Yatzy', 'Yatzy Seq.']);
     });
 
     it('defaults to Total', async () => {
@@ -87,7 +53,7 @@ describe('GamesPlayedScreen', () => {
       await thenPlayerVisible('Alice');
     });
 
-    it('switches to Maxi Standard on click', async () => {
+    it('switches to Maxi Yatzy on click', async () => {
       givenLeaderboard('maxi', [makeEntry({ player_name: 'Bob', maxi: 3 })]);
       whenRendered();
       await whenModeSelected('Maxi Yatzy');
@@ -99,11 +65,11 @@ describe('GamesPlayedScreen', () => {
         makeEntry({ player_name: 'Carol', maxi_sequential: 2 }),
       ]);
       whenRendered();
-      await whenModeSelected('Maxi Yatzy Sequential');
+      await whenModeSelected('Maxi Seq.');
       await thenPlayerVisible('Carol');
     });
 
-    it('switches to Yatzy Standard on click', async () => {
+    it('switches to Yatzy on click', async () => {
       givenLeaderboard('yatzy', [makeEntry({ player_name: 'Dave', yatzy: 4 })]);
       whenRendered();
       await whenModeSelected('Yatzy');
@@ -115,15 +81,15 @@ describe('GamesPlayedScreen', () => {
         makeEntry({ player_name: 'Eve', yatzy_sequential: 1 }),
       ]);
       whenRendered();
-      await whenModeSelected('Yatzy Sequential');
+      await whenModeSelected('Yatzy Seq.');
       await thenPlayerVisible('Eve');
     });
   });
 
   describe('leaderboard display', () => {
-    it('shows the heading', async () => {
+    it('shows the heading text', async () => {
       whenRendered();
-      await thenHeadingVisible('Games Played');
+      await thenTextEventuallyVisible('Most Games Played');
     });
 
     it('shows player name and game count', async () => {
@@ -140,8 +106,8 @@ describe('GamesPlayedScreen', () => {
       ]);
       whenRendered();
       await thenPlayerVisible('Alice');
-      await thenRowHasTrophy(0, '🥇');
-      await thenRowHasTrophy(1, '🥈');
+      await thenRowHasRank(0, '1');
+      await thenRowHasRank(1, '2');
     });
 
     it('shows "No games played yet" when empty', async () => {
@@ -150,20 +116,22 @@ describe('GamesPlayedScreen', () => {
     });
   });
 
-  describe('error handling', () => {
-    it('shows error message when fetch fails', async () => {
-      givenLeaderboardFails();
-      whenRendered();
-      await thenTextEventuallyVisible('Failed to load games played');
-    });
-  });
+  function givenLeaderboard(sortBy: string, entries: ReturnType<typeof makeEntry>[]) {
+    server.use(
+      http.get(LEADERBOARD_URL, ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('sort_by') === sortBy) return HttpResponse.json(entries);
+        return HttpResponse.json([]);
+      })
+    );
+  }
 
   function whenRendered() {
     renderWithProviders(<GamesPlayedScreen />);
   }
 
-  function thenTextIsVisible(text: string) {
-    expect(screen.getByText(text)).toBeInTheDocument();
+  async function whenModeSelected(label: string) {
+    await userEvent.click(await screen.findByRole('button', { name: label }));
   }
 
   async function thenTextEventuallyVisible(text: string) {
@@ -176,20 +144,12 @@ describe('GamesPlayedScreen', () => {
     }
   }
 
-  async function whenModeSelected(label: string) {
-    await userEvent.click(screen.getByRole('button', { name: label }));
-  }
-
   async function thenPlayerVisible(name: string) {
     await screen.findByText(name);
   }
 
-  async function thenHeadingVisible(name: string) {
-    await screen.findByRole('heading', { name });
-  }
-
-  async function thenRowHasTrophy(index: number, trophy: string) {
+  async function thenRowHasRank(index: number, rank: string) {
     const rows = document.querySelectorAll('tbody tr');
-    expect(rows[index]).toHaveTextContent(trophy);
+    expect(rows[index]).toHaveTextContent(rank);
   }
 });

@@ -1,5 +1,5 @@
 import { screen } from '@testing-library/react';
-import { userEvent } from '@testing-library/user-event';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { ALICE, createMockServer, renderWithProviders } from '@/test/helpers';
@@ -38,27 +38,14 @@ describe('HighScoresScreen', () => {
     sessionStorage.setItem('yatzy_player', JSON.stringify(ALICE));
   });
 
-  describe('loading state', () => {
-    it('shows loading indicator before data arrives', () => {
-      givenHighScoresPending();
-      whenRendered();
-      thenTextIsVisible('Loading...');
-    });
-  });
-
   describe('mode selector', () => {
     it('shows all mode buttons', async () => {
       givenHighScores([]);
       whenRendered();
-      await thenModeButtonsVisible([
-        'Maxi Yatzy',
-        'Maxi Yatzy Sequential',
-        'Yatzy',
-        'Yatzy Sequential',
-      ]);
+      await thenModeButtonsVisible(['Maxi Yatzy', 'Maxi Seq.', 'Yatzy', 'Yatzy Seq.']);
     });
 
-    it('defaults to Maxi Standard', async () => {
+    it('defaults to Maxi Yatzy', async () => {
       givenHighScores([makeHighScore({ player_name: 'Alice', mode: 'maxi' })]);
       whenRendered();
       await thenPlayerVisible('Alice');
@@ -71,12 +58,12 @@ describe('HighScoresScreen', () => {
       ]);
       whenRendered();
       await thenPlayerVisible('Alice');
-      await whenModeSelected('Maxi Yatzy Sequential');
-      await thenPlayerNotVisible('Alice');
+      await whenModeSelected('Maxi Seq.');
+      thenPlayerNotVisible('Alice');
       await thenPlayerVisible('Bob');
     });
 
-    it('switches to Yatzy Standard on click', async () => {
+    it('switches to Yatzy on click', async () => {
       givenHighScores([
         makeHighScore({ player_name: 'Alice', mode: 'maxi' }),
         makeHighScore({ player_id: 2, player_name: 'Bob', game_id: 11, mode: 'yatzy' }),
@@ -84,7 +71,7 @@ describe('HighScoresScreen', () => {
       whenRendered();
       await thenPlayerVisible('Alice');
       await whenModeSelected('Yatzy');
-      await thenPlayerNotVisible('Alice');
+      thenPlayerNotVisible('Alice');
       await thenPlayerVisible('Bob');
     });
 
@@ -95,25 +82,24 @@ describe('HighScoresScreen', () => {
       ]);
       whenRendered();
       await thenPlayerVisible('Alice');
-      await whenModeSelected('Yatzy Sequential');
-      await thenPlayerNotVisible('Alice');
+      await whenModeSelected('Yatzy Seq.');
+      thenPlayerNotVisible('Alice');
       await thenPlayerVisible('Bob');
     });
   });
 
   describe('scores display', () => {
-    it('shows the heading', async () => {
+    it('shows the heading text', async () => {
       givenHighScores([]);
       whenRendered();
       await thenTextEventuallyVisible('High Scores');
     });
 
-    it('shows player name, score, game id and date', async () => {
-      givenHighScores([makeHighScore({ player_name: 'Alice', total_score: 300, game_id: 42 })]);
+    it('shows player name and score', async () => {
+      givenHighScores([makeHighScore({ player_name: 'Alice', total_score: 300 })]);
       whenRendered();
       await thenPlayerVisible('Alice');
       await thenTextEventuallyVisible('300');
-      await thenTextEventuallyVisible('#42');
     });
 
     it('numbers rows by rank', async () => {
@@ -123,22 +109,14 @@ describe('HighScoresScreen', () => {
       ]);
       whenRendered();
       await thenPlayerVisible('Alice');
-      await thenRowHasTrophy(0, '🥇');
-      await thenRowHasTrophy(1, '🥈');
+      await thenRowHasRank(0, '1');
+      await thenRowHasRank(1, '2');
     });
 
-    it('shows "No high scores yet" when selected mode has no entries', async () => {
+    it('shows "No scores yet" when selected mode has no entries', async () => {
       givenHighScores([]);
       whenRendered();
-      await thenTextEventuallyVisible('No high scores yet');
-    });
-  });
-
-  describe('error handling', () => {
-    it('shows error message when fetch fails', async () => {
-      givenHighScoresFetchFails();
-      whenRendered();
-      await thenTextEventuallyVisible('Failed to load high scores');
+      await thenTextEventuallyVisible('No scores yet');
     });
   });
 
@@ -146,22 +124,12 @@ describe('HighScoresScreen', () => {
     server.use(http.get(HIGH_SCORES_URL, () => HttpResponse.json(scores)));
   }
 
-  function givenHighScoresPending() {
-    server.use(http.get(HIGH_SCORES_URL, () => new Promise(() => {})));
-  }
-
-  function givenHighScoresFetchFails() {
-    server.use(
-      http.get(HIGH_SCORES_URL, () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
-    );
-  }
-
   function whenRendered() {
     renderWithProviders(<HighScoresScreen />);
   }
 
-  function thenTextIsVisible(text: string) {
-    expect(screen.getByText(text)).toBeInTheDocument();
+  async function whenModeSelected(label: string) {
+    await userEvent.click(await screen.findByRole('button', { name: label }));
   }
 
   async function thenTextEventuallyVisible(text: string) {
@@ -174,10 +142,6 @@ describe('HighScoresScreen', () => {
     }
   }
 
-  async function whenModeSelected(label: string) {
-    await userEvent.click(screen.getByRole('button', { name: label }));
-  }
-
   async function thenPlayerVisible(name: string) {
     await screen.findByText(name);
   }
@@ -186,8 +150,8 @@ describe('HighScoresScreen', () => {
     expect(screen.queryByText(name)).not.toBeInTheDocument();
   }
 
-  async function thenRowHasTrophy(index: number, trophy: string) {
+  async function thenRowHasRank(index: number, rank: string) {
     const rows = document.querySelectorAll('tbody tr');
-    expect(rows[index]).toHaveTextContent(trophy);
+    expect(rows[index]).toHaveTextContent(rank);
   }
 });

@@ -1,13 +1,12 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { components } from '@/api/schema';
 import { createMockServer, renderWithProviders } from '@/test/helpers';
+import { ProfileScreen } from './ProfileScreen';
 
 type ModeStats = components['schemas']['ModeStats'];
-
-import { ProfileScreen } from './ProfileScreen';
 
 const mockUseAuth = vi.hoisted(() => vi.fn());
 vi.mock('@/hooks/AuthContext', async () => {
@@ -38,97 +37,67 @@ describe('ProfileScreen', () => {
     givenPlayerStats();
   });
 
-  it('shows edit form pre-filled with current name', async () => {
-    givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
-    whenRendered();
-    await thenInputHasValue('Alice');
-  });
+  describe('editing display name', () => {
+    it('shows edit form pre-filled with current name after clicking Edit', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      whenRendered();
+      await whenEditClicked();
+      await thenInputHasValue('Alice');
+    });
 
-  it('saves updated name and navigates to lobby', async () => {
-    givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
-    givenUpdatePlayerSucceeds({ id: 1, account_id: ACCOUNT_ID, name: 'Alicia', created_at: '' });
-    whenRendered();
-    await whenNameChangedTo('Alicia');
-    await whenSaveClicked();
-    await thenNavigatedTo('/lobby');
-  });
+    it('saves updated name and closes the form', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      givenUpdatePlayerSucceeds({ id: 1, account_id: ACCOUNT_ID, name: 'Alicia', created_at: '' });
+      whenRendered();
+      await whenEditClicked();
+      await whenNameChangedTo('Alicia');
+      await whenSaveClicked();
+      await thenEditFormIsClosed();
+    });
 
-  it('shows error toast when update fails', async () => {
-    givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
-    givenUpdatePlayerFails(1);
-    whenRendered();
-    await whenNameChangedTo('Alicia');
-    await whenSaveClicked();
-    await thenErrorToastIsVisible('Failed to update player');
+    it('closes form without navigating', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      givenUpdatePlayerSucceeds({ id: 1, account_id: ACCOUNT_ID, name: 'Alicia', created_at: '' });
+      whenRendered();
+      await whenEditClicked();
+      await whenNameChangedTo('Alicia');
+      await whenSaveClicked();
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
   });
 
   describe('stats', () => {
-    it('shows total games played', async () => {
-      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
-      givenPlayerStats({ total_games_played: 5 });
-      whenRendered();
-      await thenTotalGamesPlayedVisible(5);
-    });
-
-    it('shows tabs for all four modes', async () => {
-      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
-      whenRendered();
-      await thenModeTabsVisible([
-        'Maxi Yatzy',
-        'Maxi Yatzy Sequential',
-        'Yatzy',
-        'Yatzy Sequential',
-      ]);
-    });
-
-    it('defaults to Maxi Yatzy and shows its stats', async () => {
+    it('shows total games count in summary grid', async () => {
       givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
       givenPlayerStats({
-        maxi: {
-          games_played: 3,
-          high_score: 350,
-          average_score: 290,
-          bonus_count: 2,
-          yatzy_hit_count: 1,
-        },
+        maxi: { games_played: 3 },
+        maxi_sequential: { games_played: 2 },
       });
       whenRendered();
-      await thenGamesPlayedVisible(3);
+      await thenSummaryGamesVisible(5);
     });
 
-    it('switches stats when another tab is clicked', async () => {
+    it('shows all four mode rows in the table', async () => {
+      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      whenRendered();
+      await thenModeRowsVisible(['Maxi Yatzy', 'Maxi Sequential', 'Yatzy', 'Yatzy Sequential']);
+    });
+
+    it('shows games played per mode row', async () => {
       givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
       givenPlayerStats({
-        maxi: {
-          games_played: 3,
-          high_score: 350,
-          average_score: 290,
-          bonus_count: 2,
-          yatzy_hit_count: 1,
-        },
-        yatzy: {
-          games_played: 7,
-          high_score: 200,
-          average_score: 180,
-          bonus_count: 1,
-          yatzy_hit_count: 0,
-        },
+        maxi: { games_played: 3 },
+        yatzy: { games_played: 7 },
       });
       whenRendered();
-      await whenModeTabClicked('Yatzy');
-      await thenGamesPlayedVisible(7);
+      await thenModeRowGameCount('Maxi Yatzy', 3);
+      await thenModeRowGameCount('Yatzy', 7);
     });
 
     it('shows — for high score and average score when null', async () => {
       givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
       givenPlayerStats({
-        maxi: {
-          games_played: 1,
-          high_score: null,
-          average_score: null,
-          bonus_count: 0,
-          yatzy_hit_count: 0,
-        },
+        maxi: { games_played: 1, high_score: null, average_score: null },
       });
       whenRendered();
       await thenNullScoresShowDash();
@@ -153,7 +122,7 @@ describe('ProfileScreen', () => {
     server.use(http.put(PLAYER_URL(player.id), () => HttpResponse.json(player)));
   }
 
-  function emptyModeStats() {
+  function emptyModeStats(): ModeStats {
     return {
       games_played: 0,
       high_score: null,
@@ -165,7 +134,6 @@ describe('ProfileScreen', () => {
 
   function givenPlayerStats(
     overrides: {
-      total_games_played?: number;
       maxi?: Partial<ModeStats>;
       maxi_sequential?: Partial<ModeStats>;
       yatzy?: Partial<ModeStats>;
@@ -178,19 +146,12 @@ describe('ProfileScreen', () => {
           player_id: 1,
           player_name: 'Alice',
           member_since: '2024-01-01T00:00:00Z',
-          total_games_played: overrides.total_games_played ?? 0,
           maxi: { ...emptyModeStats(), ...overrides.maxi },
           maxi_sequential: { ...emptyModeStats(), ...overrides.maxi_sequential },
           yatzy: { ...emptyModeStats(), ...overrides.yatzy },
           yatzy_sequential: { ...emptyModeStats(), ...overrides.yatzy_sequential },
         })
       )
-    );
-  }
-
-  function givenUpdatePlayerFails(id: number) {
-    server.use(
-      http.put(PLAYER_URL(id), () => HttpResponse.json({ detail: 'Error' }, { status: 500 }))
     );
   }
 
@@ -206,8 +167,12 @@ describe('ProfileScreen', () => {
     renderWithProviders(<ProfileScreen />);
   }
 
+  async function whenEditClicked() {
+    await userEvent.click(await screen.findByRole('button', { name: /edit/i }));
+  }
+
   async function whenNameChangedTo(name: string) {
-    const input = await screen.findByRole('textbox');
+    const input = screen.getByRole('textbox');
     await userEvent.clear(input);
     await userEvent.type(input, name);
   }
@@ -221,31 +186,26 @@ describe('ProfileScreen', () => {
     expect(input).toHaveValue(value);
   }
 
-  async function thenNavigatedTo(path: string) {
-    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(path));
+  async function thenEditFormIsClosed() {
+    await screen.findByRole('button', { name: /edit/i });
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   }
 
-  async function thenErrorToastIsVisible(title: string) {
-    await screen.findByText(title);
+  async function thenSummaryGamesVisible(count: number) {
+    await screen.findAllByText('Games');
+    expect(await screen.findByText(String(count))).toBeInTheDocument();
   }
 
-  async function thenTotalGamesPlayedVisible(count: number) {
-    await screen.findByText(/Total games played/);
-    expect(screen.getByText(String(count))).toBeInTheDocument();
-  }
-
-  async function thenModeTabsVisible(labels: string[]) {
+  async function thenModeRowsVisible(labels: string[]) {
     for (const label of labels) {
-      expect(await screen.findByRole('button', { name: label })).toBeInTheDocument();
+      expect(await screen.findByText(label)).toBeInTheDocument();
     }
   }
 
-  async function whenModeTabClicked(label: string) {
-    await userEvent.click(await screen.findByRole('button', { name: label }));
-  }
-
-  async function thenGamesPlayedVisible(count: number) {
-    await screen.findByText(String(count));
+  async function thenModeRowGameCount(modeLabel: string, count: number) {
+    const cell = await screen.findByText(modeLabel);
+    const row = cell.closest('tr') as HTMLElement;
+    expect(within(row).getByText(String(count))).toBeInTheDocument();
   }
 
   async function thenNullScoresShowDash() {
