@@ -46,10 +46,10 @@ describe('NavBar', () => {
   });
 
   describe('Games dropdown', () => {
-    it('shows "New game" link in games dropdown', async () => {
+    it('shows "Available games" link in games dropdown', async () => {
       whenRendered();
       await whenGamesDropdownOpened();
-      expect(screen.getByRole('link', { name: /new game/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /available games/i })).toBeInTheDocument();
     });
 
     it('shows active game link when player has an active game', async () => {

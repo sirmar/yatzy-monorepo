@@ -61,13 +61,19 @@ function DropdownShell({
   children,
   align = 'left',
   label,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   trigger: React.ReactNode;
   children: React.ReactNode;
   align?: 'left' | 'right';
   label?: string;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false));
 
@@ -76,7 +82,7 @@ function DropdownShell({
       <button
         type="button"
         aria-label={label}
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => setOpen(!open)}
         className="flex items-center gap-2 bg-[var(--surface)] border border-[var(--border-2)] rounded-[10px] px-3 h-9 cursor-pointer text-foreground text-[13px] font-medium transition-all hover:bg-[var(--surface-2)] hover:border-white/20 hover:scale-[1.04] active:scale-[0.97]"
       >
         {trigger}
@@ -149,6 +155,7 @@ export function NavBar() {
   const { gameId: routeGameId } = useParams<{ gameId: string }>();
   const activeGames = useActiveGames();
   const [confirmAbortId, setConfirmAbortId] = useState<number | null>(null);
+  const [gamesMenuOpen, setGamesMenuOpen] = useState(false);
 
   async function handleLogout() {
     await logout();
@@ -165,7 +172,13 @@ export function NavBar() {
       errorToast('Failed to abort game');
       return;
     }
-    if (Number(routeGameId) === gameId) navigate('/lobby');
+    setGamesMenuOpen(false);
+    const remaining = activeGames.filter((g) => g.id !== gameId);
+    if (remaining.length > 0) {
+      navigate(`/games/${remaining[0].id}`);
+    } else {
+      navigate('/lobby');
+    }
   }
 
   const currentGame = activeGames.find((g) => g.id === Number(routeGameId));
@@ -177,6 +190,8 @@ export function NavBar() {
         {/* Games switcher */}
         <DropdownShell
           label="Games"
+          open={gamesMenuOpen}
+          onOpenChange={setGamesMenuOpen}
           trigger={
             <>
               {firstGame ? (
@@ -205,63 +220,65 @@ export function NavBar() {
                       isActive ? 'bg-[var(--accent-dim)]' : 'hover:bg-white/[0.06]'
                     )}
                   >
-                    <div className="flex flex-col gap-[2px]">
-                      <AvatarStack names={g.player_ids.map((id) => String(id))} size="sm" />
+                    <div className="flex flex-col gap-[2px] min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <AvatarStack names={g.player_ids.map((id) => String(id))} size="sm" />
+                        <div className="flex items-center gap-1.5 flex-shrink-0">
+                          {isCreator &&
+                            (confirmAbortId === g.id ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setConfirmAbortId(null);
+                                  }}
+                                  className="text-[11px] font-medium text-[var(--text-muted)] px-1.5 py-0.5 rounded cursor-pointer hover:text-foreground"
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleAbort(g.id);
+                                  }}
+                                  className="text-[11px] font-medium text-[var(--red)] px-1.5 py-0.5 rounded cursor-pointer hover:bg-[rgba(240,101,96,0.1)]"
+                                >
+                                  Abort
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setConfirmAbortId(g.id);
+                                }}
+                                className="text-[11px] font-medium text-[var(--text-dim)] px-1 py-0.5 rounded cursor-pointer hover:text-[var(--red)] hover:bg-[rgba(240,101,96,0.1)] transition-colors"
+                              >
+                                Abort
+                              </button>
+                            ))}
+                          <div
+                            className={cn(
+                              'w-[7px] h-[7px] rounded-full flex-shrink-0',
+                              isMyTurn
+                                ? 'bg-[var(--green)] shadow-[0_0_6px_var(--green)]'
+                                : 'bg-[var(--text-dim)]'
+                            )}
+                          />
+                        </div>
+                      </div>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         <ModePill mode={g.mode} />
                         {isMyTurn && (
                           <span className="text-[11px] text-[var(--text-muted)]">Your turn</span>
                         )}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-                      {isCreator &&
-                        (confirmAbortId === g.id ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setConfirmAbortId(null);
-                              }}
-                              className="text-[11px] font-medium text-[var(--text-muted)] px-1.5 py-0.5 rounded cursor-pointer hover:text-foreground"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleAbort(g.id);
-                              }}
-                              className="text-[11px] font-medium text-[var(--red)] px-1.5 py-0.5 rounded cursor-pointer hover:bg-[rgba(240,101,96,0.1)]"
-                            >
-                              Abort
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setConfirmAbortId(g.id);
-                            }}
-                            className="text-[11px] font-medium text-[var(--text-dim)] px-1 py-0.5 rounded cursor-pointer hover:text-[var(--red)] hover:bg-[rgba(240,101,96,0.1)] transition-colors"
-                          >
-                            Abort
-                          </button>
-                        ))}
-                      <div
-                        className={cn(
-                          'w-[7px] h-[7px] rounded-full flex-shrink-0',
-                          isMyTurn
-                            ? 'bg-[var(--green)] shadow-[0_0_6px_var(--green)]'
-                            : 'bg-[var(--text-dim)]'
-                        )}
-                      />
                     </div>
                   </Link>
                 );
@@ -271,7 +288,7 @@ export function NavBar() {
           )}
           <DropdownItem href="/lobby">
             <span className="text-[var(--accent)] text-base leading-none">＋</span>
-            New game
+            Available games
           </DropdownItem>
         </DropdownShell>
 

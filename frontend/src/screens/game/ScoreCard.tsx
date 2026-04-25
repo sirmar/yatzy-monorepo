@@ -253,12 +253,15 @@ export function ScoreCard({
                     )}
                   >
                     <span className="inline-flex items-center justify-end gap-1.5">
-                      {isActive && (
-                        <span
-                          aria-hidden="true"
-                          className="inline-block w-[6px] h-[6px] rounded-full bg-[var(--green)] shadow-[0_0_6px_var(--green)] animate-pulse flex-shrink-0"
-                        />
-                      )}
+                      <span
+                        aria-hidden="true"
+                        className={cn(
+                          'inline-block w-[6px] h-[6px] rounded-full flex-shrink-0',
+                          isActive
+                            ? 'bg-[var(--green)] shadow-[0_0_6px_var(--green)] animate-pulse'
+                            : 'invisible'
+                        )}
+                      />
                       <Avatar name={name} index={idx} size="sm" />
                       {name}
                     </span>
