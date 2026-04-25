@@ -1,6 +1,7 @@
 import type { components } from '@/api';
 import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
+import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 import { cn } from '@/lib/utils';
 
 type PlayerScorecard = components['schemas']['PlayerScorecard'];
@@ -50,7 +51,6 @@ const BONUS_THRESHOLD: Partial<Record<GameMode, number>> = {
 
 interface Props {
   scoreboard: PlayerScorecard[];
-  playerNames: Record<number, string>;
   currentPlayerId: number | null;
   myPlayerId: number;
   scoringOptions: ScoringOption[] | null;
@@ -62,7 +62,6 @@ interface Props {
 
 export function ScoreCard({
   scoreboard,
-  playerNames,
   currentPlayerId,
   myPlayerId,
   scoringOptions,
@@ -71,6 +70,7 @@ export function ScoreCard({
   mode,
   onScore,
 }: Props) {
+  const { names: playerNames, pictures: playerPictures } = usePlayerNames();
   const playerIds = scoreboard.map((s) => s.player_id);
   const allCategories: ScoreCategory[] = scoreboard[0]?.entries.map((e) => e.category) ?? [];
   const upperCategories = allCategories.filter((c) => UPPER_CATEGORIES.has(c));
@@ -262,7 +262,13 @@ export function ScoreCard({
                             : 'invisible'
                         )}
                       />
-                      <Avatar name={name} index={idx} size="sm" />
+                      <Avatar
+                        name={name}
+                        index={idx}
+                        playerId={pid}
+                        hasPicture={playerPictures[pid] ?? false}
+                        size="sm"
+                      />
                       {name}
                     </span>
                   </th>

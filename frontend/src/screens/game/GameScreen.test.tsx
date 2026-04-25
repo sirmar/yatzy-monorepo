@@ -86,7 +86,7 @@ function makeScorecard(playerId: number, scores: Partial<Record<ScoreCategory, n
       category: cat,
       score: scores[cat] ?? null,
     })),
-    bonus: null,
+    bonus: null as number | null,
     total: Object.values(scores).reduce((s, v) => s + (v ?? 0), 0),
   };
 }
@@ -106,6 +106,22 @@ describe('GameScreen', () => {
       saved_rolls: 0,
     });
     givenScoreboard([makeScorecard(ALICE.id), makeScorecard(BOB.id)]);
+  });
+
+  describe('initial load with dice already rolled', () => {
+    it('loads scoring options on mount when dice already have values', async () => {
+      givenGameState({
+        status: 'active',
+        mode: 'maxi',
+        current_player_id: ALICE.id,
+        dice: makeDice([1, 1, 1, 2, 3, 4]),
+        rolls_remaining: 2,
+        saved_rolls: 0,
+      });
+      givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+      whenRendered();
+      await thenScoringOptionVisible('Ones', 3);
+    });
   });
 
   describe('game state display', () => {
@@ -177,6 +193,17 @@ describe('GameScreen', () => {
       await thenRollButtonIsVisible();
       thenDieIsDisabled(0);
     });
+
+    it('can toggle a kept die back to not kept', async () => {
+      givenRollSucceeds([3, 4, 5, 1, 2, 6]);
+      givenScoringOptions(ALICE.id, []);
+      whenRendered();
+      await whenRollClicked();
+      await whenDieClicked(0);
+      thenDieIsKept(0);
+      await whenDieClicked(0);
+      thenDieIsNotKept(0);
+    });
   });
 
   describe('scoring', () => {
@@ -237,6 +264,80 @@ describe('GameScreen', () => {
       });
     });
 
+    it('pressing Enter on a scorable category calls the score endpoint', async () => {
+      let scoreCalled = false;
+      server.use(
+        http.put(SCORE_URL(ALICE.id), async () => {
+          scoreCalled = true;
+          return HttpResponse.json(makeScorecard(ALICE.id, { ones: 3 }));
+        })
+      );
+      givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+      givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+      whenRendered();
+      await whenRollClicked();
+      await thenScoringOptionVisible('Ones', 3);
+      await whenCategoryKeyPressed('Ones', '{Enter}');
+      await thenScoreWasCalled(() => scoreCalled);
+    });
+
+    it('pressing Space on a scorable category calls the score endpoint', async () => {
+      let scoreCalled = false;
+      server.use(
+        http.put(SCORE_URL(ALICE.id), async () => {
+          scoreCalled = true;
+          return HttpResponse.json(makeScorecard(ALICE.id, { ones: 3 }));
+        })
+      );
+      givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+      givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+      whenRendered();
+      await whenRollClicked();
+      await thenScoringOptionVisible('Ones', 3);
+      await whenCategoryKeyPressed('Ones', ' ');
+      await thenScoreWasCalled(() => scoreCalled);
+    });
+
+    describe('yatzy_sequential mode', () => {
+      beforeEach(() => {
+        givenGame({ id: 42, creator_id: ALICE.id, mode: 'yatzy_sequential' });
+      });
+
+      it('only shows scoring option for the required category', async () => {
+        givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+        givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+        whenRendered();
+        await whenRollClicked();
+        await thenScoringOptionVisible('Ones', 3);
+      });
+
+      it('does not show dash for other unfilled categories', async () => {
+        givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+        givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+        whenRendered();
+        await whenRollClicked();
+        await thenScoringOptionVisible('Ones', 3);
+        thenRowIsEmpty('Twos');
+      });
+
+      it('does not allow clicking non-option categories', async () => {
+        let scoreCalled = false;
+        server.use(
+          http.put(SCORE_URL(ALICE.id), async () => {
+            scoreCalled = true;
+            return HttpResponse.json(makeScorecard(ALICE.id));
+          })
+        );
+        givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+        givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+        whenRendered();
+        await whenRollClicked();
+        await thenScoringOptionVisible('Ones', 3);
+        await whenCategoryClicked('Twos');
+        thenScoreWasNotCalled(scoreCalled);
+      });
+    });
+
     it('clicking a category calls the score endpoint and clears scoring options', async () => {
       let scoreCalled = false;
       server.use(
@@ -255,11 +356,101 @@ describe('GameScreen', () => {
     });
   });
 
+  describe('saved rolls', () => {
+    it('shows rolls remaining count', async () => {
+      whenRendered();
+      await thenTextIsVisible('3');
+    });
+
+    it('shows saved rolls when in maxi mode', async () => {
+      givenGameState({
+        status: 'active',
+        mode: 'maxi',
+        current_player_id: ALICE.id,
+        dice: makeDice(),
+        rolls_remaining: 3,
+        saved_rolls: 2,
+      });
+      whenRendered();
+      await screen.findByRole('button', { name: /roll/i });
+      await thenTextIsVisible('2');
+    });
+
+    it('shows "Roll saved" button label when rollsRemaining is 0 but savedRolls > 0', async () => {
+      givenGameState({
+        status: 'active',
+        mode: 'maxi',
+        current_player_id: ALICE.id,
+        dice: makeDice(),
+        rolls_remaining: 0,
+        saved_rolls: 1,
+      });
+      whenRendered();
+      await screen.findByRole('button', { name: /roll saved/i });
+    });
+  });
+
+  describe('scoreboard rows', () => {
+    it('shows upper subtotal as X / threshold for maxi mode', async () => {
+      givenScoreboard([makeScorecard(ALICE.id, { ones: 3, twos: 6 }), makeScorecard(BOB.id)]);
+      whenRendered();
+      await thenTextIsVisible('9 / 84');
+    });
+
+    it('shows upper subtotal as X / 63 for yatzy mode', async () => {
+      givenGame({ id: 42, creator_id: ALICE.id, mode: 'yatzy' });
+      givenScoreboard([makeScorecard(ALICE.id, { ones: 3, twos: 6 }), makeScorecard(BOB.id)]);
+      whenRendered();
+      await thenTextIsVisible('9 / 63');
+    });
+
+    it('shows bonus needed when below threshold', async () => {
+      givenScoreboard([makeScorecard(ALICE.id, { ones: 3 }), makeScorecard(BOB.id)]);
+      whenRendered();
+      await thenTextIsVisible('+81 needed');
+    });
+
+    it('shows earned bonus', async () => {
+      const scorecardWithBonus = { ...makeScorecard(ALICE.id), bonus: 50 };
+      givenScoreboard([scorecardWithBonus, makeScorecard(BOB.id)]);
+      whenRendered();
+      await thenTextIsVisible('50');
+    });
+
+    it('shows total score', async () => {
+      givenScoreboard([makeScorecard(ALICE.id, { ones: 5, twos: 10 }), makeScorecard(BOB.id)]);
+      whenRendered();
+      await thenTextIsVisible('15');
+    });
+  });
+
   describe('game ends', () => {
     it('navigates to /games/42/end when game state is finished', async () => {
       givenGameState({ status: 'finished', current_player_id: null, dice: null });
       whenRendered();
       await thenNavigatedTo('/games/42/end');
+    });
+
+    it('navigates to /lobby when game state is abandoned', async () => {
+      givenGameState({ status: 'abandoned', current_player_id: null, dice: null });
+      whenRendered();
+      await thenNavigatedTo('/lobby');
+    });
+
+    it('navigates to /lobby when scoring causes abandoned status', async () => {
+      givenRollSucceeds([1, 1, 1, 2, 3, 4]);
+      givenScoringOptions(ALICE.id, [{ category: 'ones', score: 3 }]);
+      server.use(
+        http.put(SCORE_URL(ALICE.id), () => {
+          givenGameState({ status: 'abandoned', current_player_id: null, dice: null });
+          return HttpResponse.json(makeScorecard(ALICE.id, { ones: 3 }));
+        })
+      );
+      whenRendered();
+      await whenRollClicked();
+      await thenScoringOptionVisible('Ones', 3);
+      await whenCategoryClicked('Ones');
+      await thenNavigatedTo('/lobby');
     });
 
     it('navigates to /games/42/end when scoring the last category ends the game', async () => {
@@ -351,6 +542,12 @@ describe('GameScreen', () => {
     await userEvent.click(cell);
   }
 
+  async function whenCategoryKeyPressed(label: string, key: string) {
+    const cell = await screen.findByText(label);
+    const row = cell.closest('tr');
+    if (row) await userEvent.type(row, key);
+  }
+
   async function thenScoringOptionVisible(category: string, score: number) {
     await waitFor(() => {
       const cell = screen.getByText(category);
@@ -378,6 +575,13 @@ describe('GameScreen', () => {
     expect(screen.getByRole('button', { name: `Die ${index}` })).toHaveAttribute(
       'aria-pressed',
       'true'
+    );
+  }
+
+  function thenDieIsNotKept(index: number) {
+    expect(screen.getByRole('button', { name: `Die ${index}` })).toHaveAttribute(
+      'aria-pressed',
+      'false'
     );
   }
 

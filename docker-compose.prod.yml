@@ -35,6 +35,8 @@ services:
     environment:
       DATABASE_URL: ${BACKEND_DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
+    volumes:
+      - media_data:/media
     depends_on:
       yatzy-db:
         condition: service_healthy
@@ -57,6 +59,8 @@ services:
     environment:
       - BACKEND_HOST=backend
       - AUTH_HOST=auth
+    volumes:
+      - media_data:/media:ro
     depends_on:
       - backend
       - auth
@@ -65,3 +69,4 @@ services:
 volumes:
   yatzy_db_data:
   auth_db_data:
+  media_data:

@@ -1,9 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { ResetPasswordScreen } from './ResetPasswordScreen';
 
 const RESET_PASSWORD_URL = 'http://localhost/auth/reset-password';
@@ -15,14 +14,12 @@ vi.mock('react-router-dom', async () => {
   return { ...actual, useNavigate: () => mockNavigate };
 });
 
-const server = setupServer(http.post(REFRESH_URL, () => HttpResponse.json({}, { status: 401 })));
-beforeAll(() => server.listen());
+const server = createMockServer();
+server.use(http.post(REFRESH_URL, () => HttpResponse.json({}, { status: 401 })));
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   window.history.pushState({}, '', '/');
 });
-afterAll(() => server.close());
 
 describe('ResetPasswordScreen', () => {
   it('shows new password input and submit button when token is present', () => {

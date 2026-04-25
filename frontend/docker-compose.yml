@@ -7,3 +7,10 @@ services:
     environment:
       - BACKEND_HOST=backend
       - AUTH_HOST=auth
+    volumes:
+      - media_data:/media:ro
+
+volumes:
+  media_data:
+    external: true
+    name: yatzy-backend_media_data

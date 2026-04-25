@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 import { cn } from '@/lib/utils';
 
 const avatarColors = [
@@ -12,40 +14,67 @@ interface AvatarProps {
   index?: number;
   size?: 'sm' | 'md';
   className?: string;
+  playerId?: number;
+  hasPicture?: boolean;
 }
 
-export function Avatar({ name, index = 0, size = 'sm', className }: AvatarProps) {
+export function Avatar({
+  name,
+  index = 0,
+  size = 'sm',
+  className,
+  playerId,
+  hasPicture,
+}: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
+
+  const sizeClass =
+    size === 'sm' ? 'w-[22px] h-[22px] text-[9px]' : 'w-[26px] h-[26px] text-[10px]';
+
+  if (playerId && hasPicture && !imgError) {
+    return (
+      <img
+        src={`/media/players/${playerId}.jpg`}
+        alt={name}
+        onError={() => setImgError(true)}
+        className={cn('rounded-full object-cover flex-shrink-0', sizeClass, className)}
+      />
+    );
+  }
+
   const colorClass = avatarColors[index % avatarColors.length];
-  const initial = name.charAt(0).toUpperCase();
   return (
     <div
       className={cn(
         'flex items-center justify-center rounded-full font-bold flex-shrink-0',
-        size === 'sm' ? 'w-[22px] h-[22px] text-[9px]' : 'w-[26px] h-[26px] text-[10px]',
+        sizeClass,
         colorClass,
         className
       )}
     >
-      {initial}
+      {name.charAt(0).toUpperCase()}
     </div>
   );
 }
 
 interface AvatarStackProps {
-  names: string[];
+  playerIds: number[];
   size?: 'sm' | 'md';
   className?: string;
 }
 
-export function AvatarStack({ names, size = 'md', className }: AvatarStackProps) {
+export function AvatarStack({ playerIds, size = 'md', className }: AvatarStackProps) {
+  const { names, pictures } = usePlayerNames();
   return (
     <div className={cn('flex items-center', className)}>
-      {names.map((name, i) => (
+      {playerIds.map((id, i) => (
         <Avatar
-          key={name}
-          name={name}
+          key={id}
+          name={names[id] ?? String(id)}
           index={i}
           size={size}
+          playerId={id}
+          hasPicture={pictures[id] ?? false}
           className={cn(
             'border-[1.5px] border-[var(--surface)]',
             i > 0 ? (size === 'md' ? '-ml-2' : '-ml-1.5') : ''

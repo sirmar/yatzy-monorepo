@@ -28,14 +28,13 @@ export function GameCard({
   const isCreator = game.creator_id === currentPlayerId;
   const hasJoined = game.player_ids.includes(currentPlayerId);
   const names = game.player_ids.map((id) => playerNames[id] ?? `Player ${id}`).join(', ');
-  const avatarNames = game.player_ids.map((id) => playerNames[id] ?? String(id));
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
     <div className="py-2 flex items-center justify-between gap-4">
       <div className="flex items-center gap-3 min-w-0">
         <div className="w-20 flex-shrink-0">
-          <AvatarStack names={avatarNames} size="md" />
+          <AvatarStack playerIds={game.player_ids} size="md" />
         </div>
         <div className="flex flex-col gap-1 min-w-0">
           <div className="flex items-center gap-1.5">

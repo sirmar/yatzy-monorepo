@@ -149,6 +149,42 @@ describe('NavBar', () => {
     await userEvent.click(screen.getByRole('button', { name: /alice/i }));
   }
 
+  describe('abort game', () => {
+    beforeEach(() => {
+      givenActiveGames([{ id: 7, player_ids: [ALICE.id], mode: 'maxi' }]);
+    });
+
+    it('shows abort confirmation when abort button clicked', async () => {
+      whenRendered();
+      await whenGamesDropdownOpened();
+      await userEvent.click(await screen.findByRole('button', { name: 'Abort' }));
+      expect(screen.getByRole('button', { name: 'Abort' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+    });
+
+    it('dismisses abort confirmation when cancel is clicked', async () => {
+      whenRendered();
+      await whenGamesDropdownOpened();
+      await userEvent.click(await screen.findByRole('button', { name: 'Abort' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+    });
+
+    it('calls abort endpoint and navigates to /lobby when confirmed', async () => {
+      server.use(
+        http.post(
+          'http://localhost/api/games/7/abort',
+          () => new HttpResponse(null, { status: 204 })
+        )
+      );
+      whenRendered();
+      await whenGamesDropdownOpened();
+      await userEvent.click(await screen.findByRole('button', { name: 'Abort' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Abort' }));
+      expect(mockNavigate).toHaveBeenCalledWith('/lobby');
+    });
+  });
+
   function givenActiveGames(games: { id: number; player_ids: number[]; mode?: string }[]) {
     server.use(
       http.get(GAMES_URL, () =>

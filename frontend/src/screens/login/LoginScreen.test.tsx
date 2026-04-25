@@ -1,9 +1,8 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { LoginScreen } from './LoginScreen';
 
 const mockNavigate = vi.hoisted(() => vi.fn());
@@ -29,16 +28,14 @@ const mockTokens = {
   token_type: 'bearer',
 };
 
-const server = setupServer(
+const server = createMockServer();
+server.use(
   http.post(REFRESH_URL, () => HttpResponse.json({ detail: 'Unauthorized' }, { status: 401 }))
 );
-beforeAll(() => server.listen());
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   localStorage.clear();
 });
-afterAll(() => server.close());
 
 describe('LoginScreen', () => {
   describe('login form', () => {

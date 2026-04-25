@@ -1,9 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, it } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, beforeEach, describe, it } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { ChangePasswordForm } from './ChangePasswordForm';
 
 const CHANGE_PASSWORD_URL = 'http://localhost/auth/password';
@@ -22,16 +21,16 @@ const mockUser = {
   created_at: '2026-01-01',
 };
 
-const server = setupServer(
-  http.post(REFRESH_URL, () => HttpResponse.json(mockTokens)),
-  http.get(ME_URL, () => HttpResponse.json(mockUser))
-);
-beforeAll(() => server.listen());
+const server = createMockServer();
+beforeEach(() => {
+  server.use(
+    http.post(REFRESH_URL, () => HttpResponse.json(mockTokens)),
+    http.get(ME_URL, () => HttpResponse.json(mockUser))
+  );
+});
 afterEach(() => {
-  server.resetHandlers();
   localStorage.clear();
 });
-afterAll(() => server.close());
 
 describe('ChangePasswordForm', () => {
   it('shows current password, new password and confirm fields and submit button', () => {

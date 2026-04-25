@@ -32,7 +32,13 @@ const ACCOUNT_ID = '550e8400-e29b-41d4-a716-446655440000';
 describe('PlayerScreen', () => {
   describe('existing player check', () => {
     it('auto-navigates to lobby when account already has a player', async () => {
-      givenMyPlayer({ id: 1, account_id: ACCOUNT_ID, name: 'Alice', created_at: '' });
+      givenMyPlayer({
+        id: 1,
+        account_id: ACCOUNT_ID,
+        name: 'Alice',
+        has_picture: false,
+        created_at: '',
+      });
       whenRendered({ accountId: ACCOUNT_ID });
       await thenNavigatedTo('/lobby');
     });
@@ -45,12 +51,34 @@ describe('PlayerScreen', () => {
   });
 
   describe('creating a player', () => {
-    it('creates a new player and navigates to lobby', async () => {
+    it('shows picture step after creating player', async () => {
       givenNoMyPlayer();
-      givenCreatePlayerSucceeds({ id: 3, account_id: ACCOUNT_ID, name: 'Carol', created_at: '' });
+      givenCreatePlayerSucceeds({
+        id: 3,
+        account_id: ACCOUNT_ID,
+        name: 'Carol',
+        has_picture: false,
+        created_at: '',
+      });
       whenRendered({ accountId: ACCOUNT_ID });
       await whenPlayerNameEntered('Carol');
       await whenContinueClicked();
+      await screen.findByText(/add a profile picture/i);
+    });
+
+    it('navigates to lobby after skipping picture', async () => {
+      givenNoMyPlayer();
+      givenCreatePlayerSucceeds({
+        id: 3,
+        account_id: ACCOUNT_ID,
+        name: 'Carol',
+        has_picture: false,
+        created_at: '',
+      });
+      whenRendered({ accountId: ACCOUNT_ID });
+      await whenPlayerNameEntered('Carol');
+      await whenContinueClicked();
+      await userEvent.click(await screen.findByRole('button', { name: /skip/i }));
       await thenNavigatedTo('/lobby');
     });
 
@@ -68,6 +96,7 @@ describe('PlayerScreen', () => {
     id: number;
     account_id: string;
     name: string;
+    has_picture: boolean;
     created_at: string;
   }) {
     server.use(http.get(PLAYERS_ME_URL, () => HttpResponse.json(player)));
@@ -81,6 +110,7 @@ describe('PlayerScreen', () => {
     id: number;
     account_id: string;
     name: string;
+    has_picture: boolean;
     created_at: string;
   }) {
     server.use(http.post(PLAYERS_URL, () => HttpResponse.json(player, { status: 201 })));

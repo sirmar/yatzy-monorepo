@@ -1,10 +1,14 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '@/api';
+import type { components } from '@/api/schema';
 import { AuthScreenLayout } from '@/components/AuthScreenLayout';
+import { PicturePicker } from '@/components/PicturePicker';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { CreatePlayerForm } from './CreatePlayerForm';
+
+type Player = components['schemas']['Player'];
 
 export function PlayerScreen() {
   const { setPlayer } = usePlayer();
@@ -12,6 +16,7 @@ export function PlayerScreen() {
   const navigate = useNavigate();
   const setPlayerRef = useRef(setPlayer);
   const navigateRef = useRef(navigate);
+  const [newPlayer, setNewPlayer] = useState<Player | null>(null);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -30,8 +35,40 @@ export function PlayerScreen() {
       body: { name },
     });
     if (error || !data) throw error ?? new Error('Failed to create player');
-    setPlayer(data);
+    setNewPlayer(data);
+  }
+
+  function handleFinish(player: Player) {
+    setPlayer(player);
     navigate('/lobby');
+  }
+
+  if (newPlayer) {
+    return (
+      <AuthScreenLayout>
+        <div className="p-6 flex flex-col gap-4 items-center">
+          <div className="flex flex-col gap-0.5 w-full">
+            <div className="text-[15px] font-semibold text-foreground">Add a profile picture</div>
+            <div className="text-[12px] text-[var(--text-muted)]">
+              Optional — you can always add one later from your profile.
+            </div>
+          </div>
+          <PicturePicker
+            player={newPlayer}
+            size="md"
+            className="w-20 h-20 text-[30px]"
+            onSuccess={setNewPlayer}
+          />
+          <button
+            type="button"
+            onClick={() => handleFinish(newPlayer)}
+            className="w-full h-9 bg-[var(--accent)] text-white rounded-lg text-[13px] font-semibold cursor-pointer hover:opacity-90"
+          >
+            {newPlayer.has_picture ? 'Continue' : 'Skip'}
+          </button>
+        </div>
+      </AuthScreenLayout>
+    );
   }
 
   return (

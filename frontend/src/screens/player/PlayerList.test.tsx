@@ -2,8 +2,22 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { PlayerList } from './PlayerList';
 
-const player1 = { id: 1, account_id: 'a1', name: 'Alice', is_bot: false, created_at: '' };
-const player2 = { id: 2, account_id: 'a2', name: 'Bob', is_bot: false, created_at: '' };
+const player1 = {
+  id: 1,
+  account_id: 'a1',
+  name: 'Alice',
+  is_bot: false,
+  has_picture: false,
+  created_at: '',
+};
+const player2 = {
+  id: 2,
+  account_id: 'a2',
+  name: 'Bob',
+  is_bot: false,
+  has_picture: false,
+  created_at: '',
+};
 
 describe('PlayerList', () => {
   it('shows empty message when no players', () => {

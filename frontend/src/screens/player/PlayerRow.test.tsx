@@ -6,7 +6,14 @@ import { PlayerRow } from './PlayerRow';
 
 type Player = components['schemas']['Player'];
 
-const player = { id: 1, account_id: 'a1', name: 'Alice', is_bot: false, created_at: '' };
+const player = {
+  id: 1,
+  account_id: 'a1',
+  name: 'Alice',
+  is_bot: false,
+  has_picture: false,
+  created_at: '',
+};
 
 describe('PlayerRow', () => {
   it('shows the player name as a select button', () => {

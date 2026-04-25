@@ -1,9 +1,8 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { DeleteAccountSection } from './DeleteAccountSection';
 
 const DELETE_ACCOUNT_URL = 'http://localhost/auth/me';
@@ -28,17 +27,17 @@ const mockUser = {
   created_at: '2026-01-01',
 };
 
-const server = setupServer(
-  http.post(REFRESH_URL, () => HttpResponse.json(mockTokens)),
-  http.get(ME_URL, () => HttpResponse.json(mockUser))
-);
-beforeAll(() => server.listen());
+const server = createMockServer();
+beforeEach(() => {
+  server.use(
+    http.post(REFRESH_URL, () => HttpResponse.json(mockTokens)),
+    http.get(ME_URL, () => HttpResponse.json(mockUser))
+  );
+});
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   localStorage.clear();
 });
-afterAll(() => server.close());
 
 describe('DeleteAccountSection', () => {
   it('shows a delete button that opens a confirmation message', async () => {

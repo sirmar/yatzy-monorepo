@@ -6,8 +6,8 @@ import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { ModePill } from '@/components/ModePill';
 import { PageLayout } from '@/components/PageLayout';
+import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 import { useErrorToast } from '@/hooks/use-toast';
-import { usePlayerNames } from '@/hooks/usePlayerNames';
 
 type PlayerScore = components['schemas']['PlayerScore'];
 type GameMode = components['schemas']['GameMode'];
@@ -20,7 +20,7 @@ export function EndScreen() {
   const [finalScores, setFinalScores] = useState<PlayerScore[]>([]);
   const [winnerIds, setWinnerIds] = useState<number[]>([]);
   const [gameMode, setGameMode] = useState<GameMode | null>(null);
-  const [playerNames] = usePlayerNames();
+  const { names: playerNames, pictures: playerPictures } = usePlayerNames();
 
   useEffect(() => {
     apiClient
@@ -120,7 +120,13 @@ export function EndScreen() {
                     </td>
                     <td className="py-[10px] px-2">
                       <div className="flex items-center gap-[10px]">
-                        <Avatar name={name} index={idx} size="sm" />
+                        <Avatar
+                          name={name}
+                          index={idx}
+                          playerId={score.player_id}
+                          hasPicture={playerPictures[score.player_id] ?? false}
+                          size="sm"
+                        />
                         <span
                           className={`text-[13px] font-medium ${isWinner ? 'text-foreground' : 'text-foreground'}`}
                         >

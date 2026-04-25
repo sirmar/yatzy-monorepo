@@ -195,7 +195,7 @@ export function NavBar() {
           trigger={
             <>
               {firstGame ? (
-                <AvatarStack names={firstGame.player_ids.map((id) => String(id))} size="sm" />
+                <AvatarStack playerIds={firstGame.player_ids} size="sm" />
               ) : (
                 <span className="text-[var(--text-muted)]">Games</span>
               )}
@@ -222,7 +222,7 @@ export function NavBar() {
                   >
                     <div className="flex flex-col gap-[2px] min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <AvatarStack names={g.player_ids.map((id) => String(id))} size="sm" />
+                        <AvatarStack playerIds={g.player_ids} size="sm" />
                         <div className="flex items-center gap-1.5 flex-shrink-0">
                           {isCreator &&
                             (confirmAbortId === g.id ? (
@@ -325,7 +325,15 @@ export function NavBar() {
           align="right"
           trigger={
             <>
-              {player && <Avatar name={player.name} index={0} size="sm" />}
+              {player && (
+                <Avatar
+                  name={player.name}
+                  index={0}
+                  playerId={player.id}
+                  hasPicture={player.has_picture}
+                  size="sm"
+                />
+              )}
               <span>{player?.name}</span>
               <span className="text-[11px] text-[var(--text-muted)]">▾</span>
             </>

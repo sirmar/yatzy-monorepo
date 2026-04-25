@@ -23,4 +23,7 @@ class Player(BaseModel):
   )
   name: str = Field(description='Display name of the player')
   is_bot: bool = Field(default=False, description='Whether this is an AI bot player')
+  has_picture: bool = Field(
+    default=False, description='Whether this player has a profile picture'
+  )
   created_at: datetime = Field(description='When the player was created')

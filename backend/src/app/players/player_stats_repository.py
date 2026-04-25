@@ -39,13 +39,13 @@ class PlayerStatsRepository:
   async def get(self, player_id: int) -> PlayerStats | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT id, name, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, name, created_at, has_picture FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()
       if row is None:
         return None
-      pid, name, created_at = row
+      pid, name, created_at, has_picture = row
 
       await cursor.execute(
         'SELECT '
@@ -71,6 +71,7 @@ class PlayerStatsRepository:
     return PlayerStats(
       player_id=pid,
       player_name=name,
+      has_picture=bool(has_picture),
       member_since=created_at,
       total_games_played=len(game_rows),
       maxi=_compute_mode_stats(by_mode[GameMode.MAXI]),

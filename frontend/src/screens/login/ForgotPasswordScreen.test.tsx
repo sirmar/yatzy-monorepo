@@ -1,18 +1,15 @@
 import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { describe, expect, it } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { ForgotPasswordScreen } from './ForgotPasswordScreen';
 
 const FORGOT_PASSWORD_URL = 'http://localhost/auth/forgot-password';
 const REFRESH_URL = 'http://localhost/auth/refresh';
 
-const server = setupServer(http.post(REFRESH_URL, () => HttpResponse.json({}, { status: 401 })));
-beforeAll(() => server.listen());
-afterEach(() => server.resetHandlers());
-afterAll(() => server.close());
+const server = createMockServer();
+server.use(http.post(REFRESH_URL, () => HttpResponse.json({}, { status: 401 })));
 
 describe('ForgotPasswordScreen', () => {
   it('shows email input and submit button', () => {

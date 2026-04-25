@@ -6,9 +6,9 @@ import { Card } from '@/components/Card';
 import { FilterPill } from '@/components/FilterPill';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
+import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { useEventSource } from '@/hooks/useEventSource';
-import { usePlayerNames } from '@/hooks/usePlayerNames';
 import { GameList } from './GameList';
 
 type Game = components['schemas']['Game'];
@@ -157,7 +157,7 @@ export function LobbyScreen() {
   const [botCount, setBotCount] = useState(0);
   const [variantFilter, setVariantFilter] = useState<VariantFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [playerNames, refetchPlayerNames] = usePlayerNames();
+  const { names: playerNames, refetch: refetchPlayerNames } = usePlayerNames();
   const { player } = usePlayer();
   const navigate = useNavigate();
   const errorToast = useErrorToast();

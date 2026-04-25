@@ -6,7 +6,6 @@ import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
 import { useEventSource } from '@/hooks/useEventSource';
-import { usePlayerNames } from '@/hooks/usePlayerNames';
 import { DiceRoller } from './DiceRoller';
 import { ScoreCard } from './ScoreCard';
 
@@ -29,7 +28,6 @@ export function GameScreen() {
   const [rollCount, setRollCount] = useState(0);
   const [scoreboard, setScoreboard] = useState<PlayerScorecard[]>([]);
   const [scoringOptions, setScoringOptions] = useState<ScoringOption[] | null>(null);
-  const [playerNames] = usePlayerNames();
   const prevPlayerIdRef = useRef<number | null | undefined>(undefined);
   const pendingRollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -233,7 +231,6 @@ export function GameScreen() {
         />
         <ScoreCard
           scoreboard={scoreboard}
-          playerNames={playerNames}
           currentPlayerId={gameState?.current_player_id ?? null}
           myPlayerId={player?.id ?? 0}
           scoringOptions={scoringOptions}

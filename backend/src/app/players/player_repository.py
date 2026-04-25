@@ -8,7 +8,12 @@ class PlayerRepository:
 
   def _to_player(self, row: tuple) -> Player:
     return Player(
-      id=row[0], account_id=row[1], name=row[2], is_bot=bool(row[3]), created_at=row[4]
+      id=row[0],
+      account_id=row[1],
+      name=row[2],
+      is_bot=bool(row[3]),
+      created_at=row[4],
+      has_picture=bool(row[5]),
     )
 
   async def create(self, account_id: str, name: str) -> Player:
@@ -19,7 +24,7 @@ class PlayerRepository:
       )
       player_id = cursor.lastrowid
       await cursor.execute(
-        'SELECT id, account_id, name, is_bot, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, is_bot, created_at, has_picture FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()
@@ -33,7 +38,7 @@ class PlayerRepository:
       )
       player_id = cursor.lastrowid
       await cursor.execute(
-        'SELECT id, account_id, name, is_bot, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, is_bot, created_at, has_picture FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()
@@ -42,7 +47,7 @@ class PlayerRepository:
   async def list_all(self) -> list[Player]:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT id, account_id, name, is_bot, created_at FROM players WHERE deleted_at IS NULL ORDER BY id',
+        'SELECT id, account_id, name, is_bot, created_at, has_picture FROM players WHERE deleted_at IS NULL ORDER BY id',
       )
       rows = await cursor.fetchall()
       return [self._to_player(row) for row in rows]
@@ -50,7 +55,7 @@ class PlayerRepository:
   async def get_by_id(self, player_id: int) -> Player | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT id, account_id, name, is_bot, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, is_bot, created_at, has_picture FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()
@@ -61,7 +66,7 @@ class PlayerRepository:
   async def get_by_account_id(self, account_id: str) -> Player | None:
     async with await self._conn.cursor() as cursor:
       await cursor.execute(
-        'SELECT id, account_id, name, is_bot, created_at FROM players WHERE account_id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, is_bot, created_at, has_picture FROM players WHERE account_id = %s AND deleted_at IS NULL',
         (account_id,),
       )
       row = await cursor.fetchone()
@@ -78,11 +83,18 @@ class PlayerRepository:
       if cursor.rowcount == 0:
         return None
       await cursor.execute(
-        'SELECT id, account_id, name, is_bot, created_at FROM players WHERE id = %s AND deleted_at IS NULL',
+        'SELECT id, account_id, name, is_bot, created_at, has_picture FROM players WHERE id = %s AND deleted_at IS NULL',
         (player_id,),
       )
       row = await cursor.fetchone()
       return self._to_player(row)
+
+  async def set_has_picture(self, player_id: int, value: bool) -> None:
+    async with await self._conn.cursor() as cursor:
+      await cursor.execute(
+        'UPDATE players SET has_picture = %s WHERE id = %s AND deleted_at IS NULL',
+        (value, player_id),
+      )
 
   async def delete(self, player_id: int) -> bool:
     async with await self._conn.cursor() as cursor:

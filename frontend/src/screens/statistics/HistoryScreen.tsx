@@ -103,7 +103,7 @@ export function HistoryScreen() {
             {filtered.map((row) => (
               <li key={row.game_id} className="py-3 first:pt-0 last:pb-0">
                 <div className="flex items-center gap-3">
-                  <AvatarStack names={row.players.map((p) => p.player_name)} size="md" />
+                  <AvatarStack playerIds={row.players.map((p) => p.player_id)} size="md" />
                   <div className="flex flex-col gap-0.5 flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <ModePill mode={row.mode} />

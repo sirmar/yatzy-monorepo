@@ -1,8 +1,7 @@
 import { screen } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
-import { setupServer } from 'msw/node';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { renderWithProviders } from '@/test/helpers';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { VerifyEmailScreen } from './VerifyEmailScreen';
 
 const VERIFY_EMAIL_URL = 'http://localhost/auth/verify-email';
@@ -27,14 +26,12 @@ const mockUser = {
   created_at: '2026-01-01',
 };
 
-const server = setupServer(http.post(REFRESH_URL, () => HttpResponse.json({}, { status: 401 })));
-beforeAll(() => server.listen());
+const server = createMockServer();
+server.use(http.post(REFRESH_URL, () => HttpResponse.json({}, { status: 401 })));
 afterEach(() => {
-  server.resetHandlers();
   mockNavigate.mockReset();
   window.history.pushState({}, '', '/');
 });
-afterAll(() => server.close());
 
 describe('VerifyEmailScreen', () => {
   it('calls verify-email on mount and redirects to / on success', async () => {

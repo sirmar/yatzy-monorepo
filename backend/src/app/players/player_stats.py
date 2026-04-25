@@ -13,6 +13,7 @@ class ModeStats(BaseModel):
 class PlayerStats(BaseModel):
   player_id: int
   player_name: str
+  has_picture: bool
   member_since: datetime
   total_games_played: int
   maxi: ModeStats

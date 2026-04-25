@@ -116,6 +116,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/players/{player_id}/picture": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload Picture
+         * @description Upload a profile picture for a player.
+         */
+        post: operations["upload_picture_players__player_id__picture_post"];
+        /**
+         * Delete Picture
+         * @description Delete a player's profile picture.
+         */
+        delete: operations["delete_picture_players__player_id__picture_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/games": {
         parameters: {
             query?: never;
@@ -469,6 +493,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** Body_upload_picture_players__player_id__picture_post */
+        Body_upload_picture_players__player_id__picture_post: {
+            /** Picture */
+            picture: string;
+        };
         /** DiceResponse */
         DiceResponse: {
             /**
@@ -727,6 +756,12 @@ export interface components {
              */
             is_bot: boolean;
             /**
+             * Has Picture
+             * @description Whether this player has a profile picture
+             * @default false
+             */
+            has_picture: boolean;
+            /**
              * Created At
              * Format: date-time
              * @description When the player was created
@@ -783,6 +818,8 @@ export interface components {
             player_id: number;
             /** Player Name */
             player_name: string;
+            /** Has Picture */
+            has_picture: boolean;
             /**
              * Member Since
              * Format: date-time
@@ -1157,6 +1194,126 @@ export interface operations {
         };
     };
     delete_player_players__player_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_picture_players__player_id__picture_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                player_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_picture_players__player_id__picture_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Player"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Player not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description File too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unsupported media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_picture_players__player_id__picture_delete: {
         parameters: {
             query?: never;
             header?: never;

@@ -2,9 +2,9 @@ import { Pencil } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
-import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
 import { PageLayout } from '@/components/PageLayout';
+import { PicturePicker } from '@/components/PicturePicker';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { ChangePasswordForm } from './ChangePasswordForm';
 import { DeleteAccountSection } from './DeleteAccountSection';
 
+type Player = components['schemas']['Player'];
 type PlayerStats = components['schemas']['PlayerStats'];
 type ModeStats = components['schemas']['ModeStats'];
 
@@ -37,23 +38,25 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
 }
 
 function IdentityPanel({
-  name,
+  player,
   memberSince,
   onSaveName,
+  onPlayerUpdated,
 }: {
-  name: string;
+  player: Player;
   memberSince: string;
   onSaveName: (name: string) => Promise<void>;
+  onPlayerUpdated: (updated: Player) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [editName, setEditName] = useState(name);
+  const [editName, setEditName] = useState(player.name);
   const [saving, setSaving] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false));
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    if (!editName.trim() || editName.trim() === name) {
+    if (!editName.trim() || editName.trim() === player.name) {
       setOpen(false);
       return;
     }
@@ -68,14 +71,14 @@ function IdentityPanel({
 
   return (
     <Card className="flex items-center gap-4 h-[78px] px-4">
-      <Avatar
-        name={name}
-        index={0}
+      <PicturePicker
+        player={player}
         size="md"
         className="w-11 h-11 text-[17px] border-2 border-[rgba(124,158,248,0.4)]"
+        onSuccess={onPlayerUpdated}
       />
       <div className="flex flex-col gap-[3px] flex-1 min-w-0">
-        <div className="text-[17px] font-bold text-foreground truncate">{name}</div>
+        <div className="text-[17px] font-bold text-foreground truncate">{player.name}</div>
         <div className="text-[12px] text-[var(--text-muted)]">
           Member since {formatDate(memberSince)}
         </div>
@@ -84,7 +87,7 @@ function IdentityPanel({
         <button
           type="button"
           onClick={() => {
-            setEditName(name);
+            setEditName(player.name);
             setOpen((v) => !v);
           }}
           className="flex items-center gap-1.5 h-[30px] px-3 bg-[var(--surface-2)] border border-[var(--border-2)] rounded-lg text-[12px] font-medium text-[var(--text-muted)] cursor-pointer transition-colors hover:text-foreground hover:border-white/20"
@@ -315,9 +318,10 @@ export function ProfileScreen() {
   return (
     <PageLayout>
       <IdentityPanel
-        name={player.name}
+        player={player}
         memberSince={stats?.member_since ?? new Date().toISOString()}
         onSaveName={handleSaveName}
+        onPlayerUpdated={setPlayer}
       />
 
       {stats && (
