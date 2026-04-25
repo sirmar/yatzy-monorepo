@@ -8,6 +8,7 @@ RUN uv sync --no-dev
 
 FROM base-deps AS deps
 RUN uv sync --extra dev
+ENV UV_NO_SYNC=1
 
 FROM deps AS app
 ENTRYPOINT ["uv", "run"]
