@@ -1,11 +1,21 @@
+import re
 from datetime import datetime
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class PlayerBase(BaseModel):
   name: str = Field(
-    min_length=1, max_length=64, description='Display name of the player'
+    min_length=1, max_length=32, description='Display name of the player'
   )
+
+  @field_validator('name')
+  @classmethod
+  def name_characters(cls, v: str) -> str:
+    if not re.fullmatch(r'[^\W_]+([- _][^\W_]+)*', v, re.UNICODE):
+      raise ValueError(
+        'Name must start and end with a letter or number; spaces, hyphens, and underscores may only appear between words'
+      )
+    return v
 
 
 class PlayerCreate(PlayerBase):

@@ -7,7 +7,6 @@ import { PageLayout } from '@/components/PageLayout';
 import { PicturePicker } from '@/components/PicturePicker';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
-import { useFormSubmit } from '@/hooks/useFormSubmit';
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { ChangePasswordForm } from './ChangePasswordForm';
@@ -51,6 +50,7 @@ function IdentityPanel({
   const [open, setOpen] = useState(false);
   const [editName, setEditName] = useState(player.name);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   useClickOutside(ref, () => setOpen(false));
 
@@ -61,11 +61,14 @@ function IdentityPanel({
       return;
     }
     setSaving(true);
+    setError(null);
     try {
       await onSaveName(editName.trim());
+      setOpen(false);
+    } catch {
+      setError('Could not save name. Please try again.');
     } finally {
       setSaving(false);
-      setOpen(false);
     }
   }
 
@@ -73,8 +76,8 @@ function IdentityPanel({
     <Card className="flex items-center gap-4 h-[78px] px-4">
       <PicturePicker
         player={player}
-        size="md"
-        className="w-11 h-11 text-[17px] border-2 border-[rgba(124,158,248,0.4)]"
+        size="lg"
+        className="w-14 h-14 text-[22px] border-2 border-[rgba(124,158,248,0.4)]"
         onSuccess={onPlayerUpdated}
       />
       <div className="flex flex-col gap-[3px] flex-1 min-w-0">
@@ -111,10 +114,14 @@ function IdentityPanel({
                 id="edit-display-name"
                 type="text"
                 value={editName}
-                onChange={(e) => setEditName(e.target.value)}
+                onChange={(e) => {
+                  setEditName(e.target.value);
+                  setError(null);
+                }}
                 maxLength={32}
                 className="h-8 bg-[var(--surface)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)]"
               />
+              {error && <div className="text-[11px] text-[var(--red)]">{error}</div>}
             </div>
             <button
               type="submit"
@@ -284,7 +291,6 @@ function AccountPanel({ email }: { email: string }) {
 export function ProfileScreen() {
   const { player, setPlayer } = usePlayer();
   const { user } = useAuth();
-  const { submit } = useFormSubmit();
   const [stats, setStats] = useState<PlayerStats | null>(null);
 
   useEffect(() => {
@@ -303,14 +309,12 @@ export function ProfileScreen() {
 
   async function handleSaveName(name: string) {
     if (!player) return;
-    await submit(async () => {
-      const { data, error } = await apiClient.PUT('/players/{player_id}', {
-        params: { path: { player_id: player.id } },
-        body: { name },
-      });
-      if (error || !data) throw error ?? new Error('Failed to update');
-      setPlayer(data);
+    const { data, error } = await apiClient.PUT('/players/{player_id}', {
+      params: { path: { player_id: player.id } },
+      body: { name },
     });
+    if (error || !data) throw error ?? new Error('Failed to update');
+    setPlayer(data);
   }
 
   if (!player) return null;

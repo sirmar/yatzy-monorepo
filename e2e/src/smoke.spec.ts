@@ -110,6 +110,7 @@ test('creating a player navigates to lobby', async ({ page, request }) => {
   await gotoAuthenticated(page, '/');
   await page.getByLabel('Display name').fill('Alice');
   await page.getByRole('button', { name: 'Continue' }).click();
+  await page.getByRole('button', { name: /skip|continue/i }).click();
   await page.waitForURL('/lobby');
   await expect(page.getByRole('button', { name: 'New game' })).toBeVisible();
 });
