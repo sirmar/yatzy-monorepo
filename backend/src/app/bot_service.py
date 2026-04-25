@@ -93,6 +93,7 @@ async def _play_turn(game_id, player_id, conn, settings, event_bus):
         )
         await game_repo.set_current_turn(game_id, new_turn_id)
         event_bus.publish_game(game_id)
+        event_bus.publish_player(game.player_ids)
 
         next_player = await PlayerRepository(conn).get_by_id(next_player_id)
         if next_player and next_player.is_bot:

@@ -133,8 +133,7 @@ def create_scorecard_router(
         )
 
     event_bus.publish_game(game_id)
-    if game_ended:
-      event_bus.publish_player(game.player_ids)
+    event_bus.publish_player(game.player_ids)
 
     scorecard = await scorecard_repo.get(game_id, player_id, variant)
     assert scorecard is not None
