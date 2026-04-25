@@ -8,7 +8,7 @@ class GameCreate(BaseModel):
   creator_id: int = Field(gt=0, description='ID of the player creating the game')
   mode: GameMode = Field(default=GameMode.MAXI, description='Game mode')
   bot_count: int = Field(
-    default=0, ge=0, le=5, description='Number of bot players to add'
+    default=0, ge=0, le=4, description='Number of bot players to add'
   )
 
 

@@ -112,8 +112,8 @@ function NewGamePanel({
             </div>
             <button
               type="button"
-              onClick={() => onBotCountChange(Math.min(5, botCount + 1))}
-              disabled={botCount === 5}
+              onClick={() => onBotCountChange(Math.min(4, botCount + 1))}
+              disabled={botCount === 4}
               className="w-[30px] h-[30px] flex items-center justify-center text-[var(--text-muted)] hover:text-foreground hover:bg-white/[0.06] transition-colors disabled:opacity-25 disabled:cursor-default cursor-pointer"
             >
               +

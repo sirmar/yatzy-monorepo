@@ -39,7 +39,7 @@ def assert_player_not_in_game(game: Game, player_id: int) -> None:
 
 
 def assert_game_not_full(game: Game) -> None:
-  if len(game.player_ids) >= 6:
+  if len(game.player_ids) >= 5:
     raise HTTPException(status_code=409, detail='Game is full')
 
 

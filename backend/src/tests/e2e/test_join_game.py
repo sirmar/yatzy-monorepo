@@ -39,10 +39,10 @@ async def test_join_non_lobby_game(client: AsyncClient, make_token):
 
 async def test_join_game_full(client: AsyncClient, make_token):
   players = [
-    await Player(client).create(f'Player{i}', token=make_token()) for i in range(7)
+    await Player(client).create(f'Player{i}', token=make_token()) for i in range(6)
   ]
   game = await Game(client).create(players[0].id, token=players[0].token)
-  for player in players[1:6]:
+  for player in players[1:5]:
     await game.join(game.id, player.id, token=player.token)
-  await game.join(game.id, players[6].id, token=players[6].token)
+  await game.join(game.id, players[5].id, token=players[5].token)
   game.assert_status(409).assert_has_detail()

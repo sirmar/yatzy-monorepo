@@ -216,7 +216,7 @@ def create_game_router(
     conn: Annotated[aiomysql.Connection, Depends(database.get_db)],
     current_user: Annotated[dict, Depends(get_current_user)],
   ) -> Game:
-    """Join a game that is in the lobby. Up to 6 players can join."""
+    """Join a game that is in the lobby. Up to 5 players can join."""
     assert_player_exists_and_owns(
       await PlayerRepository(conn).get_by_id(body.player_id), current_user['sub']
     )

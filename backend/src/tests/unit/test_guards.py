@@ -126,12 +126,12 @@ class TestAssertPlayerNotInGame:
 
 
 class TestAssertGameNotFull:
-  def test_passes_when_fewer_than_six_players(self):
-    assert_game_not_full(make_game(player_ids=[1, 2, 3, 4, 5]))
+  def test_passes_when_fewer_than_five_players(self):
+    assert_game_not_full(make_game(player_ids=[1, 2, 3, 4]))
 
-  def test_raises_409_when_six_players(self):
+  def test_raises_409_when_five_players(self):
     with pytest.raises(HTTPException) as exc:
-      assert_game_not_full(make_game(player_ids=[1, 2, 3, 4, 5, 6]))
+      assert_game_not_full(make_game(player_ids=[1, 2, 3, 4, 5]))
     assert exc.value.status_code == 409
 
 
