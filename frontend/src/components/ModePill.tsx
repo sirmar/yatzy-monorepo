@@ -1,9 +1,4 @@
-const MODE_LABELS: Record<string, string> = {
-  maxi: 'Maxi Yatzy',
-  maxi_sequential: 'Maxi Sequential',
-  yatzy: 'Yatzy',
-  yatzy_sequential: 'Yatzy Sequential',
-};
+import { MODE_LABELS } from '@/lib/constants';
 
 export function ModePill({ mode }: { mode: string }) {
   return (

@@ -4,6 +4,7 @@ import type { components } from '@/api';
 import { apiClient } from '@/api';
 import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
+import { LeaderboardHeader } from '@/components/Leaderboard';
 import { ModePill } from '@/components/ModePill';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayerNames } from '@/hooks/PlayerNamesContext';
@@ -90,19 +91,7 @@ export function EndScreen() {
 
         <Card className="px-4 py-[14px]">
           <table className="w-full border-collapse">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="pb-2 px-2 w-7 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
-                  #
-                </th>
-                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
-                  Player
-                </th>
-                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-right">
-                  Score
-                </th>
-              </tr>
-            </thead>
+            <LeaderboardHeader rankColWidth="w-7" />
             <tbody>
               {withRanks.map((score, idx) => {
                 const isWinner = winnerIds.includes(score.player_id);

@@ -6,7 +6,7 @@ import { Button } from '@/components/Button';
 import { ErrorMessage } from '@/components/ErrorMessage';
 import { FormField } from '@/components/FormField';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
-import { validatePassword, validatePasswordsMatch } from '@/lib/utils';
+import { validateNewPassword } from '@/lib/utils';
 
 export function ResetPasswordScreen() {
   const [searchParams] = useSearchParams();
@@ -37,7 +37,7 @@ export function ResetPasswordScreen() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const pwError = validatePassword(password) ?? validatePasswordsMatch(password, confirmPassword);
+    const pwError = validateNewPassword(password, confirmPassword);
     if (pwError) {
       setError(pwError);
       return;

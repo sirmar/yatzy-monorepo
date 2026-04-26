@@ -9,6 +9,7 @@ import { ModePill } from '@/components/ModePill';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { useEventSource } from '@/hooks/useEventSource';
 import { cn } from '@/lib/utils';
 
@@ -43,17 +44,6 @@ function useActiveGames(): ActiveGame[] {
   );
 
   return games;
-}
-
-function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
-  useEffect(() => {
-    function listener(e: MouseEvent) {
-      if (!ref.current || ref.current.contains(e.target as Node)) return;
-      handler();
-    }
-    document.addEventListener('mousedown', listener);
-    return () => document.removeEventListener('mousedown', listener);
-  }, [ref, handler]);
 }
 
 function DropdownShell({

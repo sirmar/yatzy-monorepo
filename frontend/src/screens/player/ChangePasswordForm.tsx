@@ -4,7 +4,10 @@ import { ErrorMessage } from '@/components/ErrorMessage';
 import { FormField } from '@/components/FormField';
 import { useAuth } from '@/hooks/AuthContext';
 import { useFormSubmit } from '@/hooks/useFormSubmit';
-import { validatePassword, validatePasswordsMatch } from '@/lib/utils';
+import { validateNewPassword } from '@/lib/utils';
+
+const INPUT_CLASS =
+  'h-9 bg-[var(--surface)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)] w-full';
 
 interface Props {
   onDone?: () => void;
@@ -20,8 +23,7 @@ export function ChangePasswordForm({ onDone }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const pwError =
-      validatePassword(newPassword) ?? validatePasswordsMatch(newPassword, confirmPassword);
+    const pwError = validateNewPassword(newPassword, confirmPassword);
     if (pwError) {
       setError(pwError);
       return;
@@ -49,7 +51,7 @@ export function ChangePasswordForm({ onDone }: Props) {
         onChange={(e) => setCurrentPassword(e.target.value)}
         required
         autoComplete="current-password"
-        inputClassName="h-9 bg-[var(--surface)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)] w-full"
+        inputClassName={INPUT_CLASS}
       />
       <FormField
         id="new-password"
@@ -59,7 +61,7 @@ export function ChangePasswordForm({ onDone }: Props) {
         onChange={(e) => setNewPassword(e.target.value)}
         required
         autoComplete="new-password"
-        inputClassName="h-9 bg-[var(--surface)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)] w-full"
+        inputClassName={INPUT_CLASS}
       />
       <FormField
         id="confirm-new-password"
@@ -69,7 +71,7 @@ export function ChangePasswordForm({ onDone }: Props) {
         onChange={(e) => setConfirmPassword(e.target.value)}
         required
         autoComplete="new-password"
-        inputClassName="h-9 bg-[var(--surface)] border border-[var(--border-2)] rounded-lg px-2.5 text-[13px] text-foreground outline-none transition-colors focus:border-[var(--accent)] w-full"
+        inputClassName={INPUT_CLASS}
       />
       <ErrorMessage error={error} />
       <div className="flex justify-end gap-2">

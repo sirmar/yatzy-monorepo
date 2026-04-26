@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '@/api';
 import type { components } from '@/api/schema';
-import { Avatar } from '@/components/Avatar';
 import { Card } from '@/components/Card';
+import { LeaderboardHeader, LeaderboardRow } from '@/components/Leaderboard';
 import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayerNames } from '@/hooks/PlayerNamesContext';
+import { ignoreAbort } from '@/lib/utils';
 
 type HighScore = components['schemas']['HighScore'];
 type GameMode = components['schemas']['GameMode'];
@@ -15,12 +16,6 @@ const TABS: { label: string; value: GameMode }[] = [
   { label: 'Maxi Seq.', value: 'maxi_sequential' },
   { label: 'Yatzy', value: 'yatzy' },
   { label: 'Yatzy Seq.', value: 'yatzy_sequential' },
-];
-
-const RANK_COLORS = [
-  'text-[var(--amber)]',
-  'text-[rgba(180,180,200,0.9)]',
-  'text-[rgba(180,140,80,0.9)]',
 ];
 
 export function HighScoresScreen() {
@@ -35,9 +30,7 @@ export function HighScoresScreen() {
       .then(({ data }) => {
         if (data) setScores(data);
       })
-      .catch((e: unknown) => {
-        if ((e as { name?: string })?.name !== 'AbortError') throw e;
-      });
+      .catch(ignoreAbort);
     return () => controller.abort();
   }, []);
 
@@ -55,48 +48,17 @@ export function HighScoresScreen() {
 
         <Card className="px-4 py-[14px]">
           <table className="w-full border-collapse table-fixed">
-            <thead>
-              <tr className="border-b border-[var(--border)]">
-                <th className="pb-2 px-2 w-8 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
-                  #
-                </th>
-                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-left">
-                  Player
-                </th>
-                <th className="pb-2 px-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[var(--text-dim)] text-right">
-                  Score
-                </th>
-              </tr>
-            </thead>
+            <LeaderboardHeader />
             <tbody>
               {filtered.map((score, idx) => (
-                <tr
+                <LeaderboardRow
                   key={`${score.game_id}-${score.player_id}`}
-                  className="border-b border-[var(--border)] last:border-b-0"
-                >
-                  <td
-                    className={`py-[10px] px-2 text-[12px] font-bold w-8 ${RANK_COLORS[idx] ?? 'text-[var(--text-dim)]'}`}
-                  >
-                    {idx + 1}
-                  </td>
-                  <td className="py-[10px] px-2">
-                    <div className="flex items-center gap-[10px]">
-                      <Avatar
-                        name={score.player_name}
-                        index={idx}
-                        size="lg"
-                        playerId={score.player_id}
-                        hasPicture={pictures[score.player_id] ?? false}
-                      />
-                      <span className="text-[13px] font-medium text-foreground">
-                        {score.player_name}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-[10px] px-2 text-[14px] font-bold text-right text-foreground">
-                    {score.total_score}
-                  </td>
-                </tr>
+                  rank={idx + 1}
+                  playerId={score.player_id}
+                  playerName={score.player_name}
+                  hasPicture={pictures[score.player_id] ?? false}
+                  score={score.total_score}
+                />
               ))}
               {filtered.length === 0 && (
                 <tr>

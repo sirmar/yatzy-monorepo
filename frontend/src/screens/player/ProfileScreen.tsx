@@ -7,6 +7,8 @@ import { PageLayout } from '@/components/PageLayout';
 import { PicturePicker } from '@/components/PicturePicker';
 import { useAuth } from '@/hooks/AuthContext';
 import { usePlayer } from '@/hooks/PlayerContext';
+import { useClickOutside } from '@/hooks/useClickOutside';
+import { MODE_LABELS } from '@/lib/constants';
 import { formatDate } from '@/lib/format';
 import { cn } from '@/lib/utils';
 import { ChangePasswordForm } from './ChangePasswordForm';
@@ -16,25 +18,7 @@ type Player = components['schemas']['Player'];
 type PlayerStats = components['schemas']['PlayerStats'];
 type ModeStats = components['schemas']['ModeStats'];
 
-const MODE_LABELS: Record<string, string> = {
-  maxi: 'Maxi Yatzy',
-  maxi_sequential: 'Maxi Sequential',
-  yatzy: 'Yatzy',
-  yatzy_sequential: 'Yatzy Sequential',
-};
-
 const MODE_KEYS = ['maxi', 'maxi_sequential', 'yatzy', 'yatzy_sequential'] as const;
-
-function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
-  useEffect(() => {
-    function listener(e: MouseEvent) {
-      if (!ref.current || ref.current.contains(e.target as Node)) return;
-      handler();
-    }
-    document.addEventListener('mousedown', listener);
-    return () => document.removeEventListener('mousedown', listener);
-  }, [ref, handler]);
-}
 
 function IdentityPanel({
   player,

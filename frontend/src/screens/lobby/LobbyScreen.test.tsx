@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MODE_LABELS } from '@/lib/constants';
 import { createMockServer, renderWithProviders } from '@/test/helpers';
 import { LobbyScreen } from './LobbyScreen';
 
@@ -27,13 +28,6 @@ const LEAVE_URL = (id: number, playerId: number) =>
 
 const PLAYER = { id: 1, name: 'Alice', created_at: '' };
 const BOB = { id: 2, name: 'Bob', created_at: '' };
-
-const MODE_LABELS: Record<string, string> = {
-  maxi: 'Maxi Yatzy',
-  maxi_sequential: 'Maxi Sequential',
-  yatzy: 'Yatzy',
-  yatzy_sequential: 'Yatzy Sequential',
-};
 
 describe('LobbyScreen', () => {
   beforeEach(() => {

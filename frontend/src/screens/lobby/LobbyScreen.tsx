@@ -8,6 +8,7 @@ import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
 import { usePlayerNames } from '@/hooks/PlayerNamesContext';
 import { useErrorToast } from '@/hooks/use-toast';
+import { useClickOutside } from '@/hooks/useClickOutside';
 import { useEventSource } from '@/hooks/useEventSource';
 import { GameList } from './GameList';
 
@@ -20,17 +21,6 @@ const MODES: { value: GameMode; label: string }[] = [
   { value: 'yatzy', label: 'Yatzy' },
   { value: 'yatzy_sequential', label: 'Yatzy Sequential' },
 ];
-
-function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () => void) {
-  useEffect(() => {
-    function listener(e: MouseEvent) {
-      if (!ref.current || ref.current.contains(e.target as Node)) return;
-      handler();
-    }
-    document.addEventListener('mousedown', listener);
-    return () => document.removeEventListener('mousedown', listener);
-  }, [ref, handler]);
-}
 
 function NewGamePanel({
   mode,

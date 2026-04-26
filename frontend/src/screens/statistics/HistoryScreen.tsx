@@ -7,6 +7,7 @@ import { ModePill } from '@/components/ModePill';
 import { ModeSelector } from '@/components/ModeSelector';
 import { PageLayout } from '@/components/PageLayout';
 import { usePlayer } from '@/hooks/PlayerContext';
+import { ignoreAbort } from '@/lib/utils';
 
 type GameHistory = components['schemas']['GameHistory'];
 
@@ -48,9 +49,7 @@ export function HistoryScreen() {
       .then(({ data }) => {
         if (data) setHistory(data);
       })
-      .catch((e: unknown) => {
-        if ((e as { name?: string })?.name !== 'AbortError') throw e;
-      });
+      .catch(ignoreAbort);
     return () => controller.abort();
   }, [player]);
 
