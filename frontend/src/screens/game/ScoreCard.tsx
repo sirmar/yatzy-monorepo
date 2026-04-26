@@ -243,10 +243,10 @@ export function ScoreCard({
   return (
     <Card className="overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse min-w-[480px]">
+        <table className="w-full border-collapse min-w-[480px] table-fixed">
           <thead>
             <tr className="border-b border-[var(--border-2)]">
-              <th className="py-2 px-[14px] pl-5 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)] text-left align-middle">
+              <th className="w-[140px] py-2 px-[14px] pl-5 text-[12px] font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)] text-left align-middle">
                 Category
               </th>
               {playerIds.map((pid, idx) => {
