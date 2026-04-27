@@ -4,6 +4,7 @@ from app.games.turn_repository import TurnRepository
 from app.scoring.score_calculator import calculate
 from app.scoring.scorecard import Scorecard
 from app.scoring.scorecard_repository import ScorecardRepository
+from yatzy_rules.score_category import ScoreCategory
 from yatzy_rules.game_variant import get_variant
 
 
@@ -20,7 +21,7 @@ class TurnService:
     self._conn = conn
 
   async def score_and_advance(
-    self, game_id: int, player_id: int, category: str
+    self, game_id: int, player_id: int, category: ScoreCategory
   ) -> TurnResult:
     game_repo = GameRepository(self._conn)
     turn_repo = TurnRepository(self._conn)

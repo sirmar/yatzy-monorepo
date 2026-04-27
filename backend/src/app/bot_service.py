@@ -8,6 +8,7 @@ from app.games.turn_repository import TurnRepository
 from app.games.turn_service import TurnService
 from app.players.player_repository import PlayerRepository
 from app.scoring.scorecard_repository import ScorecardRepository
+from yatzy_rules.score_category import ScoreCategory
 
 
 async def play_bot_turn(
@@ -62,7 +63,7 @@ async def _play_turn(game_id, player_id, conn, settings, event_bus):
     else:
       await asyncio.sleep(4.0)
       result = await TurnService(conn).score_and_advance(
-        game_id, player_id, response['category']
+        game_id, player_id, ScoreCategory(response['category'])
       )
       await conn.commit()
       event_bus.publish_game(game_id)
