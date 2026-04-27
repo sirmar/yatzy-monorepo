@@ -5,6 +5,11 @@ WORKDIR /workspace
 COPY package.json pnpm-lock.yaml biome.json tsconfig.json tsconfig.node.json vite.config.ts index.html ./
 RUN pnpm install --frozen-lockfile
 
+FROM base AS lock
+WORKDIR /workspace
+COPY package.json pnpm-lock.yaml ./
+ENTRYPOINT ["/usr/local/bin/lock-entrypoint.sh"]
+
 FROM deps AS lint
 ENTRYPOINT ["/usr/local/bin/lint-entrypoint.sh"]
 
