@@ -3,6 +3,9 @@ WORKDIR /workspace
 COPY pyproject.toml uv.lock ./
 RUN uv sync --no-dev
 
+FROM base AS lock
+ENTRYPOINT ["/usr/local/bin/lock-entrypoint.sh"]
+
 FROM base AS deps
 RUN uv sync --extra dev
 

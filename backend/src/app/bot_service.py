@@ -18,7 +18,9 @@ async def play_bot_turn(
   settings: Settings,
   event_bus: EventBus,
 ) -> None:
-  async with database._pool.acquire() as conn:  # type: ignore[union-attr]
+  if database._pool is None:
+    raise RuntimeError('Database.connect() must be called before play_bot_turn()')
+  async with database._pool.acquire() as conn:
     await _play_turn(game_id, player_id, conn, settings, event_bus)
 
 

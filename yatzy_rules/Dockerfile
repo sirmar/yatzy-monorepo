@@ -4,6 +4,9 @@ ENV PYTHONPATH=/workspace/src
 COPY pyproject.toml uv.lock ./
 RUN uv sync --extra dev
 
+FROM base AS lock
+ENTRYPOINT ["/usr/local/bin/lock-entrypoint.sh"]
+
 FROM base AS lint
 ENTRYPOINT ["/usr/local/bin/lint-entrypoint.sh"]
 

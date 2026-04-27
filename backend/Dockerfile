@@ -6,6 +6,9 @@ COPY backend/pyproject.toml backend/uv.lock ./
 COPY yatzy_rules/ /yatzy_rules/
 RUN uv sync --no-dev
 
+FROM base-deps AS lock
+ENTRYPOINT ["/usr/local/bin/lock-entrypoint.sh"]
+
 FROM base-deps AS deps
 RUN uv sync --extra dev
 ENV UV_NO_SYNC=1
