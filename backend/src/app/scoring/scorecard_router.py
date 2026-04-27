@@ -18,6 +18,7 @@ from app.games.guards import (
   assert_sequential_category,
 )
 from app.games.turn_repository import TurnRepository
+from app.games.turn_service import TurnService
 from app.players.player_repository import PlayerRepository
 from app.scoring.score_calculator import calculate
 from app.scoring.scorecard import (
@@ -88,7 +89,7 @@ def create_scorecard_router(
     assert_game_active(game)
 
     turn_repo = TurnRepository(conn)
-    turn_id, current_player_id, rolls_remaining, saved_rolls = assert_turn_active(
+    turn_id, current_player_id, rolls_remaining, _ = assert_turn_active(
       await turn_repo.get_turn_info(game_id)
     )
     assert_current_player(player_id, current_player_id)
@@ -104,38 +105,21 @@ def create_scorecard_router(
       variant.categories, variant.is_sequential, scored, body.category
     )
 
-    dice = await turn_repo.get_dice_values(turn_id)
-    score = calculate(body.category, dice)
-    await scorecard_repo.save(game_id, player_id, body.category, score)
-
-    new_saved = (saved_rolls + rolls_remaining) if variant.saves_rolls else 0
-    await game_repo.update_saved_rolls(game_id, player_id, new_saved)
-
-    turn_repo = TurnRepository(conn)
-    total_scored = await scorecard_repo.count_all_scored(game_id)
-    game_ended = total_scored >= len(game.player_ids) * len(variant.categories)
-    if game_ended:
-      await game_repo.end(game_id)
-    else:
-      current_index = game.player_ids.index(player_id)
-      next_player_id = game.player_ids[(current_index + 1) % len(game.player_ids)]
-      turn_number = await turn_repo.get_turn_number(turn_id)
-      new_turn_id = await turn_repo.create(
-        game_id, next_player_id, turn_number + 1, variant.dice_count
-      )
-      await game_repo.set_current_turn(game_id, new_turn_id)
-      next_player = await PlayerRepository(conn).get_by_id(next_player_id)
-      if next_player and next_player.is_bot:
-        background_tasks.add_task(
-          play_bot_turn, game_id, next_player_id, database, settings, event_bus
-        )
+    result = await TurnService(conn).score_and_advance(
+      game_id, player_id, body.category
+    )
 
     event_bus.publish_game(game_id)
-    event_bus.publish_player(game.player_ids)
+    event_bus.publish_player(result.player_ids)
 
-    scorecard = await scorecard_repo.get(game_id, player_id, variant)
-    assert scorecard is not None
-    return scorecard
+    if not result.game_ended and result.next_player_id is not None:
+      next_player = await PlayerRepository(conn).get_by_id(result.next_player_id)
+      if next_player and next_player.is_bot:
+        background_tasks.add_task(
+          play_bot_turn, game_id, result.next_player_id, database, settings, event_bus
+        )
+
+    return result.scorecard
 
   @router.get(
     '/games/{game_id}/scoreboard',

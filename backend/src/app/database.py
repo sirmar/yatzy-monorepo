@@ -17,7 +17,7 @@ class Database:
       user=url.username,
       password=url.password,
       db=url.path.lstrip('/'),
-      autocommit=True,
+      autocommit=False,
     )
 
   async def disconnect(self) -> None:
@@ -29,4 +29,9 @@ class Database:
     if self._pool is None:
       raise RuntimeError('Database.connect() must be called before get_db()')
     async with self._pool.acquire() as conn:
-      yield conn
+      try:
+        yield conn
+        await conn.commit()
+      except Exception:
+        await conn.rollback()
+        raise
