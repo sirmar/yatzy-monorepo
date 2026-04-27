@@ -11,9 +11,9 @@ class HighScoresRepository:
     self._conn = conn
 
   async def list_all(self) -> list[HighScore]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
-        'SELECT p.id, p.name, g.id, g.ended_at, g.mode, se.category, se.score '
+        'SELECT p.id AS player_id, p.name AS player_name, g.id AS game_id, g.ended_at, g.mode, se.category, se.score '
         'FROM games g '
         'JOIN game_players gp ON gp.game_id = g.id AND gp.deleted_at IS NULL '
         'JOIN players p ON p.id = gp.player_id AND p.deleted_at IS NULL '
@@ -26,13 +26,13 @@ class HighScoresRepository:
     entries: dict[tuple[int, int], dict] = defaultdict(
       lambda: {'player_name': '', 'finished_at': None, 'mode': None, 'scores': {}}
     )
-    for player_id, player_name, game_id, ended_at, mode, category, score in rows:
-      key = (player_id, game_id)
-      entries[key]['player_name'] = player_name
-      entries[key]['finished_at'] = ended_at
-      entries[key]['mode'] = mode
-      if category is not None and score is not None:
-        entries[key]['scores'][category] = score
+    for row in rows:
+      key = (row['player_id'], row['game_id'])
+      entries[key]['player_name'] = row['player_name']
+      entries[key]['finished_at'] = row['ended_at']
+      entries[key]['mode'] = row['mode']
+      if row['category'] is not None and row['score'] is not None:
+        entries[key]['scores'][row['category']] = row['score']
 
     result = []
     for (player_id, game_id), data in entries.items():

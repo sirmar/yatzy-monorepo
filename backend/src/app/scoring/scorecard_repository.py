@@ -10,9 +10,8 @@ class ScorecardRepository:
     self._conn = conn
 
   def _build_scorecard(
-    self, rows: list[tuple], variant: GameVariant, last_category: str | None = None
+    self, scores: dict[str, int], variant: GameVariant, last_category: str | None = None
   ) -> Scorecard:
-    scores = {row[0]: row[1] for row in rows}
     entries = [
       ScoreEntry(
         category=cat, score=scores.get(cat), last_scored=(cat == last_category)
@@ -27,7 +26,7 @@ class ScorecardRepository:
   async def is_category_scored(
     self, game_id: int, player_id: int, category: ScoreCategory
   ) -> bool:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT id FROM scorecard_entries '
         'WHERE game_id = %s AND player_id = %s AND category = %s AND deleted_at IS NULL',
@@ -38,7 +37,7 @@ class ScorecardRepository:
   async def save(
     self, game_id: int, player_id: int, category: ScoreCategory, score: int
   ) -> None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'INSERT INTO scorecard_entries (game_id, player_id, category, score) '
         'VALUES (%s, %s, %s, %s)',
@@ -46,45 +45,45 @@ class ScorecardRepository:
       )
 
   async def count_all_scored(self, game_id: int) -> int:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
-        'SELECT COUNT(*) FROM scorecard_entries '
+        'SELECT COUNT(*) AS cnt FROM scorecard_entries '
         'WHERE game_id = %s AND deleted_at IS NULL',
         (game_id,),
       )
       row = await cursor.fetchone()
-      return row[0]
+      return row['cnt']
 
   async def get_scores_dict(self, game_id: int, player_id: int) -> dict[str, int]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT category, score FROM scorecard_entries '
         'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
         (game_id, player_id),
       )
       rows = await cursor.fetchall()
-      return {row[0]: row[1] for row in rows}
+      return {row['category']: row['score'] for row in rows}
 
   async def get_scored_categories(
     self, game_id: int, player_id: int
   ) -> set[ScoreCategory]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT category FROM scorecard_entries '
         'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
         (game_id, player_id),
       )
       rows = await cursor.fetchall()
-      return {ScoreCategory(row[0]) for row in rows}
+      return {ScoreCategory(row['category']) for row in rows}
 
   async def get_all(self, game_id: int, variant: GameVariant) -> list[PlayerScorecard]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT player_id FROM game_players WHERE game_id = %s AND deleted_at IS NULL',
         (game_id,),
       )
       player_rows = await cursor.fetchall()
-      player_ids = [r[0] for r in player_rows]
+      player_ids = [r['player_id'] for r in player_rows]
       if not player_ids:
         return []
       await cursor.execute(
@@ -93,17 +92,18 @@ class ScorecardRepository:
         (game_id,),
       )
       entry_rows = await cursor.fetchall()
-      entries_by_player: dict[int, list[tuple]] = {pid: [] for pid in player_ids}
+      scores_by_player: dict[int, dict[str, int]] = {pid: {} for pid in player_ids}
       last_id_by_player: dict[int, tuple[int, str]] = {}
-      for pid, cat, score, row_id in entry_rows:
-        if pid in entries_by_player:
-          entries_by_player[pid].append((cat, score))
-          if pid not in last_id_by_player or row_id > last_id_by_player[pid][0]:
-            last_id_by_player[pid] = (row_id, cat)
+      for row in entry_rows:
+        pid = row['player_id']
+        if pid in scores_by_player:
+          scores_by_player[pid][row['category']] = row['score']
+          if pid not in last_id_by_player or row['id'] > last_id_by_player[pid][0]:
+            last_id_by_player[pid] = (row['id'], row['category'])
       result = []
       for pid in player_ids:
         last_cat = last_id_by_player[pid][1] if pid in last_id_by_player else None
-        sc = self._build_scorecard(entries_by_player[pid], variant, last_cat)
+        sc = self._build_scorecard(scores_by_player[pid], variant, last_cat)
         result.append(
           PlayerScorecard(
             player_id=pid, entries=sc.entries, bonus=sc.bonus, total=sc.total
@@ -114,7 +114,7 @@ class ScorecardRepository:
   async def get(
     self, game_id: int, player_id: int, variant: GameVariant
   ) -> Scorecard | None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT id FROM games WHERE id = %s AND deleted_at IS NULL',
         (game_id,),
@@ -134,5 +134,6 @@ class ScorecardRepository:
         (game_id, player_id),
       )
       rows = await cursor.fetchall()
-      last_cat = max(rows, key=lambda r: r[2])[0] if rows else None
-      return self._build_scorecard([(r[0], r[1]) for r in rows], variant, last_cat)
+      last_cat = max(rows, key=lambda r: r['id'])['category'] if rows else None
+      scores = {row['category']: row['score'] for row in rows}
+      return self._build_scorecard(scores, variant, last_cat)

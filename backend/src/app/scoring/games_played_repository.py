@@ -16,9 +16,9 @@ class GamesPlayedRepository:
     self._conn = conn
 
   async def list_top(self, sort_by: GamesPlayedSortBy) -> list[GamesPlayed]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
-        'SELECT p.id, p.name, '
+        'SELECT p.id AS player_id, p.name AS player_name, '
         '  COUNT(*) AS total, '
         "  COUNT(CASE WHEN g.mode = 'maxi' THEN 1 END) AS maxi, "
         "  COUNT(CASE WHEN g.mode = 'maxi_sequential' THEN 1 END) AS maxi_sequential, "
@@ -36,13 +36,13 @@ class GamesPlayedRepository:
 
     return [
       GamesPlayed(
-        player_id=player_id,
-        player_name=player_name,
-        total=total,
-        maxi=maxi,
-        maxi_sequential=maxi_sequential,
-        yatzy=yatzy,
-        yatzy_sequential=yatzy_sequential,
+        player_id=row['player_id'],
+        player_name=row['player_name'],
+        total=row['total'],
+        maxi=row['maxi'],
+        maxi_sequential=row['maxi_sequential'],
+        yatzy=row['yatzy'],
+        yatzy_sequential=row['yatzy_sequential'],
       )
-      for player_id, player_name, total, maxi, maxi_sequential, yatzy, yatzy_sequential in rows
+      for row in rows
     ]

@@ -8,7 +8,7 @@ class RollRepository:
     self._conn = conn
 
   async def get_turn_info(self, game_id: int) -> tuple[int, int, int, int] | None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT t.id, t.player_id, t.rolls_remaining, gp.saved_rolls '
         'FROM games g '
@@ -17,25 +17,30 @@ class RollRepository:
         'WHERE g.id = %s AND g.deleted_at IS NULL',
         (game_id,),
       )
-      return await cursor.fetchone()
+      row = await cursor.fetchone()
+      if row is None:
+        return None
+      return (row['id'], row['player_id'], row['rolls_remaining'], row['saved_rolls'])
 
   async def get_dice(self, turn_id: int) -> list[Die]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT die_index, value, kept FROM turn_dice WHERE turn_id = %s ORDER BY die_index',
         (turn_id,),
       )
       rows = await cursor.fetchall()
-      return [Die(index=r[0], value=r[1], kept=bool(r[2])) for r in rows]
+      return [
+        Die(index=r['die_index'], value=r['value'], kept=bool(r['kept'])) for r in rows
+      ]
 
   async def get_dice_values(self, turn_id: int) -> list[int]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT value FROM turn_dice WHERE turn_id = %s ORDER BY die_index',
         (turn_id,),
       )
       rows = await cursor.fetchall()
-      return [r[0] for r in rows]
+      return [r['value'] for r in rows]
 
   async def execute(
     self,
@@ -45,7 +50,7 @@ class RollRepository:
     rolls_remaining: int,
     kept_dice: list[int],
   ) -> list[Die]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       kept_set = set(kept_dice)
       if kept_set:
         kept_indices = sorted(kept_set)
@@ -77,4 +82,6 @@ class RollRepository:
         (turn_id,),
       )
       rows = await cursor.fetchall()
-      return [Die(index=r[0], value=r[1], kept=bool(r[2])) for r in rows]
+      return [
+        Die(index=r['die_index'], value=r['value'], kept=bool(r['kept'])) for r in rows
+      ]

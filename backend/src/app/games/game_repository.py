@@ -9,21 +9,21 @@ class GameRepository:
     self._conn = conn
 
   def _to_game(
-    self, row: tuple, player_ids: list[int], current_player_id: int | None = None
+    self, row: dict, player_ids: list[int], current_player_id: int | None = None
   ) -> Game:
     return Game(
-      id=row[0],
-      status=row[1],
-      mode=row[2],
-      creator_id=row[3],
-      created_at=row[4],
-      started_at=row[5],
-      ended_at=row[6],
+      id=row['id'],
+      status=row['status'],
+      mode=row['mode'],
+      creator_id=row['creator_id'],
+      created_at=row['created_at'],
+      started_at=row['started_at'],
+      ended_at=row['ended_at'],
       player_ids=player_ids,
       current_player_id=current_player_id,
     )
 
-  async def _fetch_game(self, cursor: aiomysql.Cursor, game_id: int) -> Game:
+  async def _fetch_game(self, cursor: aiomysql.DictCursor, game_id: int) -> Game:
     await cursor.execute(
       'SELECT g.id, g.status, g.mode, g.creator_id, g.created_at, g.started_at, g.ended_at, '
       't.player_id '
@@ -34,17 +34,17 @@ class GameRepository:
     row = await cursor.fetchone()
     if row is None:
       raise RuntimeError(f'Expected game {game_id} to exist in _fetch_game')
-    current_player_id = row[7]
+    current_player_id = row['player_id']
     await cursor.execute(
       'SELECT player_id FROM game_players '
       'WHERE game_id = %s AND deleted_at IS NULL ORDER BY join_order',
       (game_id,),
     )
     player_rows = await cursor.fetchall()
-    return self._to_game(row, [r[0] for r in player_rows], current_player_id)
+    return self._to_game(row, [r['player_id'] for r in player_rows], current_player_id)
 
   async def create(self, creator_id: int, mode: GameMode = GameMode.MAXI) -> Game:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'INSERT INTO games (creator_id, mode) VALUES (%s, %s)',
         (creator_id, mode),
@@ -57,7 +57,7 @@ class GameRepository:
       return await self._fetch_game(cursor, game_id)
 
   async def abort(self, game_id: int) -> Game | None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE games SET status = %s, ended_at = NOW() '
         'WHERE id = %s AND status = %s AND deleted_at IS NULL',
@@ -68,7 +68,7 @@ class GameRepository:
       return await self._fetch_game(cursor, game_id)
 
   async def end(self, game_id: int) -> Game | None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE games SET status = %s, ended_at = NOW() '
         'WHERE id = %s AND status = %s AND deleted_at IS NULL',
@@ -79,7 +79,7 @@ class GameRepository:
       return await self._fetch_game(cursor, game_id)
 
   async def start(self, game_id: int, turn_id: int) -> Game | None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE games SET status = %s, started_at = NOW(), current_turn = %s '
         'WHERE id = %s AND status = %s AND deleted_at IS NULL',
@@ -90,7 +90,7 @@ class GameRepository:
       return await self._fetch_game(cursor, game_id)
 
   async def get_by_id(self, game_id: int) -> Game | None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'SELECT id FROM games WHERE id = %s AND deleted_at IS NULL',
         (game_id,),
@@ -100,7 +100,7 @@ class GameRepository:
       return await self._fetch_game(cursor, game_id)
 
   async def soft_delete(self, game_id: int) -> bool:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE games SET deleted_at = NOW() '
         'WHERE id = %s AND status IN (%s, %s, %s) AND deleted_at IS NULL',
@@ -109,7 +109,7 @@ class GameRepository:
       return cursor.rowcount > 0
 
   async def set_current_turn(self, game_id: int, turn_id: int) -> None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE games SET current_turn = %s WHERE id = %s AND deleted_at IS NULL',
         (turn_id, game_id),
@@ -118,7 +118,7 @@ class GameRepository:
   async def list_all(
     self, status: GameStatus | None = None, player_id: int | None = None
   ) -> list[Game]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       query = (
         'SELECT g.id, g.status, g.mode, g.creator_id, g.created_at, g.started_at, g.ended_at, '
         't.player_id '
@@ -137,7 +137,7 @@ class GameRepository:
       game_rows = await cursor.fetchall()
       if not game_rows:
         return []
-      game_ids = [row[0] for row in game_rows]
+      game_ids = [row['id'] for row in game_rows]
       placeholders = ', '.join(['%s'] * len(game_ids))
       await cursor.execute(
         'SELECT game_id, player_id FROM game_players '
@@ -147,7 +147,10 @@ class GameRepository:
         game_ids,
       )
       player_rows = await cursor.fetchall()
-      players_by_game: dict[int, list[int]] = {row[0]: [] for row in game_rows}
-      for game_id, player_id in player_rows:
-        players_by_game[game_id].append(player_id)
-      return [self._to_game(row, players_by_game[row[0]], row[7]) for row in game_rows]
+      players_by_game: dict[int, list[int]] = {row['id']: [] for row in game_rows}
+      for player_row in player_rows:
+        players_by_game[player_row['game_id']].append(player_row['player_id'])
+      return [
+        self._to_game(row, players_by_game[row['id']], row['player_id'])
+        for row in game_rows
+      ]

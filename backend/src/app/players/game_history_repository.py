@@ -11,9 +11,9 @@ class GameHistoryRepository:
     self._conn = conn
 
   async def list_for_player(self, player_id: int) -> list[GameHistory]:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
-        'SELECT g.id, g.mode, g.ended_at, p.id, p.name, p.is_bot, se.category, se.score '
+        'SELECT g.id AS game_id, g.mode, g.ended_at, p.id AS pid, p.name, p.is_bot, se.category, se.score '
         'FROM games g '
         'JOIN game_players gp_me ON gp_me.game_id = g.id AND gp_me.player_id = %s AND gp_me.deleted_at IS NULL '
         'JOIN game_players gp ON gp.game_id = g.id AND gp.deleted_at IS NULL '
@@ -31,13 +31,15 @@ class GameHistoryRepository:
         'players': defaultdict(lambda: {'name': '', 'is_bot': False, 'scores': {}}),
       }
     )
-    for game_id, mode, ended_at, pid, name, is_bot, category, score in rows:
-      games[game_id]['mode'] = mode
-      games[game_id]['ended_at'] = ended_at
-      games[game_id]['players'][pid]['name'] = name
-      games[game_id]['players'][pid]['is_bot'] = is_bot
-      if category is not None and score is not None:
-        games[game_id]['players'][pid]['scores'][category] = score
+    for row in rows:
+      game_id = row['game_id']
+      pid = row['pid']
+      games[game_id]['mode'] = row['mode']
+      games[game_id]['ended_at'] = row['ended_at']
+      games[game_id]['players'][pid]['name'] = row['name']
+      games[game_id]['players'][pid]['is_bot'] = row['is_bot']
+      if row['category'] is not None and row['score'] is not None:
+        games[game_id]['players'][pid]['scores'][row['category']] = row['score']
 
     result = []
     for game_id, game_data in games.items():

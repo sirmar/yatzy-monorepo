@@ -6,7 +6,7 @@ class GamePlayerRepository:
     self._conn = conn
 
   async def update_saved_rolls(self, game_id: int, player_id: int, value: int) -> None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE game_players SET saved_rolls = %s '
         'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
@@ -14,7 +14,7 @@ class GamePlayerRepository:
       )
 
   async def remove(self, game_id: int, player_id: int) -> None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'UPDATE game_players SET deleted_at = NOW() '
         'WHERE game_id = %s AND player_id = %s AND deleted_at IS NULL',
@@ -22,7 +22,7 @@ class GamePlayerRepository:
       )
 
   async def add(self, game_id: int, player_id: int, join_order: int) -> None:
-    async with await self._conn.cursor() as cursor:
+    async with await self._conn.cursor(aiomysql.DictCursor) as cursor:
       await cursor.execute(
         'INSERT INTO game_players (game_id, player_id, join_order) VALUES (%s, %s, %s) AS new '
         'ON DUPLICATE KEY UPDATE deleted_at = NULL, join_order = new.join_order',
