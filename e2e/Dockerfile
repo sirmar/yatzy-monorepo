@@ -1,20 +1,27 @@
-FROM node:22-slim AS base
+FROM ghcr.io/sirmar/dev-typescript:v0.0.4 AS base
+
+FROM base AS lock
 WORKDIR /workspace
-COPY package.json biome.json playwright.config.ts tsconfig.json ./
-RUN npm install
+COPY package.json pnpm-lock.yaml ./
+ENTRYPOINT ["/usr/local/bin/lock-entrypoint.sh"]
 
-FROM base AS lint
-ENTRYPOINT ["npx", "biome", "check", "."]
+FROM base AS deps
+WORKDIR /workspace
+COPY package.json pnpm-lock.yaml biome.json tsconfig.json playwright.config.ts ./
+RUN pnpm install --frozen-lockfile
 
-FROM base AS format
-ENTRYPOINT ["npx", "biome", "check", "--fix", "."]
+FROM deps AS lint
+ENTRYPOINT ["/usr/local/bin/lint-entrypoint.sh"]
 
-FROM base AS types
-ENTRYPOINT ["npx", "tsc", "--noEmit"]
+FROM deps AS format
+ENTRYPOINT ["/usr/local/bin/format-entrypoint.sh"]
 
-FROM base AS security
-ENTRYPOINT ["npm", "audit", "--audit-level=moderate"]
+FROM deps AS types
+ENTRYPOINT ["/usr/local/bin/types-entrypoint.sh"]
 
-FROM base AS prod
+FROM deps AS security
+ENTRYPOINT ["/usr/local/bin/security-entrypoint.sh"]
+
+FROM deps AS prod
 RUN npx playwright install chromium --with-deps
 COPY src ./src
