@@ -5,7 +5,6 @@ from app.auth import make_get_current_user
 from app.config import Settings
 from app.database import Database
 from app.events import EventBus
-from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_repository import GameRepository
 from yatzy_rules.game_variant import get_variant
 from app.games.guards import (
@@ -18,7 +17,6 @@ from app.games.guards import (
   assert_has_rolled,
   assert_sequential_category,
 )
-from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.players.player_repository import PlayerRepository
 from app.scoring.score_calculator import calculate
@@ -89,9 +87,9 @@ def create_scorecard_router(
     assert_player_in_game(game, player_id)
     assert_game_active(game)
 
-    roll_repo = RollRepository(conn)
+    turn_repo = TurnRepository(conn)
     turn_id, current_player_id, rolls_remaining, saved_rolls = assert_turn_active(
-      await roll_repo.get_turn_info(game_id)
+      await turn_repo.get_turn_info(game_id)
     )
     assert_current_player(player_id, current_player_id)
     assert_has_rolled(rolls_remaining)
@@ -106,12 +104,12 @@ def create_scorecard_router(
       variant.categories, variant.is_sequential, scored, body.category
     )
 
-    dice = await roll_repo.get_dice_values(turn_id)
+    dice = await turn_repo.get_dice_values(turn_id)
     score = calculate(body.category, dice)
     await scorecard_repo.save(game_id, player_id, body.category, score)
 
     new_saved = (saved_rolls + rolls_remaining) if variant.saves_rolls else 0
-    await GamePlayerRepository(conn).update_saved_rolls(game_id, player_id, new_saved)
+    await game_repo.update_saved_rolls(game_id, player_id, new_saved)
 
     turn_repo = TurnRepository(conn)
     total_scored = await scorecard_repo.count_all_scored(game_id)
@@ -173,14 +171,14 @@ def create_scorecard_router(
     assert_player_in_game(game, player_id)
     assert_game_active(game)
 
-    roll_repo = RollRepository(conn)
+    turn_repo = TurnRepository(conn)
     turn_id, current_player_id, _, _ = assert_turn_active(
-      await roll_repo.get_turn_info(game_id)
+      await turn_repo.get_turn_info(game_id)
     )
     assert_current_player(player_id, current_player_id)
 
     variant = get_variant(game.mode)
-    dice = await roll_repo.get_dice_values(turn_id)
+    dice = await turn_repo.get_dice_values(turn_id)
     scored = await ScorecardRepository(conn).get_scored_categories(game_id, player_id)
     if variant.is_sequential:
       next_cat = next((c for c in variant.categories if c not in scored), None)

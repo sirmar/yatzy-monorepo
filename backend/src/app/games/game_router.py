@@ -29,11 +29,9 @@ from app.games.guards import (
 from app.games.requests import GameJoin, GameStart, RollRequest
 from app.games.dice import DiceResponse
 from app.games.game_repository import GameRepository
-from app.games.game_player_repository import GamePlayerRepository
 from app.games.game_state import GameState
 from app.games.game_state_repository import GameStateRepository
 from yatzy_rules.game_variant import get_variant
-from app.games.roll_repository import RollRepository
 from app.games.turn_repository import TurnRepository
 from app.players.player_repository import PlayerRepository
 
@@ -83,11 +81,11 @@ def create_game_router(
     )
     game = await GameRepository(conn).create(body.creator_id, body.mode)
     if body.bot_count > 0:
-      gp_repo = GamePlayerRepository(conn)
+      game_repo = GameRepository(conn)
       for i in range(body.bot_count):
         name = f'Bot #{i + 1}'
         bot = await player_repo.create_bot(name)
-        await gp_repo.add(game.id, bot.id, len(game.player_ids) + 1 + i)
+        await game_repo.add_player(game.id, bot.id, len(game.player_ids) + 1 + i)
       game = (await GameRepository(conn).get_by_id(game.id)) or game
     event_bus.publish_lobby()
     return game
@@ -193,7 +191,7 @@ def create_game_router(
     assert_game_in_lobby(game)
     assert_player_in_game(game, player_id)
     assert_not_creator(game, player_id)
-    await GamePlayerRepository(conn).remove(game_id, player_id)
+    await GameRepository(conn).remove_player(game_id, player_id)
     updated = await GameRepository(conn).get_by_id(game_id)
     if updated is None:
       raise HTTPException(status_code=409, detail='Game could not be retrieved')
@@ -224,7 +222,7 @@ def create_game_router(
     assert_game_in_lobby(game)
     assert_player_not_in_game(game, body.player_id)
     assert_game_not_full(game)
-    await GamePlayerRepository(conn).add(
+    await GameRepository(conn).add_player(
       game_id, body.player_id, len(game.player_ids) + 1
     )
     updated = await GameRepository(conn).get_by_id(game_id)
@@ -316,13 +314,13 @@ def create_game_router(
     )
     game = assert_game_exists(await GameRepository(conn).get_by_id(game_id))
     assert_game_active(game)
-    roll_repo = RollRepository(conn)
+    turn_repo = TurnRepository(conn)
     turn_id, current_player_id, rolls_remaining, saved_rolls = assert_turn_active(
-      await roll_repo.get_turn_info(game_id)
+      await turn_repo.get_turn_info(game_id)
     )
     assert_current_player(body.player_id, current_player_id)
     assert_rolls_remaining(rolls_remaining, saved_rolls)
-    dice = await roll_repo.execute(
+    dice = await turn_repo.execute(
       turn_id, game_id, body.player_id, rolls_remaining, body.kept_dice
     )
     event_bus.publish_game(game_id)
