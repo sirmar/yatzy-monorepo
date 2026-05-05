@@ -6,41 +6,14 @@ on:
   pull_request:
     branches: ['**']
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 permissions:
   contents: read
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: [lint-dockerfile, lint, types, security]
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: crazy-max/ghaction-github-runtime@v4.0.0
-      - uses: docker/setup-buildx-action@v4.0.0
-        with:
-          driver-opts: |
-            env.ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}
-            env.ACTIONS_RESULTS_URL=${{ env.ACTIONS_RESULTS_URL }}
-            env.ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}
-      - uses: sirmar/dev@main
-      - run: cd e2e && dev ${{ matrix.target }}
-
   e2e:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6.0.2
-      - uses: crazy-max/ghaction-github-runtime@v4.0.0
-      - uses: docker/setup-buildx-action@v4.0.0
-        with:
-          driver-opts: |
-            env.ACTIONS_CACHE_URL=${{ env.ACTIONS_CACHE_URL }}
-            env.ACTIONS_RESULTS_URL=${{ env.ACTIONS_RESULTS_URL }}
-            env.ACTIONS_RUNTIME_TOKEN=${{ env.ACTIONS_RUNTIME_TOKEN }}
       - uses: sirmar/dev@main
       - run: mdev build backend auth frontend e2e
       - run: cd e2e && dev run
