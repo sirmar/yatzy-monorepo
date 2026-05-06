@@ -1,4 +1,5 @@
 DEV_NAME=yatzy-frontend
+DEV_REGISTRY=ghcr.io/sirmar/yatzy-monorepo
 DEV_REPO_TYPE=service
 DEV_NETWORK=yatzy
 DEV_PORT=5173

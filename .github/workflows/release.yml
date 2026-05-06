@@ -5,71 +5,9 @@ on:
     tags:
       - 'v*.*.*'
 
-permissions:
-  contents: read
-  packages: write
-
 jobs:
-  backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: docker/setup-buildx-action@v4.0.0
-      - uses: docker/login-action@v4.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v7.1.0
-        with:
-          context: .
-          file: backend/Dockerfile
-          target: prod
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:backend-${{ github.ref_name }}
-            ghcr.io/${{ github.repository }}:backend-latest
-          cache-from: type=gha,scope=yatzy-backend-prod
-          cache-to: type=gha,mode=max,scope=yatzy-backend-prod
-
-  auth:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: docker/setup-buildx-action@v4.0.0
-      - uses: docker/login-action@v4.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v7.1.0
-        with:
-          context: auth
-          target: prod
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:auth-${{ github.ref_name }}
-            ghcr.io/${{ github.repository }}:auth-latest
-          cache-from: type=gha,scope=yatzy-auth-prod
-          cache-to: type=gha,mode=max,scope=yatzy-auth-prod
-
-  frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6.0.2
-      - uses: docker/setup-buildx-action@v4.0.0
-      - uses: docker/login-action@v4.1.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/build-push-action@v7.1.0
-        with:
-          context: frontend
-          target: prod
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:frontend-${{ github.ref_name }}
-            ghcr.io/${{ github.repository }}:frontend-latest
-          cache-from: type=gha,scope=yatzy-frontend-prod
-          cache-to: type=gha,mode=max,scope=yatzy-frontend-prod
+  release:
+    uses: sirmar/dev/.github/workflows/reusable-release.yml@main
+    with:
+      mode: mdev
+    secrets: inherit
