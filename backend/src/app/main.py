@@ -14,7 +14,7 @@ event_bus = EventBus()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+async def lifespan(_: FastAPI) -> AsyncGenerator[None, None]:
   await database.connect()
   yield
   await database.disconnect()
