@@ -29,7 +29,7 @@ EXPOSE 8000
 ENTRYPOINT ["/usr/local/bin/watch-entrypoint.sh"]
 
 FROM deps AS test-base
-RUN apt-get update && apt-get install -y --no-install-recommends curl=8.14.1-2+deb13u2 \
+RUN apt-get update && apt-get install -y --no-install-recommends curl=8.14.1-2+deb13u3 \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL -o /usr/local/bin/dbmate https://github.com/amacneil/dbmate/releases/latest/download/dbmate-linux-amd64 \
     && chmod +x /usr/local/bin/dbmate
